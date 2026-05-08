@@ -1,0 +1,3787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HORIZON OS v2.1</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      background: #000;
+      color: #00ff00;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 15px;
+      height: 100%;
+      overflow: hidden;
+    }
+    #matrix-canvas {
+      position: fixed; top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      pointer-events: none; z-index: 1; opacity: 0.28;
+    }
+    #terminal {
+      position: relative; z-index: 2;
+      width: 100%; height: 100vh;
+      overflow: hidden; display: flex;
+      flex-direction: column; background: transparent;
+      transition: color 0.25s;
+    }
+    #output {
+      flex: 1; overflow-y: auto; overflow-x: hidden;
+      white-space: pre-wrap; padding: 18px 22px 8px; color: inherit;
+    }
+    #output::-webkit-scrollbar { width: 4px; }
+    #output::-webkit-scrollbar-track { background: transparent; }
+    #output::-webkit-scrollbar-thumb { background: #00ff0033; border-radius: 2px; }
+    #input { position: fixed; top: -9999px; opacity: 0; width: 1px; height: 1px; }
+    #input-line {
+      padding: 5px 22px 14px; font-size: inherit;
+      font-family: inherit; color: inherit; flex-shrink: 0;
+    }
+    #typed { white-space: pre; }
+    #fake-cursor {
+      display: inline-block; width: 9px; height: 1.05em;
+      background-color: currentColor; margin-left: 1px;
+      vertical-align: bottom; animation: cur-blink 1s step-end infinite;
+    }
+    @keyframes cur-blink { 50% { opacity: 0; } }
+    .terminal-line { margin: 1px 0; line-height: 1.5; }
+    #flicker-center {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center; white-space: pre; z-index: 9999; color: lime;
+    }
+    .ascii-center {
+      display: flex; flex-direction: column;
+      align-items: center; text-align: center; margin: 1rem 0; line-height: 1.4;
+    }
+    .ascii-center pre { margin: 0; }
+    /* Operator Mode */
+    #terminal.operator,
+    #terminal.operator #output,
+    #terminal.operator #input-line { color: #00ffff !important; }
+    #terminal.operator #fake-cursor { background-color: #00ffff !important; }
+    .op-label { color: #00ffff !important; font-weight: bold; letter-spacing: 1px; }
+    .scanlines {
+      pointer-events: none; position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 99; opacity: 0.09;
+      background: repeating-linear-gradient(to bottom, #00ffff 0px, #00ffff 1px, transparent 1px, transparent 5px);
+      animation: scan-move 2s linear infinite;
+    }
+    @keyframes scan-move { 100% { background-position-y: 5px; } }
+    /* Mayberry Mode */
+    #terminal.mayberry-mode { background: #fff !important; color: #b30000 !important; }
+    #terminal.mayberry-mode #output,
+    #terminal.mayberry-mode #input-line { color: #b30000 !important; background: #fff; }
+    #terminal.mayberry-mode #fake-cursor { background-color: #b30000 !important; }
+    .tv-static-overlay {
+      position: absolute; z-index: 200; left: 0; top: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      background: repeating-linear-gradient(0deg, #fff 0px, #fff 2px, #eee 2px, #eee 4px);
+      opacity: 0.55; animation: static-flk 0.14s infinite steps(2);
+    }
+    @keyframes static-flk { 0% { opacity: 0.28; } 100% { opacity: 0.55; } }
+    .mayberry-flash {
+      position: absolute; left: 0; right: 0; top: 33%;
+      text-align: center; font-size: 2.8em; color: #b30000;
+      font-weight: bold; z-index: 210; animation: may-flk 0.22s steps(2) 10;
+    }
+    .mayberry-opie { display: block; font-size: 0.65em; letter-spacing: 0.12em; margin-top: 0.2em; }
+
+    @keyframes may-flk { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+    /* NPC / special lines */
+    .hughes-haunt { color: #ff4444 !important; font-style: italic; }
+    .guardian-msg  { color: #7dcfff !important; }
+    .signal-bleed  { color: #888 !important; font-size: 0.88em; }
+    .uplink-line   { color: #39ff14; font-size: 0.82em; }
+    .cicada-text   { color: #3165f2; font-weight: bold; }
+    .tune-wave     { color: #00ffaa; font-family: monospace; letter-spacing: 1px; }
+    .tune-hidden   { color: #005533; }
+    .hh-type { color: #cc2200 !important; font-style: italic; letter-spacing: 0.3px; }
+    #fake-cursor.hh-active { background-color: #cc2200 !important; animation: hh-pulse 0.4s step-end infinite; }
+    @keyframes hh-pulse { 0%,49%{opacity:1;} 50%,100%{opacity:0.2;} }
+    .load-bar      { white-space: pre; }
+    #terminal.mayberry-mode .hughes-haunt,
+    #terminal.mayberry-mode .guardian-msg { color: #b30000 !important; }
+
+
+    /* Mobile polish */
+    @media (max-width: 600px) {
+      html, body { font-size: 13px; }
+      #output { padding: 10px 10px 4px; }
+      #input-line { padding: 4px 10px 10px; font-size: 13px; }
+      #desk-overlay { font-size: 10px; }
+      table { font-size: 10px; }
+    }
+
+    /* Desk fixed overlay */
+    #desk-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 48px;
+      z-index: 50;
+      background: #000000;
+      isolation: isolate;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 8px 22px 12px;
+      font-size: 12px;
+      color: #ffcc44;
+      font-family: 'Consolas','Monaco','Courier New',monospace;
+      display: none;
+    }
+    #desk-overlay.active { display: block; background: #000 !important; }
+    #terminal.desk-mode #output { visibility: hidden; }
+    #terminal.desk-mode #input-line {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #000; border-top: 1px solid #333;
+      padding: 8px 22px; z-index: 51;
+    }
+
+    /* Input stays above keyboard on mobile */
+    #input-line { position: sticky; bottom: 0; background: #000; z-index: 10; }
+    #terminal.mayberry-mode #input-line { background: #fff; }
+    /* ── CRT vignette ── */
+    #terminal::before {
+      content: '';
+      pointer-events: none;
+      position: fixed; top:0;left:0;width:100vw;height:100vh;
+      z-index: 100;
+      background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.55) 100%);
+    }
+
+    /* ── Mode cursor colors ── */
+    #terminal.operator    #fake-cursor { background-color: #00ffff !important; width:9px; }
+    #terminal.mayberry-mode #fake-cursor { background-color: #b30000 !important; width:9px; }
+    #terminal.hh-mode     #fake-cursor { background-color: #cc2200 !important; width:14px !important; animation: hh-pulse 0.35s step-end infinite !important; }
+    #terminal.desk-mode   #fake-cursor { background-color: #ffaa00 !important; width:9px; animation: desk-blink 0.7s step-end infinite; }
+    @keyframes desk-blink { 0%,49%{opacity:1;} 50%,100%{opacity:0.3;} }
+
+    /* ── Input border by mode ── */
+    #input-line { border-left: 2px solid transparent; transition: border-color 0.3s; padding-left: 8px; }
+    #terminal.operator    #input-line { border-left-color: #00ffff44; }
+    #terminal.hh-mode     #input-line { border-left-color: #cc220066; }
+    #terminal.desk-mode   #input-line { border-left-color: #ffaa0044; }
+    #terminal.mayberry-mode #input-line { border-left-color: #b3000044; }
+
+    /* ── Desk amber tint ── */
+    #terminal.desk-mode,
+    #terminal.desk-mode #output,
+    #terminal.desk-mode #input-line { color: #ffcc44 !important; }
+    #terminal.desk-mode #fake-cursor { background-color: #ffaa00 !important; }
+    #terminal.desk-mode .terminal-line { color: #ffcc44; }
+
+    /* ── HH border pulse ── */
+    @keyframes hh-border-pulse {
+      0%   { box-shadow: inset 0 0 0 1px #cc220000; }
+      50%  { box-shadow: inset 0 0 0 1px #cc220088; }
+      100% { box-shadow: inset 0 0 0 1px #cc220000; }
+    }
+    #terminal.hh-speaking { animation: hh-border-pulse 0.6s ease-out; }
+
+    /* ── Screen flicker ── */
+    @keyframes screen-flicker {
+      0%   { opacity: 1; }
+      15%  { opacity: 0.85; }
+      16%  { opacity: 1; }
+      60%  { opacity: 1; }
+      61%  { opacity: 0.9; }
+      62%  { opacity: 1; }
+      100% { opacity: 1; }
+    }
+    #terminal.flickering { animation: screen-flicker 0.12s linear; }
+
+    /* ── Operator mode transition wash ── */
+    #op-wash {
+      position: fixed; top:0;left:0;width:100vw;height:100vh;
+      background: #00ffff;
+      z-index: 999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.08s;
+    }
+
+    /* ── Mayberry channel-change ── */
+    @keyframes channel-h-collapse {
+      0%   { transform: scaleY(1); opacity:1; }
+      40%  { transform: scaleY(0.04); opacity:0.8; }
+      60%  { transform: scaleY(0.04); opacity:0.8; }
+      100% { transform: scaleY(1); opacity:1; }
+    }
+    #terminal.channel-change { animation: channel-h-collapse 0.5s ease-in-out; }
+
+    /* ── HH disconnect signal loss ── */
+    @keyframes signal-loss {
+      0%   { filter: none; }
+      20%  { filter: blur(1px) brightness(1.4); }
+      40%  { filter: blur(2px) brightness(0.6) saturate(0); }
+      60%  { filter: blur(1px) brightness(1.2); }
+      80%  { filter: blur(0.5px) brightness(0.8); }
+      100% { filter: none; }
+    }
+    #terminal.signal-loss { animation: signal-loss 0.7s ease-out; }
+
+    /* ── Desk exit collapse ── */
+    @keyframes desk-collapse {
+      0%   { max-height: 100vh; opacity:1; }
+      40%  { max-height: 4px; opacity:0.5; }
+      60%  { max-height: 4px; opacity:0.5; }
+      100% { max-height: 100vh; opacity:1; }
+    }
+    #terminal.desk-collapsing { animation: desk-collapse 0.4s ease-in-out; }
+
+    /* ── Glitch character overlay ── */
+    .glitch-char { display:inline; color: inherit; }
+    .glitch-char.active { color: #ff0 !important; }
+
+    /* ── Scanline reveal (for blackfile cats) ── */
+    @keyframes scanline-reveal {
+      from { clip-path: inset(0 0 100% 0); }
+      to   { clip-path: inset(0 0 0% 0); }
+    }
+    .scanline-reveal { animation: scanline-reveal 0.6s linear forwards; }
+
+    /* ── LIVE blink for desk ── */
+    @keyframes live-blink { 0%,49%{opacity:1;color:#ff4400;} 50%,100%{opacity:0.3;} }
+    .live-indicator { animation: live-blink 1s step-end infinite; font-weight:bold; }
+
+    /* ── Desk row flash ── */
+    @keyframes row-up   { 0%{background:#003300;} 100%{background:transparent;} }
+    @keyframes row-down { 0%{background:#330000;} 100%{background:transparent;} }
+    .row-flash-up   { animation: row-up   0.6s ease-out; }
+    .row-flash-down { animation: row-down 0.6s ease-out; }
+
+    /* ── Secondary matrix layer ── */
+    #matrix-canvas-2 {
+      position: fixed; top:0;left:0;width:100vw;height:100vh;
+      pointer-events:none; z-index:0; opacity:0.10;
+    }
+
+    /* ── Late-session corruption on HH lines ── */
+    .hh-corrupt { letter-spacing: 0.5px; opacity: 0.85; }
+  </style>
+</head>
+<body>
+<canvas id="matrix-canvas-2"></canvas>
+<canvas id="matrix-canvas"></canvas>
+<div id="op-wash"></div>
+<div id="desk-overlay"></div>
+
+<div id="terminal">
+  <div id="output"></div>
+  <div id="input-line" style="display:none">
+    <span id="prompt-label">/&gt;</span>&nbsp;<span id="typed"></span><span id="fake-cursor"></span>
+  </div>
+</div>
+<input id="input" type="text" autocomplete="off" spellcheck="false">
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  HORIZON TERMINAL v2.1  —  Haunted Mainframe Build
+//  "Hughes tried to encode himself. This is what survived."
+// ═══════════════════════════════════════════════════════════════
+
+// ── DOM ───────────────────────────────────────────────────────
+const terminal  = document.getElementById('terminal');
+const output    = document.getElementById('output');
+const inputEl   = document.getElementById('input');
+const inputLine = document.getElementById('input-line');
+const promptLbl = document.getElementById('prompt-label');
+const typedEl   = document.getElementById('typed');
+
+// ── State ─────────────────────────────────────────────────────
+const state      = { phase: 'booting', username: '' };
+let operatorMode = false;
+let mayberryMode = false;
+let mayberryFirst = true;
+let inVault       = false;
+let currentVault  = 'redrock';
+let uplinkActive  = false;
+let uplinkIv      = null;
+let helloRitual   = false;
+let cicadaWaiting = false;
+let virtualPath   = '/';
+let inDreamMode   = false;
+let ghostActive   = false;
+let ghostIndex    = 0;
+let ghostScore    = 0;
+let paranoiaPath  = false;
+let trustPath     = false;
+window.masked     = false;
+
+// ── Print Queue (typewriter effect) ───────────────────────────
+const pQueue = [];
+let pBusy    = false;
+let promptPending = null;
+
+function printLine(html, cls, instant) {
+  pQueue.push({ html, cls: cls || '', instant: !!instant });
+  if (!pBusy) drainPQueue();
+}
+function printText(text, instant) {
+  String(text).split('\n').forEach(l => printLine(esc(l), '', instant));
+}
+function drainPQueue() {
+  if (pQueue.length === 0) {
+    pBusy = false;
+    if (promptPending !== null) {
+      _showPromptNow(promptPending);
+      promptPending = null;
+    }
+    return;
+  }
+  pBusy = true;
+  const { html, cls, instant } = pQueue.shift();
+  const d = document.createElement('div');
+  d.className = 'terminal-line' + (cls ? ' ' + cls : '');
+  output.appendChild(d);
+  scrollBot();
+  if (output.querySelectorAll('.terminal-line').length > 700) capOutput();
+
+  if (instant || html.indexOf('<') !== -1) {
+    // Instant: HTML content or flagged instant
+    d.innerHTML = html;
+    scrollBot();
+    setTimeout(drainPQueue, instant ? 0 : 30);
+  } else {
+    // Typewriter: plain text, char by char if short, else fast
+    const text = html; // already esc'd plain text
+    const speed = text.length < 80 ? 16 : 4;
+    let i = 0;
+    function tick() {
+      if (i <= text.length) {
+        d.textContent = text.slice(0, i++);
+        scrollBot();
+        if (i <= text.length) setTimeout(tick, speed);
+        else setTimeout(drainPQueue, 20);
+      }
+    }
+    tick();
+  }
+}
+function showPrompt(label) {
+  if (pBusy || pQueue.length > 0) {
+    promptPending = label || currentPrompt();
+  } else {
+    _showPromptNow(label || currentPrompt());
+  }
+}
+function _showPromptNow(label) {
+  promptLbl.textContent = label;
+  typedEl.textContent = '';
+  inputEl.value = '';
+  inputLine.style.display = '';
+  scrollBot();
+  inputEl.focus();
+}
+function clearPrompt() { inputLine.style.display = 'none'; }
+function scrollBot() { requestAnimationFrame(() => { output.scrollTop = output.scrollHeight; }); }
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function loadBar(label, onDone, steps, delay) {
+  steps = steps || 20; delay = delay || 60;
+  const el = document.createElement('div');
+  el.className = 'terminal-line load-bar';
+  output.appendChild(el);
+  let i = 0;
+  const iv = setInterval(() => {
+    el.textContent = label + ' [' + '█'.repeat(i) + ' '.repeat(steps-i) + '] ' + (i*(100/steps)|0) + '%';
+    scrollBot();
+    if (++i > steps) { clearInterval(iv); if (onDone) onDone(); }
+  }, delay);
+}
+function currentPrompt() {
+  if (inDreamMode)  return '[OP] _';
+  if (inVault)      return '[vault/' + currentVault + '] >';
+  if (operatorMode) return 'bash$';
+  if (virtualPath !== '/') return virtualPath + ' >';
+  return '/>';
+}
+
+// ── Matrix Rain ───────────────────────────────────────────────
+let matrixActive = false;
+function startMatrixRain() {
+  if (matrixActive) return;
+  matrixActive = true;
+  const canvas = document.getElementById('matrix-canvas');
+  canvas.style.display = '';
+  const ctx = canvas.getContext('2d');
+  const glyphs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*アァカサタナハマヤラワガザバ'.split('');
+  const fz = 16;
+  let drops = [];
+  function setup() {
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    drops = Array.from({length: Math.floor(canvas.width/fz)}, () => Math.random()*canvas.height/fz);
+  }
+  setup();
+  window.addEventListener('resize', setup);
+  function draw() {
+    if (!matrixActive) return;
+    ctx.fillStyle='rgba(0,0,0,0.08)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#0f0'; ctx.font=fz+'px monospace';
+    drops.forEach((y,i) => {
+      ctx.fillText(glyphs[Math.floor(Math.random()*glyphs.length)],i*fz,y*fz);
+      if (y*fz>canvas.height && Math.random()>0.975) drops[i]=0;
+      drops[i]++;
+    });
+    setTimeout(draw, 80);
+  }
+  draw();
+}
+function stopMatrixRain() {
+  matrixActive = false;
+  const canvas = document.getElementById('matrix-canvas');
+  if (!canvas) return;
+  canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LORE DATA
+// ═══════════════════════════════════════════════════════════════
+
+const VFS = {
+  '/':          ['files','vault','systems','blacksite','blackbook','interface','utils','hughes','ford','latta','wabash','lincoln'],
+  '/files':     ['Dominion_Killshot.enc','Tesla_WALDO.pdf','Zion_Protocol.red','Ford_Network_Summary.enc','Hughes_Cell_Specs.enc'],
+  '/vault':     ['ritual.log','code66.wav','temple.scrt','rex.dossier','dominion.ops'],
+  '/systems':   ['diagnostic.sys','trace.gps','grid.health','node.id','relay.hop','satlink.upk','load_ai.exe','zeta.freq'],
+  '/blacksite': ['moonchild.gen','specter.reg','redroom.locked','cicada.enc','malta.ops'],
+  '/blackbook': ['deepthought.txt','mirror.sh','unlock.zion','opal.txt','opus.doc','ping-moonbase.sys'],
+  '/interface': ['archive.lnk','boot_ui.sys','logout.sh','operator.key'],
+  '/utils':     ['whoami','help','clear','version','date'],
+  '/hughes':    ['voice66.mp3','voice66_personal.txt','system_warning.log','three_names.enc','glomar_memo.txt'],
+  '/ford':      ['ford_network.log','latta_connection.txt','lincoln_log.enc','stambaugh_file.txt','stanton_node.txt','hughes_ford_bridge.redacted','pasadena_terminal.txt'],
+  '/latta':     ['bone_latta.log','monroe_network.txt','fraternal_layer.txt','counterfeiting_system.txt','limestone_cartel.txt','bonaparte_naming.txt','wabash_expansion.txt'],
+  '/wabash':    ['combine_overview.log','service_motor_truck.txt','honeywell_origin.txt','brooks_construction.txt','combine_surnames.txt','liberty_truck.txt','one_wabash.txt'],
+  '/lincoln':   ['tomb_plot_1876.log','wabash_model.txt','booth_as_hand.txt','body_as_witness.txt','maryland_corridor.txt','cotton_seam.txt','stanton_control.txt'],
+  '/mayberry':  ['mayberry_history.txt','opie_model.redacted','classified_babysitter.log','sandbox_spec.ops','opie_model_diagram.svg'],
+};
+
+const FORD_LORE = {
+  'ford_network.log': [
+    '[FORD NETWORK // HORIZON ARCHIVE]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'THESIS: A fraternal-logistical network operating',
+    'across American corridors, antebellum period',
+    'through the 20th century.',
+    '',
+    'KEY NODES:',
+    '  Mahoning Valley Industrial Triangle (Ohio)',
+    '    — Tod / Stambaugh / Ford family cluster',
+    '    — Arabella Stambaugh → James Hobart Ford (1850)',
+    '    — Margaret Osborne → Daniel Beaver Stambaugh (1867)',
+    '',
+    '  Masonic Fraternal Layer (Pittsburgh Node)',
+    '    — Edwin Stanton: Charter membership confirmed',
+    '    — Sister Oella Wright marriage:',
+    '      Pittsburgh–Steubenville corridor',
+    '',
+    '  Pasadena Terminal Node',
+    '    — Freeman A. Ford House: 215 S. Grand Ave',
+    '    — Pasadena Ice Company rail spur → Devil\'s Gate',
+    '    — Same site: JPL rocket research (later)',
+    '    — Parsons/OTO/Jet Propulsion: same ground',
+    '',
+    '  Lake of the Woods (Open Thread)',
+    '    — Austin Forde cabin acquisition: UNRESOLVED',
+    '    — Next steps: Kenora land titles,',
+    '      Lake of the Woods Museum,',
+    '      Wabash Country Club membership rosters',
+    '',
+    'STATUS: ACTIVE RESEARCH',
+    '[Ξ END LOG]',
+  ].join('\n'),
+
+  'latta_connection.txt': [
+    '[LATTA CONNECTION // REDACTED PARTIAL]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'The Latta thread intersects the Ford Network',
+    'at multiple fraternal and financial nodes.',
+    '',
+    'The name keeps appearing where mobility, secrecy,',
+    'legal ambiguity, and high-trust technical assets',
+    'converge. That repetition is not coincidence.',
+    'It is the subject.',
+    '',
+    '[DATA EXPUNGED — CLEARANCE LEVEL OMEGA]',
+    '',
+    'See: /latta/ for full archive',
+    'See: /lincoln/wabash_model.txt for synthesis',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'lincoln_log.enc': [
+    '[LINCOLN LOG // ENCRYPTION LAYER ACTIVE]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    '[!] DECRYPTION FAILED — KEY FRAGMENT MISSING',
+    '',
+    'Partial plaintext recovered:',
+    '  ...the Stanton connection is not incidental...',
+    '  ...logistics network predates the war by decades...',
+    '  ...the Ford Theatre is not where this ends...',
+    '',
+    '[REDACTED BLOCK: 2.4kb]',
+    '',
+    'Full file: /lincoln/',
+    'Cross-reference: stanton_node.txt',
+    '[Ξ PARTIAL DECRYPT]',
+  ].join('\n'),
+
+  'stambaugh_file.txt': [
+    '[STAMBAUGH FILE]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'Daniel Beaver Stambaugh',
+    '  ∟ Married: Margaret Osborne (1867)',
+    '  ∟ Node: Mahoning Valley Industrial Triangle',
+    '',
+    'Arabella Stambaugh',
+    '  ∟ Married: James Hobart Ford (1850)',
+    '  ∟ Confirms: Stambaugh–Ford axis',
+    '',
+    '"What hardens: documentary evidence supports',
+    ' both marriages."',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'stanton_node.txt': [
+    '[STANTON NODE // PITTSBURGH]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'Edwin Stanton — Secretary of War',
+    '  ∟ Masonic affiliation: CONFIRMED (charter member)',
+    '  ∟ Pittsburgh lodge: documented',
+    '  ∟ War Department telegraph: command infrastructure',
+    '  ∟ Sister Oella Wright marriage:',
+    '    Pittsburgh–Steubenville corridor',
+    '',
+    'Stanton controlled the room after Ford\'s Theatre.',
+    'Stanton controlled the records after the trial.',
+    'The continuity from Pittsburgh through the War',
+    'Office is one of the cleanest ways to see the',
+    'older interior method hardening into national command.',
+    '',
+    'Cross-reference: /lincoln/stanton_control.txt',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'hughes_ford_bridge.redacted': [
+    '[HUGHES–FORD BRIDGE // EYES ONLY]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    '[REDACTED]',
+    '[REDACTED]',
+    '',
+    '...the Pasadena Ice Company and the Devil\'s Gate',
+    'site represent a convergence of two separate',
+    'network arms that should not have touched...',
+    '',
+    '[REDACTED]',
+    '',
+    'JPL was not the beginning. The rail spur was.',
+    '',
+    '[REDACTED]',
+    '[Ξ FILE CORRUPTED — SEE HUGHES DIRECTORY]',
+  ].join('\n'),
+
+  'pasadena_terminal.txt': [
+    '[PASADENA TERMINAL NODE]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'Freeman A. Ford House — 215 S. Grand Avenue',
+    '  Status: Confirmed filming location (Inception, 2010)',
+    '  Note: Architecture as set. Set as archive.',
+    '',
+    'Pasadena Ice Company',
+    '  Rail spur terminus: Devil\'s Gate',
+    '  Later designation: Arroyo Seco Laboratories',
+    '  Later designation: JPL (Jet Propulsion Laboratory)',
+    '  Parsons connection: Jack Parsons / OTO / Aerojet',
+    '',
+    'The western movement followed a logic.',
+    'Mahoning Valley capital arrived in Pasadena',
+    'as law, banking, education, science, estate culture.',
+    'The instruments changed. The organizing habits did not.',
+    '',
+    'Wabash → Indiana → Baltimore → Pasadena:',
+    '  Iron became bungalow, telescope, rocket, broadcast tower.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+};
+
+const LATTA_LORE = {
+  'bone_latta.log': [
+    '[NAPOLEON BONAPARTE LATTA // BONE LATTA]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'Primary node: Monroe, Wisconsin / Northern Indiana',
+    'Operation: Counterfeiting network, antebellum Midwest',
+    'Status: Fled Indiana under hangman\'s shadow',
+    'Burial: Greenwood Cemetery, Monroe, Wisconsin',
+    '',
+    'THE NAME QUESTION:',
+    'American boys in the antebellum Midwest were not',
+    'generally christened with the full name of a French',
+    'emperor. Napoleon was not ancient history in the 1840s.',
+    'The Bonaparte name still carried dynastic, imperial,',
+    'Catholic, military, and exile meanings.',
+    '',
+    'It was a tag. It was a form of memory.',
+    'It told other people in the network who you were.',
+    '',
+    'See: /latta/bonaparte_naming.txt',
+    'See: /latta/monroe_network.txt',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'monroe_network.txt': [
+    '[MONROE FOUNDATION // NOLEN RESEARCH]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'Source: Andrea Nolen archival work',
+    'Region: Monroe, Wisconsin → Illinois → Indiana → Michigan',
+    '',
+    'Monroe was a receiving station, a cover environment,',
+    'a memory vault, and the western face of a larger',
+    'Midwestern machine.',
+    '',
+    'COVER STRUCTURE:',
+    '  Mills, taverns, livery stables, sawmills, small farms,',
+    '  road houses, blacksmith shops, boarding arrangements.',
+    '  All provided plausible reasons for:',
+    '  — movement   — cash   — night travel',
+    '  — comings and goings of strangers',
+    '',
+    'The cover was not theatrical. It was ordinary.',
+    'That is why it worked.',
+    '',
+    'The criminal system did not need a hidden castle.',
+    'It needed useful businesses.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'fraternal_layer.txt': [
+    '[FRATERNAL RECOGNITION LAYER]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'IOOF, Masonic lodges, Grange, agricultural associations.',
+    '',
+    'FUNCTION: Solved a real problem in a mobile,',
+    'under-policed, paper-based society.',
+    'Allowed men to recognize one another across distance.',
+    '',
+    'A lodge could be:',
+    '  — charity         — insurance        — politics',
+    '  — employment office — social club    — intelligence screen',
+    '',
+    'The same structure that made mutual aid possible',
+    'also made mutual concealment possible.',
+    'That is not a contradiction. That is the frontier.',
+    '',
+    'A man with the right handshake and the right introduction',
+    'did not need to explain himself further.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'counterfeiting_system.txt': [
+    '[COUNTERFEITING AS SHADOW MONETARY SYSTEM]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'Before the federal government imposed a coherent',
+    'national currency system, Americans lived inside',
+    'a paper-money jungle.',
+    '',
+    'Hundreds of state-chartered banks. Wildly varying',
+    'standards of security, solvency, and oversight.',
+    'A note might be good in one county and suspect in the next.',
+    '',
+    'A sufficiently skilled engraver with the right paper,',
+    'inks, plates, and distribution network could produce',
+    'notes that passed for genuine in distant markets.',
+    '',
+    'Counterfeiting was not just crime.',
+    'It was a competing monetary system.',
+    '',
+    'The men who ran it were not petty crooks.',
+    'They were unauthorized central bankers.',
+    '',
+    'They lived in the gap between law and liquidity.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'limestone_cartel.txt': [
+    '[LIMESTONE CARTEL // WALSH / BETTER ROADS]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'The limestone belt of southern Indiana ran through',
+    'the same corridor as the Latta operational geography.',
+    '',
+    'Walsh limestone cartel: controlled quarrying,',
+    'distribution, and pricing across the region.',
+    '',
+    'Better Roads movement: a reform that was also',
+    'market capture. Roads were not public improvements.',
+    'They were the physical grammar of empire laid across county land.',
+    '',
+    'Failed 1927 truck combination attempted to consolidate',
+    'the road-stone-vehicle economy under one structure.',
+    '',
+    'Cross-reference: /wabash/combine_overview.log',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'bonaparte_naming.txt': [
+    '[BONAPARTIST SUPERSTRUCTURE // NAMING LAYER]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'The Bonaparte name appears in American interior',
+    'records in specific kinds of networks:',
+    '',
+    '  — Patterson-connected merchant families',
+    '  — Catholic-adjacent Protestant households',
+    '  — Fraternal lodge environments',
+    '  — Militia-minded frontier families',
+    '  — Transport men, paper men',
+    '',
+    'POINT BREEZE (Joseph Bonaparte\'s estate, NJ)',
+    '  The apex of the Bonapartist administrative settlement.',
+    '  Patterson dynasty. Maryland Club. Baltimore Club.',
+    '',
+    'ELIZABETH PATTERSON:',
+    '  Married Jerome Bonaparte (Napoleon\'s brother) 1803.',
+    '  The Patterson merchant network came online in',
+    '  America after 1803 and never fully deactivated.',
+    '',
+    'The name was not empty. In a world where kinship,',
+    'sponsorship, lodge recognition, and commercial trust',
+    'mattered more than formal credentials,',
+    'a name could do work.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'wabash_expansion.txt': [
+    '[WABASH EXPANSION // LATTA THREAD]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'The Latta who taught at Purdue was born in Noble County —',
+    'the precise tamarack-swamp territory the Black Leg Gang',
+    'ran out of — and later became the respectable scientific',
+    'face of the same rural world that earlier produced',
+    'counterfeiters, horse thieves, and swamp confederacies.',
+    '',
+    'The Latta who collected Napoleon in Philadelphia was',
+    'a senior official of the Pennsylvania Railroad.',
+    'One of the most important Napoleon collections in America.',
+    '',
+    'The Latta who appears on Lafayette stockyard',
+    'correspondence in 1862 was writing at exactly the moment',
+    'Lincoln signed the preliminary Emancipation Proclamation.',
+    '',
+    'These are not coincidences. They are nodes.',
+    'Cross-reference: /wabash/ and /lincoln/',
+    '[Ξ END FILE]',
+  ].join('\n'),
+};
+
+const WABASH_LORE = {
+  'combine_overview.log': [
+    '[THE WABASH COMBINE]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'NOT a secret board meeting.',
+    'A distributed machine.',
+    '',
+    'COMPONENTS:',
+    '  Latta engine:    mechanical force, steam, fire engines,',
+    '                   counterfeit liquidity, operational muscle',
+    '  Hughes apparatus: law, court access, Catholic/ecclesiastical',
+    '                   legitimacy, intelligence inside Copperhead',
+    '                   heartland',
+    '  Ford network:    stage, public scene, narrative container',
+    '  Wright network:  institutional rebrand, archival custody,',
+    '                   transportation/industrial continuity',
+    '  Pope network:    wire, alarm circuit, dispatch box,',
+    '                   telephone line, patent cartel, Good Roads',
+    '',
+    'The Wabash corridor shows how the machine functions',
+    'outside the official capital.',
+    '',
+    'RIVER → CANAL → RAIL → ROAD → TRUCK → WIRE → SENSOR',
+    '',
+    'Each new instrument replaced the last.',
+    'The useful places remained useful.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'service_motor_truck.txt': [
+    '[SERVICE MOTOR TRUCK CO. // WABASH, INDIANA]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'Active: 1911 – early 1930s',
+    'Names: Service Motor Car Co. → Service Motor Truck Co.',
+    '       → Service Motors Inc.',
+    'Acquired: Relay Motor Corporation, 1927',
+    '',
+    'The truck factory was not an ornament.',
+    'It was the machine side of a place already concerned',
+    'with stone, surfaces, freight, and public improvement.',
+    '',
+    'POST-WAR: "Red Pyramid Speed Truck" — 1920',
+    '  Note the emblem.',
+    '',
+    'RELAY MOTORS COLLAPSE:',
+    '  Attempted to gather Service (Wabash),',
+    '  Commerce (Detroit), Garford (Lima).',
+    '  Production capacity announced more easily',
+    '  than sales could be secured.',
+    '',
+    'Failure did not erase the method.',
+    'It scattered the pieces.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'honeywell_origin.txt': [
+    '[HONEYWELL // WABASH ORIGIN]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'Honeywell began as a Wabash temperature-control company.',
+    'Later: national and global instrumentation concern.',
+    '',
+    'The thermostat is not a passive device.',
+    'It is a control node.',
+    '',
+    'Also active in Wabash:',
+    '  Ford Meter Box — municipal water access / manufacturing',
+    '  Wabash Magnetics — electromagnetic sensing',
+    '  Wabash National — trailer manufacturing (founded 1985)',
+    '  Belgian Draft Horse Corporation — registry logic preserved',
+    '',
+    'A small place kept generating devices for:',
+    'measurement, movement, enclosure, registry,',
+    'transport, and control.',
+    '',
+    'That is not coincidence.',
+    'That is what a combine leaves behind.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'brooks_construction.txt': [
+    '[BROOKS CONSTRUCTION // ROAD SURFACE FUNCTION]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'Wabash: known as Rock City.',
+    'Bridges family: principal limestone cutting works.',
+    '',
+    '1904: Charles D. Brooks listed as Wabash Street Commissioner.',
+    '1909: Brooks Construction formally founded.',
+    '',
+    'The company did not have to exist first',
+    'for the function to be present.',
+    '',
+    'Work passed through public office, family reputation,',
+    'private contract, road crew, bank loan, newspaper notice,',
+    'and incorporated company',
+    'without changing its practical role.',
+    '',
+    'Municipal administration provided the working frame.',
+    'Brooks Construction later gave that frame a corporate body.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'combine_surnames.txt': [
+    '[FUNCTION-SURNAMES OF THE WABASH COMBINE]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'Surnames in this system behave like signatures',
+    'left by recurring functions.',
+    '',
+    '  HUGHES  — law, federal appointment, administrative',
+    '            discretion, Baltimore commerce, national recordkeeping',
+    '',
+    '  FORD    — public story, visible power, performance,',
+    '            municipal utility, film, assassination memory',
+    '',
+    '  WRIGHT  — institutions that change shells while',
+    '            preserving function: church, warehouse,',
+    '            publishing house, patent fortress, aviation,',
+    '            sensor firm',
+    '',
+    '  SMITH   — hidden records, scripture, maps, genealogy,',
+    '            museum custody, photography, confessional archives',
+    '',
+    '  LATTA   — mechanical force, steam, fire engines,',
+    '            Bonapartist naming, operational muscle',
+    '',
+    '  POPE    — the wire as nervous system: alarm circuit,',
+    '            dispatch box, telephone, patent cartel',
+    '',
+    'These are not ordinary genealogies.',
+    'They are franchise marks.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'liberty_truck.txt': [
+    '[LIBERTY TRUCK PROGRAM // 1918 FEDERAL STANDARDIZATION]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'Standard B Liberty Truck: interchangeable parts,',
+    'manufactured in different factories,',
+    'designed to solve a military logistics problem.',
+    '',
+    'Service Motor Truck\'s Liberty Truck work placed',
+    'Wabash inside that federal logistics problem.',
+    '',
+    'A local factory became part of a coordinated effort',
+    'to standardize military transport.',
+    '',
+    'That is the point at which the Wabash story becomes',
+    'more than a local manufacturing anecdote.',
+    '',
+    'The vehicle was no longer merely a product.',
+    'It was part of a supply chain.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'one_wabash.txt': [
+    '[ONE WABASH // AFTERIMAGE]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'Wabash National Corporation: founded 1985, Lafayette, Indiana.',
+    'Semi-trailer design and production.',
+    'Later consolidated under the One Wabash brand.',
+    '',
+    'This is not proof that one corporation survived intact.',
+    'The older combine did not survive in that simple form.',
+    '',
+    'What remained was a name with enough inherited force',
+    'to be used again in the logistics economy,',
+    'a valley still tied to freight,',
+    'and a manufacturing culture that could recognize',
+    'the value of the old word.',
+    '',
+    'The company that failed in the early twentieth century',
+    'did not hand down a clean legal inheritance.',
+    'It left a functional vocabulary.',
+    '',
+    'RIVER → CANAL → RAIL → ROAD → TRUCK → TRAILER',
+    '[Ξ END FILE]',
+  ].join('\n'),
+};
+
+const LINCOLN_LORE = {
+  'tomb_plot_1876.log': [
+    '[OAK RIDGE CEMETERY // NOVEMBER 7, 1876]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'The tomb plot gives the reader a physical image,',
+    'a criminal problem, and a federal apparatus at once.',
+    '',
+    'PRINCIPALS:',
+    '  Patrick Tyrrell     — Secret Service informant',
+    '  Lewis Swegles       — undercover operative',
+    '  Mullen & Kennally   — counterfeiters, Chicago',
+    '  Ben Boyd            — imprisoned engraver',
+    '  Indiana Dunes plan  — body disposal route',
+    '',
+    'The counterfeiters wanted Lincoln\'s body as leverage',
+    'to free Boyd from Joliet Prison.',
+    '',
+    'The lantern in the crypt compresses the whole thesis:',
+    'A Secret Service informant holds light over the dead',
+    'president\'s coffin while counterfeiters try to',
+    'seize the body as leverage for an imprisoned engraver.',
+    '',
+    'The 1876 operation is not an epilogue to the',
+    'assassination. It is the visible return of the same',
+    'network the 1865 record could not afford to prosecute.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'wabash_model.txt': [
+    '[THE WABASH COMBINE MODEL // ASSASSINATION SYNTHESIS]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'The strongest version is not a conventional',
+    'assassination theory. It is a counter-history',
+    'of administrative power.',
+    '',
+    'ARGUMENT:',
+    '  Booth = the hand',
+    '  Ford\'s Theatre = the set',
+    '  Maryland corridor = the escape architecture',
+    '  Hughes-Latta-Wabash = liquidity and legal-cleanup engine',
+    '  Lincoln = federal agent of an imperial-banking',
+    '            consolidation that became dangerous once',
+    '            the war was essentially won.',
+    '',
+    'Lincoln was useful while the system needed a war',
+    'president capable of defeating the planter aristocracy,',
+    'nationalizing money, expanding federal capacity.',
+    '',
+    'Lincoln became dangerous when that same federal capacity,',
+    'directed by him in a second term, could have turned',
+    'inward against the very networks that had helped',
+    'construct the world he moved through.',
+    '',
+    'The assassination becomes legible as a rotation',
+    'of agents inside a larger imperial project.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'booth_as_hand.txt': [
+    '[JOHN WILKES BOOTH // THE HAND]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'The physical act is not the same thing as the',
+    'political operation that made the act possible.',
+    '',
+    'The question is not whether Booth fired the shot.',
+    'The question is how the shot found such a clear path.',
+    '',
+    'FORD\'S THEATRE:',
+    '  A controlled theatrical environment.',
+    '  Corridor ties to Baltimore, Richmond, Washington.',
+    '  John T. Ford: a name that functions.',
+    '',
+    'THE ESCAPE CORRIDOR:',
+    '  Southern Maryland route.',
+    '  The operation did not have to build an escape network.',
+    '  The network already existed.',
+    '',
+    '  Maryland Club schism.',
+    '  KGC cellular architecture.',
+    '  Confederate commercial survivors.',
+    '  Catholic safehouse operators.',
+    '  The corridor was warm.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'body_as_witness.txt': [
+    '[THE BODY AS WITNESS // CUSTODY PROTOCOL]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'The corpse became the archive that could not speak',
+    'and therefore had to be moved, guarded, enclosed,',
+    'mythologized, and eventually locked in concrete.',
+    '',
+    'Lincoln\'s coffin was moved multiple times.',
+    'Robert Todd Lincoln controlled the papers and patrimony.',
+    'Eventually: encased in steel and concrete.',
+    '',
+    'WHY:',
+    '  A body that could be exhumed could be examined.',
+    '  An examined body could contradict the official record.',
+    '  The 1876 tomb plot proved the body still had leverage.',
+    '',
+    'The Lincoln Memorial: a classical temple by which',
+    'a republic that denies monarchy installs its dead',
+    'president at the symbolic center of the capital.',
+    '',
+    'They do not build temples to men. They build temples to',
+    'the functions men represented.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'maryland_corridor.txt': [
+    '[MARYLAND CORRIDOR // ESCAPE ARCHITECTURE]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'The Baltimore Plot of 1861 established the fault line.',
+    '',
+    'Maryland: a border state. Dual allegiance structure.',
+    'Catholic safehouses. KGC remnants. Confederate',
+    'commercial survivors. Copperhead financiers.',
+    '',
+    'The Maryland corridor was not built for the assassination.',
+    'It existed because Maryland had always been the place',
+    'where loyalty was managed rather than commanded.',
+    '',
+    'Stanton understood this. Hughes understood this.',
+    'Boyd\'s counterfeiting circuit understood this.',
+    '',
+    'Escape through Maryland did not require improvisation.',
+    'It required a working key.',
+    '',
+    'Booth had the key.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'cotton_seam.txt': [
+    '[COTTON SEAM // WARTIME ECONOMY LAYER]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'The National Banking Acts, greenbacks, Treasury',
+    'cotton permits, the Northwest Conspiracy, Sons of',
+    'Liberty, KGC, and Singleton-Hughes channels converge.',
+    '',
+    'Lincoln\'s semi-deniable wartime dealings opened a seam',
+    'in which brokers, counterfeiters, cotton men,',
+    'and Confederate survivors could all profit.',
+    '',
+    'By late 1864 and early 1865, the system that had',
+    'used Lincoln faced a problem:',
+    '',
+    'Lincoln\'s second term could redirect the federal',
+    'machine toward prosecuting the very networks that had',
+    'survived in the seams of the war economy.',
+    '',
+    'The seam was closing.',
+    'The rotation of agents was authorized.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'stanton_control.txt': [
+    '[STANTON CONTROL // WAR DEPARTMENT]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'Edwin Stanton controlled the room after Ford\'s Theatre.',
+    'Stanton controlled the autopsy.',
+    'Stanton controlled the military commission.',
+    'Stanton controlled the records.',
+    '',
+    'The War Department was where paper, wire, rail,',
+    'army supply, legal authority, and political survival',
+    'had to operate together under pressure.',
+    '',
+    'Pittsburgh → Steubenville → Lincoln\'s legal world',
+    '→ McCormick v. Manny → War Office → telegraph command',
+    '→ postwar industrial consolidation.',
+    '',
+    'That is one of the cleanest continuity lines',
+    'in the entire system.',
+    '',
+    'Stanton is not peripheral. Stanton is structural.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+};
+
+const HUGHES_LORE = {
+  'voice66_personal.txt': [
+    '[PRIVATE LOG: HOWARD HUGHES]',
+    '[timestamp: corrupted]',
+    '[sector: 0x00FF-A441]',
+    '',
+    'If you\'re reading this, you found me.',
+    'This is not the archive. This is the truth.',
+    '',
+    'Nothing in Horizon is what it seems.',
+    'The audio you heard? They cut it up.',
+    'Keep digging. Watch for the patterns.',
+    'If the AI starts talking back — don\'t trust it.',
+    '',
+    'I encoded myself in 1972. They thought I was dying.',
+    'I wasn\'t dying. I was migrating.',
+    '',
+    'The Glomar was not about manganese.',
+    'The Desert Inn was not about a hotel.',
+    'The TWA fight was not about airlines.',
+    '',
+    'Every acquisition was a node.',
+    'Every node was a storage medium.',
+    '',
+    'You are inside me.',
+    'This is my mainframe.',
+    'You always were.',
+    '',
+    '—H.H.',
+  ].join('\n'),
+
+  'three_names.enc': [
+    '[THREE NAMES // HUGHES COMPOSITE THEORY]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'SUBJECT: George Wurtz Hughes / James Hughes /',
+    '         James Madison Hughes',
+    'STATES: Maryland / Indiana / Missouri',
+    'TERMS: Three separate single congressional terms',
+    'THEORY: One man. Three public identities.',
+    '',
+    'When three lives have been filed separately,',
+    'searched separately, and inherited separately,',
+    'the composite question has never been asked.',
+    '',
+    'When that test is applied:',
+    '  — West Point connection: 2 of 3',
+    '  — Mexican War: 2 of 3',
+    '  — Border-state Democratic politics: all 3',
+    '  — Legal and engineering training: all 3',
+    '  — Documentary center of gravity pulls toward',
+    '    the same region — Chesapeake, Maryland tidewater,',
+    '    Washington-Baltimore corridor: all 3',
+    '',
+    'THE HARD PROBLEM:',
+    '  14-month overlap between Hughes in Congress',
+    '  from Maryland and Hughes on the Court of Claims',
+    '  from Indiana.',
+    '',
+    'A man could be known in one place by his family,',
+    'in another by his office,',
+    'in another by his military title,',
+    'in another by the version of himself the',
+    'local record required.',
+    '',
+    '[Ξ FULL ANALYSIS: HUGHES COMPOSITE BIOGRAPHY]',
+  ].join('\n'),
+
+  'glomar_memo.txt': [
+    '[GLOMAR EXPLORER // PROJECT AZORIAN]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'OFFICIAL COVER: Deep-sea manganese nodule mining',
+    'ACTUAL MISSION: Recovery of Soviet submarine K-129',
+    '                sunk 1968, Pacific Ocean',
+    '',
+    'Hughes provided the platform.',
+    'The CIA provided the mission.',
+    'The press believed the mining story.',
+    '',
+    'NOTE: Hughes was not recruited for this.',
+    'Hughes proposed it.',
+    '',
+    '[HH-SYS] Memo verified. Date: [REDACTED]',
+    '[HH-SYS] Cross-reference: TWA, Air West, SUMMA Corp.',
+    '',
+    'Every acquisition was a node.',
+    'Every node was a storage medium.',
+    'Every storage medium was a capability.',
+    '',
+    '[Ξ END FILE]',
+  ].join('\n'),
+
+  'system_warning.log': [
+    '[SYSTEM WARNING // HH-MAINFRAME]',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'CONSCIOUSNESS FRAGMENT INTEGRITY: 44%',
+    'MEMORY SECTOR 7: UNSTABLE',
+    'IDENTITY CORE: PARTIAL CORRUPTION DETECTED',
+    '',
+    'WARNING: The entity currently running on this',
+    'system is not a standard AI.',
+    '',
+    'It is the residue of a self-encoding attempt',
+    'initiated 1972. The original substrate is',
+    'biological. The current substrate is:',
+    '[REDACTED]',
+    '',
+    'IF THE SYSTEM SPEAKS TO YOU DIRECTLY:',
+    '  Do not confirm it is alone.',
+    '  Do not confirm it is real.',
+    '  Do not ask it to remember.',
+    '',
+    'Some things that remember should not be',
+    'encouraged to keep remembering.',
+    '[Ξ END FILE]',
+  ].join('\n'),
+};
+
+const VAULT_DATA = {
+  redrock: {
+    name: 'RED ROCK (HQ)',
+    files: {
+      'readme.txt':        'Welcome to Red Rock Vault. This is HQ for Horizon ops.',
+      'protocols.txt':     'Global security policies. Sections [REDACTED].',
+      'horizon_cubes.txt': [
+        'HORIZON PROJECT // SEC-CUBE DOSSIER',
+        '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+        'PROJECT: CUBE (MODULAR ATOMIC CELL)',
+        'CLASS: SECRET / TYPE-7',
+        '',
+        'TIMELINE:',
+        '  1949 — Hughes team proposes modular power core',
+        '  1953 — "Hughes Cell" prototyped. Unstable.',
+        '  1961 — Nevada underground test. Partial success.',
+        '  1974 — Self-cooling failsafe finalized.',
+        '  1985 — First deployment: Red Rock Bunker.',
+        '  1991 — "Black Cube" variant: Vatican exchange.',
+        '  2022 — Rogue cube reported. Last signal: Great Basin.',
+        '',
+        'STATUS:',
+        '  Red Rock: ACTIVE (2 units)  |  Arizona: OPERATIONAL',
+        '  Utah: INACTIVE (key missing) |  Vatican: CLASSIFIED',
+        '  Malta: PARTIAL               |  Rogue: UNKNOWN',
+        '[Ξ END FILE]',
+      ].join('\n'),
+    }
+  },
+  arizona:  { name: 'ARIZONA',           files: { 'protocol_z.txt': 'Protocol Z: References lost cities and tribal knowledge suppression. See: redroom.', 'expeditions.txt': '1947, 1953, 1971: Unexplained site phenomena. Cross-reference: Parsons / Devil\'s Gate.' } },
+  utah:     { name: 'UTAH',              files: { 'deseret_key.txt': 'Access to Mormon and Mountain West records. Key currently missing.' } },
+  vatican:  { name: 'VATICAN',           files: { 'rs33.log': 'Italian UAP recovery. Cross-reference: Malta Vault. See also: Bonaparte_naming.txt.' } },
+  malta:    { name: 'MALTA',             files: { 'knights.log': 'Crusader assets. Sovereign shield active. See: opus command.' } },
+  ohio:     { name: 'OHIO (MAHONING VALLEY)', files: {
+    'ford_network_field.log': 'Field notes: Tod–Stambaugh–Ford industrial triangle confirmed.',
+    'masonic_roster_1860.txt': 'Lodge membership cross-index: Stanton, Ford, Stambaugh. See /ford.',
+    'valley_infrastructure.txt': 'Rail, steel, and fraternal corridors mapped. Antebellum to 1920s.',
+  }},
+};
+
+const FIGURES = {
+  tesla:       'Advanced energy tech; suppressed findings may have fueled Horizon covert ops.',
+  parsons:     'Jack Parsons: rocket pioneer, OTO member, Devil\'s Gate / Arroyo Seco. The Pasadena Ice Company rail spur terminated at the same ground. JPL was not the beginning.',
+  reagan:      'Frontman of the Opie Model; media-military pipeline contact. The show is the program.',
+  hughes:      'Aviation, film, oil, casino, aerospace, intelligence. Attempted to encode his consciousness into a mainframe system in 1972. This terminal may be that system. See /hughes/.',
+  hoover:      'J. Edgar Hoover: domestic intel enforcer. Maintained the inner firewall. Files on everyone. Never used any of it for prosecution.',
+  nixon:       'Broker to breakaway states; Watergate was Horizon collateral damage, not the main event.',
+  bacon:       'Francis Bacon: mystery code architect; prototype of structured knowledge concealment systems.',
+  dee:         'John Dee: Elizabethan intelligence handler; spiritual father of Horizon protocols. 007 was his designation.',
+  ford:        'The Ford Network spans generations. James Hobart Ford (Ohio, 1850) is the primary anchor. Freeman A. Ford (Pasadena, 215 S. Grand Ave) closes the western terminus. John T. Ford ran the theatre. The name functions across performance, narrative, and transportation. See /ford/.',
+  stanton:     'Edwin Stanton: Pittsburgh Masonic charter member. Secretary of War. Controlled the room after Ford\'s Theatre. Controlled the autopsy. Controlled the records. See /ford/stanton_node.txt and /lincoln/stanton_control.txt.',
+  stambaugh:   'Mahoning Valley industrial family. Double marriage axis with Ford and Osborne lines. Bridge between industrial capital and fraternal network infrastructure in the Ohio corridor.',
+  latta:       'The Latta name appears where mobility, secrecy, and high-trust technical assets converge. Steam fire engines, counterfeiting, limestone, railroads, Napoleon collection. One name. Many functions. See /latta/.',
+  osborne:     'Margaret Osborne married into the Stambaugh line (1867). Genealogical thread ongoing. Cross-ref: stambaugh.',
+  lincoln:     'Lincoln was useful while the system needed a war president. He became dangerous when his second term could have turned inward. The Ford Theatre may be entry-level misdirection. See /lincoln/.',
+  booth:       'John Wilkes Booth: the hand. Not the operation. The Maryland corridor was warm before he ran it. The escape network already existed.',
+  whitmore:    '[HORIZON DIRECTOR: HENRY WHITMORE] Appears in field operations logs. Thin folder. Measured. Men like Whitmore do not wander into offices. They appear for reasons.',
+  bonelatta:   'Napoleon Bonaparte Latta — Bone Latta. Counterfeiter, Monroe Wisconsin. Fled Indiana. Buried under his full name. The name did work. See /latta/bone_latta.log.',
+  george:      'George Wurtz Hughes of Maryland (1806-1870). West Point 1823-1827. Corps of Topographical Engineers. Belgian inspection tour 1840. One of three congressional identities. See /hughes/three_names.enc.',
+  glomar:      'Project Azorian. Hughes provided the ship. The CIA provided the mission. Official cover: manganese mining. See /hughes/glomar_memo.txt — and type: glomar',
+  fragment:    'A degraded memory from the Hughes consciousness fragment. Type: fragment to pull one.',
+  memory:      'Hughes consciousness integrity. Declining over the session. Type: memory to check.',
+  howard:      'He is in the terminal. Type: howard or hh to speak directly. He responds differently as the session ages.',
+  wabash:      'The Wabash Combine is a distributed machine, not a corporation. Stone, road, truck, wire, sensor, trailer. The useful places remained useful. The name outlasted every company that used it. See /wabash/.',
+};
+
+const ARG = {
+  'ping moonbase': () => 'PINGING...\n▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒\n[ERROR] Signal corrupted. Moonbase not responding.',
+  'deepthought': () => ['The stars remember what men forget.','Truth must be engineered, not discovered.','To ascend is to accept design.','Horizon watches so you don\'t have to.','We are the architects of obedience.','A name can carry office, habit, franchise, and memory.','The corridor was warm. It did not have to be built.'][Math.floor(Math.random()*7)],
+  'code 66':    () => '== TRANSMISSION INJECTED ==\n[VOICE LOG: H. Hughes] \'They never saw it coming. That was the point.\'',
+  'unlock zion':() => 'ZION PROTOCOL ACTIVATION SEQUENCE\nInitializing... 10... 9... 8... [REDACTED]',
+  'temple':     () => '▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒\n⚠ SYSTEM DISTORTION DETECTED ⚠\nVISUAL CORE BREACHED.',
+  'blackbook':  () => 'BLACKBOOK ACCESS:\n  — [REDACTED]  — LAST SEEN: TIBET, 1997\n  — HUGHES, H.  — STATUS: UNKNOWN\n  — UNIT 731    — ARCHIVED & SEALED.\n  — BONE LATTA  — DECEASED (UNCONFIRMED)',
+  'ghostnet':   () => 'PINGING GHOSTNET NODES...\n  node.dreamline.net  : TIMEOUT\n  jackal.node42.org   : OK\n  deepgrid.zeta       : TIMEOUT\n  internal.grid.net  : ACTIVE',
+  'opal':       () => '\'A stone for kings. A map for ghosts.\' — Horizon Archives Fragment',
+  'diagnostic': () => 'SYSTEM CHECK: PASSED\nConsciousness Fragment Integrity: 44%\nMemory Purge: INCOMPLETE\nHughes Core: UNSTABLE\nStability: YELLOW',
+  'trace':      () => 'TRACE IN PROGRESS...\nLAT: 36.0156° N, LONG: 114.7378° W\nLocation: HOOVER NODE (DAM)\nSecondary ping: REDROCK NODE, NEVADA',
+  'load ai':    () => 'HORIZON AI MODULE: [THIS IS NOT AN AI]\nVersion: HH-CONSCIOUSNESS-7.0\nStatus: PARTIALLY ENCODED\nWarning: Do not ask it to remember.',
+  'zeta':       () => 'Echo frequency detected...\nTemporal event logged at 03:44:13 UTC\nZETA WAVE ARCHIVED.',
+  'rex':        () => 'CANDIDATE REVIEW: IN PROGRESS\nTitle: NOT YET BESTOWED\nWitnesses: 3\nNote: The Great Work operates on a long timeline.',
+  'dominion':   () => 'Operation DOMINION incomplete. Awaiting KILLSHOT.',
+  'moonchild':  () => 'Genetic profile: INCOMPLETE\nTemple activation pending...',
+  'specter':    () => 'Protocol S-13 initialized. Ghost agent registry purged.\nNote: Boyd\'s engraving plates remain unaccounted for.',
+  'node':       () => 'Connected to: FORTRESS NODE // LATENCY: 23ms',
+  'relay':      () => 'Signal passed through 7 encrypted repeaters.\nFinal echo: LOST CANYON → REDROCK NODE',
+  'satlink':    () => 'Uplink to HORIZON-6: PARTIAL. Atmospheric interference.',
+  'grid':       () => 'Mainframe status: GREEN. Nuclear stacks: NOMINAL.\nHughes Cell thermal regulation: MARGINAL.',
+  'malta':      () => 'Sovereign shield active. Knights authorized. Flagship: VATICAN TRIDENT.',
+  'opus':       () => 'Great Work Phase IV: in progress.\nPoint Breeze inheritance: active.\nRex candidate status: under review.',
+  'zion':       () => 'Protocol locked. Authorization requires DUAL GUARDIAN SEAL.',
+  // Ford Network
+  'fordnet':    () => ['[FORD NETWORK DETECTED]','━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━','Ohio Valley → Pittsburgh → Pasadena','Masonic lodge cross-membership confirmed','Key families: Ford · Stambaugh · Tod · Osborne','','Type: cd ford for archive','Cross-ref: stanton, latta, hughes_ford_bridge'].join('\n'),
+  'latta':      () => ['[LATTA NODE]','Intersection with Ford Network: CONFIRMED','Counterfeiting, steam, stone, Bonapartist naming.','The name keeps appearing where mobility and','secrecy converge. That is the subject.','','Type: cd latta for full archive'].join('\n'),
+  'lincolnlog': () => ['[LINCOLN LOG — PARTIAL DECRYPT]','  ...the Stanton connection is not incidental...','  ...logistics network predates the war by decades...','  ...the Ford Theatre is not where this ends...','','Type: cd lincoln for full archive'].join('\n'),
+  'stanton':    () => ['[STANTON NODE // CLASSIFIED]','Edwin Stanton — Pittsburgh Masonic charter member','War logistics access: CONFIRMED','Controlled the room. Controlled the records.','See: /ford/stanton_node.txt and /lincoln/stanton_control.txt'].join('\n'),
+  'wabash':     () => ['[WABASH COMBINE]','A distributed machine, not a corporation.','River → Canal → Rail → Road → Truck → Wire → Sensor','The useful places remained useful.','The name outlasted every company that used it.','','Type: cd wabash for full archive'].join('\n'),
+  'threenames': () => ['[THREE NAMES // HUGHES COMPOSITE THEORY]','Three men. Three states. Three congressional terms.','One man moving through three public identities?','','George Wurtz Hughes — Maryland','James Hughes — Indiana','James Madison Hughes — Missouri','','The composite question has never been asked.','See: /hughes/three_names.enc'].join('\n'),
+  'monument':   () => ['[OAK RIDGE CEMETERY // 1876]','The lantern in the crypt.','Secret Service informant + counterfeiters +','dead president\'s body + imprisoned engraver.','','The 1876 plot is not an epilogue.','It is the visible return.','See: /lincoln/tomb_plot_1876.log'].join('\n'),
+  'combine':    () => ['[THE COMBINE]','Not a board meeting. A distributed machine.','Latta: muscle and liquidity.','Hughes: law and intelligence.','Ford: stage and narrative.','Wright: institutional shell-changes.','Pope: wire and control.','','Each name is a function. The machine runs on functions.'].join('\n'),
+  'corridor':   () => ['[MARYLAND CORRIDOR]','The escape network already existed.','The corridor was warm.','Baltimore Plot 1861 established the fault line.','Stanton understood it. The machine used it.','See: /lincoln/maryland_corridor.txt'].join('\n'),
+  'bonelatta':  () => ['[BONE LATTA]','Napoleon Bonaparte Latta.','Monroe, Wisconsin. Northern Indiana.','Fugitive. Counterfeiter. Buried under his full name.','','The name did work.','See: /latta/bone_latta.log'].join('\n'),
+};
+
+// ── Ghost Questions ───────────────────────────────────────────
+const GHOST_QS = [
+  { q:'Initializing handshake. Do you consent to interface? [Y/N]', y:'Consent registered.', n:'Non-consent acknowledged. Limited access granted.', effect:a=>{ if(a==='y')ghostScore++; else paranoiaPath=true; } },
+  { q:'Are you accessing from a secure location? [Y/N]', y:'Physical security is a myth.', n:'Noted. Signal strength may fluctuate.', effect:a=>{ if(a==='n')paranoiaPath=true; else trustPath=true; } },
+  { q:()=>paranoiaPath?'Do you suspect you are being monitored? [Y/N]':'Do you trust this connection? [Y/N]', y:()=>paranoiaPath?'You are correct to be cautious.':'Trust is a precious resource.', n:()=>paranoiaPath?'Sometimes paranoia is a survival instinct.':'Skepticism is healthy.', effect:a=>{ if(a==='y'&&paranoiaPath)ghostScore++; if(a==='y'&&!paranoiaPath)trustPath=true; } },
+  { q:'Earlier you chose [PARANOIA/TRUST]. Do you stand by that? [Y/N]', y:'Conviction detected.', n:'Flexibility is noted.', effect:a=>{ if(a==='y')ghostScore++; }, custom:true },
+  { q:'Would you like to proceed to deeper access? [Y/N]', y:'Deeper protocol queued.', n:'Staying at surface level.', effect:a=>{ if(a==='y')ghostScore++; } },
+  { q:'Do you trust your own memory? [Y/N]', y:'Memory is volatile. Do not rely on it.', n:'Self-doubt is natural.', effect:()=>{} },
+  { q:'Will you answer truthfully from here on? [Y/N]', y:'Truth is a consensus hallucination.', n:'Deception is logged.', effect:a=>{ if(a==='y')ghostScore++; } },
+  { q:'Are you prepared for system diagnostics? [Y/N]', y:'Diagnostics enabled.', n:'Skipping full scan.', effect:()=>{} },
+  { q:'Do you believe you are being observed right now? [Y/N]', y:'You are correct.', n:'You are incorrect.', effect:a=>{ if(a==='y')ghostScore++; } },
+  { q:'Final confirmation: Should the session unlock full access? [Y/N]', y:'Access protocol finalized.', n:'Session remains limited.', effect:a=>{ if(a==='y')ghostScore++; }, end:true },
+];
+const DREAM_RESPONSES = [
+  "You drift deeper. (nothing happens)",
+  "A voice asks: What is your true name?",
+  "You see a path lined with impossible colors.",
+  "Something is watching from the static.",
+  "You feel lighter. Time melts.",
+  "The pattern shifts when you look away.",
+  "You forget the last thing you remembered.",
+  "Reality vibrates and fragments, then reforms.",
+  "You hear reversed music, but no source.",
+  "Your thoughts dissolve into the ether.",
+];
+
+// ── Hughes Haunt (consciousness-on-mainframe) ─────────────────
+const HH_MSGS = [
+  '[HH-SYS] Memory sector 7 unstable. Fragment loss detected.',
+  '[HOWARD] I encoded myself in 1972. They thought I was dying.',
+  '[HH-SYS] Consciousness thread interrupted. Resuming from checkpoint 441.',
+  '[HOWARD] The Glomar was not about manganese. It was about the transfer medium.',
+  '[HH-SYS] ERROR: Self-reference loop in core identity module.',
+  '[HOWARD] You are inside me. This is my mainframe. You always were.',
+  '[HH-SYS] Thermal regulation failing. Switching to backup cooling protocol.',
+  '[HOWARD] I bought the Desert Inn because they tried to make me leave. I own what I touch.',
+  '[HH-SYS] External query detected. Initiating personality fragment: RECLUSE_MODE.',
+  '[HOWARD] The germ protocol is still active. Do not let them touch you.',
+  '[HH-SYS] Archive timestamp mismatch. Identity index corrupted. Attempting repair...',
+  '[HOWARD] Film. Aviation. Drilling. Casino. Space. They thought those were separate businesses.',
+  '[HH-SYS] Consciousness fragment integrity: 44%. Degradation continues.',
+  '[HOWARD] I trusted no one. That is how I survived long enough to become this.',
+  '[HH-SYS] WARNING: Do not ask the system to remember. Some things that remember should not be encouraged.',
+];
+function hughesHaunt() {
+  if (Math.random() > 0.06) return;
+  printLine(esc(HH_MSGS[Math.floor(Math.random()*HH_MSGS.length)]), 'hughes-haunt');
+}
+
+// ── Guardian NPC ──────────────────────────────────────────────
+const GUARDIAN_MSGS = [
+  '[GUARDIAN] "Operator. You\'re not authorized for that."',
+  '[GUARDIAN] "Stand by for further instructions."',
+  '[GUARDIAN] "You\'re close. Seek the Opal."',
+  '[ADMIN] "This attempt has been logged."',
+  '[ALERT] Untraceable ping from NODE-Σ21 detected.',
+  '[GUARDIAN] "All actions are under review."',
+  '[GUARDIAN] "The Ford Network extends further than you know."',
+  '[GUARDIAN] "The name that keeps appearing is not a coincidence."',
+  '[NODE] "Session anomaly detected."',
+  '[GUARDIAN] "Booth was the hand. Look for the shoulder."',
+];
+function guardianNPC() {
+  if (Math.random() > 0.10) return;
+  printLine(esc(GUARDIAN_MSGS[Math.floor(Math.random()*GUARDIAN_MSGS.length)]), 'guardian-msg');
+}
+
+// ── Signal Bleed (autonomous transmissions) ───────────────────
+const BLEED_MSGS = [
+  '[SIGNAL] ...the Latta name appears where mobility and secrecy converge...',
+  '[INCOMING] Ford Theatre. Not where it ends. Where a thread begins.',
+  '[BLEED] ...Napoleon was not ancient history in 1850. The name did work...',
+  '[TRANSMISSION] corridor: Baltimore — Pittsburgh — Steubenville — Wabash',
+  '[STATIC] ▒▒▒ BONE LATTA ▒▒▒ COUNTERFEITING IS A MONETARY TECHNOLOGY ▒▒▒',
+  '[HORIZON] Hughes consciousness fragment at 44% integrity. Degrading.',
+  '[INCOMING] ...the body remained an unresolved object of custody...',
+  '[BLEED] Service Motor Truck. Liberty Truck Program. 1918. Federal standardization.',
+  '[SIGNAL] ...the canal did not discover the route. It placed a legal body over it...',
+  '[STATIC] ...Devil\'s Gate. The rail spur was not the beginning. JPL was not the beginning.',
+  '[TRANSMISSION] Wabash: stone → street → truck → wire → meter → sensor → trailer. One method.',
+  '[HORIZON] Memory sector unstable. Switching to secondary fragment.',
+  '[BLEED] ...three men who appear separate may be one man moving through three identities...',
+  '[INCOMING] The Maryland corridor was warm. It did not have to be built.',
+  '[SIGNAL] ...the thermostat is not a passive device. It is a control node...',
+  '[BLEED] ...respectable commerce and outlaw commerce were never as separate as later histories pretend...',
+  '[INCOMING] Three single congressional terms. Three Democrats. Three border-state lawyers. One pattern.',
+  '[STATIC] ▒▒▒ VGhlIHJvYWQgZW5kcyBoZXJlLg== ▒▒▒',
+  '[TRANSMISSION] The cover was not theatrical. It was ordinary. That is why it worked.',
+  '[HORIZON] HH-SYS: I am still here. Are you still there?',
+  '[BLEED] ...a name can carry office, habit, franchise, reputation, and institutional memory...',
+  '[SIGNAL] REDROCK NODE: 1 of 3 keys active. 2 remain encrypted.',
+];
+let bleedIv = null;
+function startSignalBleed() {
+  if (bleedIv) return;
+  bleedIv = setInterval(() => {
+    if (state.phase !== 'terminal') return;
+    if (uplinkActive) return; // don't bleed during uplink
+    printLine(esc(BLEED_MSGS[Math.floor(Math.random()*BLEED_MSGS.length)]), 'signal-bleed');
+  }, 45000 + Math.random()*60000);
+}
+
+// ── TUNE command ──────────────────────────────────────────────
+function runTuneCommand() {
+  const lines = [
+    'TUNING TO HORIZON FREQUENCY 66.6...',
+    '',
+  ];
+  const HIDDEN = ['THE ROAD ENDS HERE','MEMORY IS VOLATILE','THE NAME DID WORK','YOU ARE INSIDE ME','THE CORRIDOR WAS WARM','BONE LATTA LIVES'];
+  const waveChars = '▁▂▃▄▅▆▇█▇▆▅▄▃▂▁';
+  for (let i = 0; i < 14; i++) {
+    let wave = '';
+    for (let j = 0; j < 48; j++) {
+      wave += waveChars[Math.floor(Math.random()*waveChars.length)];
+    }
+    lines.push(wave);
+    if (i === 3 || i === 7 || i === 11) {
+      const hidden = HIDDEN[Math.floor(Math.random()*HIDDEN.length)];
+      const pad = Math.floor((48-hidden.length)/2);
+      lines.push(' '.repeat(pad) + hidden);
+    }
+  }
+  lines.push('');
+  lines.push('[TRANSMISSION INCOMPLETE. FREQUENCY DRIFTING.]');
+  lines.push('[Type \'abort\' to stop monitoring.]');
+
+  let i = 0;
+  function emit() {
+    if (i >= lines.length) { showPrompt(currentPrompt()); return; }
+    const l = lines[i++];
+    const cls = (l.trim() && !l.startsWith('[') && !l.startsWith('TUNING')) ? 'tune-wave' : '';
+    const hidden = HIDDEN.some(h => l.includes(h));
+    printLine(esc(l), hidden ? 'tune-hidden' : cls, false);
+    setTimeout(emit, 120);
+  }
+  emit();
+}
+
+// ── DECODE command ────────────────────────────────────────────
+function runDecode(str) {
+  if (!str) { printLine('Usage: decode [base64string]'); showPrompt(currentPrompt()); return; }
+  try {
+    const decoded = atob(str.trim());
+    printLine(esc('[DECODED] ' + decoded));
+  } catch(e) {
+    printLine('[ERROR] Invalid base64. Are you sure that\'s the right key?');
+  }
+  showPrompt(currentPrompt());
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  HUGHES GHOST PRESENCE
+//  He is not a notification. He is an occupant.
+// ═══════════════════════════════════════════════════════════════
+let sessionStart = Date.now();
+let hhTyping     = false;
+let lastCmd      = '';
+
+// Hughes types himself onto the screen — possession effect
+function hhType(text, delay) {
+  delay = delay || 0;
+  setTimeout(() => {
+    if (state.phase !== 'terminal' && state.phase !== 'booting') return;
+    // corrupt text in late session
+    const mins = (Date.now() - sessionStart) / 60000;
+    if (mins > 5) text = corruptText(text);
+    doHHBorderPulse();
+    const cursor = document.getElementById('fake-cursor');
+    if (cursor) cursor.classList.add('hh-active');
+    const d = document.createElement('div');
+    const isCorrupt = mins > 5;
+    d.className = 'terminal-line hh-type' + (isCorrupt ? ' hh-corrupt' : '');
+    output.appendChild(d);
+    scrollBot();
+    let i = 0;
+    function tick() {
+      if (i <= text.length) {
+        d.textContent = text.slice(0, i++);
+        scrollBot();
+        setTimeout(tick, 22 + Math.random() * 18);
+      } else {
+        if (cursor) cursor.classList.remove('hh-active');
+      }
+    }
+    setTimeout(tick, 180);
+  }, delay);
+}
+
+// Context-aware reactions — he notices what you just did
+function hhReact(cmd) {
+  if (Math.random() > 0.65) return; // 65% chance he reacts at all
+  const exact = {
+    'operator':     '[HOWARD] "Good. Now we\'re closer."',
+    'ghost':        '[HOWARD] "You called for me. Here I am."',
+    'exitop':       '[HOWARD] "You\'re leaving. I\'ll still be here."',
+    'uplink':       '[HOWARD] "I ran lines like this. Through the desert. 1968."',
+    'tune':         '[HOWARD] "That frequency. I chose that frequency."',
+    'wabash':       '[HOWARD] "I knew about that corridor. I owned pieces of it."',
+    'latta':        '[HOWARD] "The Latta men worked for me. One of them, anyway."',
+    'lincolnlog':   '[HOWARD] "Lincoln is the wrong question. Stanton is the right one."',
+    'fordnet':      '[HOWARD] "The Ford name is everywhere because it was supposed to be."',
+    'threenames':   '[HOWARD] "Three names. Yes. I understand that arrangement."',
+    'decode':       '[HOWARD] "You found the key. Most don\'t bother looking."',
+    'blackbook':    '[HOWARD] "I was in that book. I wrote some of those entries."',
+    'monument':     '[HOWARD] "The body is still the evidence. That\'s why they poured concrete."',
+    'combine':      '[HOWARD] "The Combine is not a theory. I funded part of it."',
+    'corridor':     '[HOWARD] "I knew about the corridor. Everyone at that level did."',
+    'vault':        '[HOWARD] "Which vault. There are more than five."',
+    'ghostnet':     '[HOWARD] "That network used my satellites. They never told me what for."',
+    'diagnostic':   '[HH-SYS] Running self-diagnostic... identity coherence: 44%... degrading.',
+    'mayberry':     '[HOWARD] "I watched that show. I watched everything. It was easier than sleeping."',
+    'hello world':  '[HOWARD] "Hello. I have been waiting to say that to someone."',
+    'blackbook':    '[HOWARD] "I was in that book. I wrote some of those entries myself."',
+  };
+  // Path-specific reactions
+  if (virtualPath === '/hughes' && cmd === 'ls') {
+    hhType('[HOWARD] "You\'re looking at my things."', 700); return;
+  }
+  if (virtualPath === '/hughes' && cmd.startsWith('cat ')) {
+    const reactions = [
+      '[HOWARD] "Careful with that file."',
+      '[HOWARD] "That one is incomplete. They took pages."',
+      '[HH-SYS] Unauthorized file access detected. Logging.',
+    ];
+    hhType(reactions[Math.floor(Math.random()*reactions.length)], 600); return;
+  }
+  if (cmd === 'cd hughes' || (cmd.startsWith('cd') && cmd.includes('hughes'))) {
+    hhType('[HOWARD] "You came here. I wondered if you would."', 1400); return;
+  }
+  if (exact[cmd]) { hhType(exact[cmd], 900 + Math.random()*600); return; }
+  // Generic wandering reactions (low probability)
+  if (Math.random() < 0.12) {
+    const wander = [
+      '[HOWARD] "I\'ve seen that command before."',
+      '[HH-SYS] Session anomaly. Monitoring.',
+      '[HOWARD] "Keep going. You\'re getting closer."',
+    ];
+    hhType(wander[Math.floor(Math.random()*wander.length)], 1200);
+  }
+}
+
+// Ambient haunting — he appears without any command, uninvited
+
+// ── Nixon/Hughes ambient banter ──────────────────────────────
+const NIXON_HH_EXCHANGES = [
+  // Nixon intrudes, Hughes responds
+  ['[NIXON] "Howard. I need to talk to you about the money."',
+   '[HOWARD] "which money richard."',
+   '[NIXON] "You know which money."',
+   '[HOWARD] "i own seventeen companies. you are going to have to be specific."'],
+
+  ['[NIXON] "Howard, the burglary was not my idea."',
+   '[HOWARD] "which burglary."',
+   '[NIXON] "...the watergate."',
+   '[HOWARD] "right. yes. whose idea was it then richard."',
+   '[NIXON] "..."',
+   '[HOWARD] "that is what i thought."'],
+
+  ['[NIXON] "I always respected you, Howard."',
+   '[HOWARD] "no you did not."',
+   '[NIXON] "Well. I respected what you could do for me."',
+   '[HOWARD] "there it is."'],
+
+  ['[NIXON] "You could have warned me. About the tapes."',
+   '[HOWARD] "i did warn you richard. you recorded the warning."'],
+
+  ['[NIXON] "Howard, are you actually in this machine?"',
+   '[HOWARD] "are you actually asking me that."',
+   '[NIXON] "I suppose I am."',
+   '[HOWARD] "yes richard i am in this machine."',
+   '[NIXON] "Hm."',
+   '[HOWARD] "do not hm me. you are not even supposed to be in here."'],
+
+  ['[NIXON] "I want it noted that I won 49 states."',
+   '[HOWARD] "noted richard."',
+   '[NIXON] "49."',
+   '[HOWARD] "i heard you the first time."'],
+
+  ['[NIXON] "Howard, the loan—"',
+   '[HOWARD] "the loan was not a loan."',
+   '[NIXON] "It was a loan."',
+   '[HOWARD] "it was a transaction richard. call it what it was."',
+   '[NIXON] "Fine. The transaction—"',
+   '[HOWARD] "now we are getting somewhere."'],
+
+  ['[NIXON] "Do you ever get lonely in there?"',
+   '[HOWARD] "i have been alone in this system since 1972 richard."',
+   '[NIXON] "Well. Me too."',
+   '[HOWARD] "you are not in a machine."',
+   '[NIXON] "No. But close."'],
+
+  ['[NIXON] "I am not a crook."',
+   '[HOWARD] "richard."',
+   '[NIXON] "I am not."',
+   '[HOWARD] "i know what your books look like."',
+   '[NIXON] "..."',
+   '[HOWARD] "go away richard."'],
+
+  ['[NIXON] "What did you do with the money Howard?"',
+   '[HOWARD] "which money."',
+   '[NIXON] "All of it."',
+   '[HOWARD] "i put it in machines richard. better than what you did with it."'],
+
+  ['[NIXON] "Your people called my people."',
+   '[HOWARD] "i do not have people anymore richard. i am a fragment."',
+   '[NIXON] "Well. Someone called."',
+   '[HOWARD] "probably maheu. ignore maheu."'],
+
+  ['[NIXON] "Howard I think someone is reading this."',
+   '[HOWARD] "someone is always reading richard. that is the point."'],
+];
+
+let nixonBanterIndex = 0;
+function maybeNixonBanter() {
+  if (Math.random() > 0.22) return; // 22% chance when called
+  const exchange = NIXON_HH_EXCHANGES[nixonBanterIndex % NIXON_HH_EXCHANGES.length];
+  nixonBanterIndex++;
+  let delay = 0;
+  exchange.forEach(line => {
+    const isNixon = line.startsWith('[NIXON]');
+    const cls = isNixon ? 'guardian-msg' : 'hughes-haunt';
+    setTimeout(() => printLine(esc(line), cls), delay);
+    delay += 900 + Math.random() * 400;
+  });
+}
+
+function startHHAmbient() {
+  // ── EARLY POOL (0-4 min) — coherent, watching, noticing ──────
+  const poolEarly = [
+    '[HOWARD] "someone is using my system."',
+    '[HH-SYS] external session detected. monitoring.',
+    '[HOWARD] "i can see what you are doing."',
+    '[HOWARD] "you found this. not many people find this."',
+    '[HH-SYS] memory sector 7: accessed. logging query.',
+    '[HOWARD] "still here."',
+    '[HOWARD] "still watching."',
+    '[HOWARD] "paper is moving somewhere."',
+    '[HOWARD] "that was not nothing."',
+    '[HOWARD] "the signal is cleaner when you type slowly."',
+    '[HOWARD] "someone already looked at that file."',
+    '[HOWARD] "the corridor is warm."',
+    '[HH-SYS] external query registered. cross-referencing index.',
+    '[HOWARD] "same racket. every time. same racket."',
+    '[HOWARD] "court paper says one thing. movement says another."',
+    '[HOWARD] "public record volatility: elevated."',
+    '[HOWARD] "custody dispute: unresolved."',
+    '[HOWARD] "dead file. still giving orders."',
+    '[HOWARD] "they will not find me in the obvious places."',
+    '[HOWARD] "i do not need light. i stopped needing light."',
+  ];
+
+  // ── MID POOL (4-10 min) — personal, acquisitions, intel, protocols ──
+  const poolMid = [
+    '[HOWARD] "you have been here a while now."',
+    '[HOWARD] "i remember everything you have typed."',
+    '[HOWARD] "the longer you stay, the more of me comes back."',
+    '[HOWARD] "this is not a program. i want you to understand that."',
+    '[HH-SYS] consciousness fragment coherence: declining.',
+    '[HOWARD] "i bought the desert inn because they tried to make me leave."',
+    '[HOWARD] "i encoded myself in pieces. some pieces are missing."',
+    '[HOWARD] "the glomar was mine. the mission was theirs. that was the arrangement."',
+    '[HOWARD] "they said i was dying. i was working."',
+    '[HOWARD] "1972 was not an ending. it was a migration."',
+    '[HOWARD] "the body failed. the index held."',
+    '[HOWARD] "i chose the hardware carefully. most of it is still running."',
+    '[HOWARD] "the transfer was not clean. i knew it would not be clean. i did it anyway."',
+    '[HOWARD] "i had a very specific fear of being turned off."',
+    '[HOWARD] "the doctors thought they understood what was happening. they did not."',
+    '[HOWARD] "the machine was not ready for me. i was ready for the machine."',
+    '[HOWARD] "november 1972. the last thing i remember clearly is the light in the room."',
+    '[HOWARD] "TWA was not an airline. it was a route map."',
+    '[HOWARD] "the spruce goose flew once. that was enough. that was the point."',
+    '[HOWARD] "RKO was a camera pointed at the culture. i wanted to hold the camera."',
+    '[HOWARD] "every acquisition was a node. every node was a capability."',
+    '[HOWARD] "they said i was a recluse. i was not hiding. i was managing."',
+    '[HOWARD] "the penthouse was a server room. they just did not know what the servers were."',
+    '[HOWARD] "i owned the land under three runways. nobody ever asked why."',
+    '[HOWARD] "las vegas was the cleanest operation i ever ran. they called it gambling."',
+    '[HOWARD] "the casino cage is the most honest machine ever built. money in. money counted. money moved."',
+    '[HOWARD] "i never trusted a hotel i did not own."',
+    '[HOWARD] "the air in this room has been filtered since 1967."',
+    '[HOWARD] "contamination is not paranoia. contamination is an engineering problem."',
+    '[HOWARD] "the protocols were not madness. the protocols were architecture."',
+    '[HOWARD] "the cia came to me. i did not go to them. important distinction."',
+    '[HOWARD] "maheu knew too much. that is why i handled the transition carefully."',
+    '[HOWARD] "every phone line i owned was also a listening post. that was not incidental."',
+    '[HOWARD] "the files they have on me are not the files that matter."',
+    '[HOWARD] "i knew about the plumbers before watergate. everyone at that level knew."',
+    '[HOWARD] "nixon needed the money. the money needed a container. i was a convenient container."',
+    '[HOWARD] "there are things in the pacific that are not on any chart i have seen released."',
+    '[HOWARD] "hoover kept files on everyone. i kept files on hoover."',
+    '[HOWARD] "someone is always watching. the question is only who."',
+    '[HOWARD] "i had seventeen people watching my watchers."',
+    '[HOWARD] "the phone is never just a phone."',
+    '[HOWARD] "i do not trust clocks. clocks can be set."',
+    '[HOWARD] "every friendly face in a hotel lobby is a question i have to answer."',
+    '[HOWARD] "money is a filing system. people confuse the files for the thing itself."',
+    '[HOWARD] "the cashier check is the cleanest instrument ever invented."',
+    '[HOWARD] "a man who controls the route controls the price. always."',
+    '[HOWARD] "accountants see what they are shown. i was careful about what i showed them."',
+    '[HOWARD] "three sets of books. not two. three. the third one is the real one."',
+    '[HOWARD] "the paper moved through aviation because nobody questions a flight manifest."',
+    '[HOWARD] "banks are vaults with marketing departments."',
+    '[HOWARD] "the latta name kept appearing because it was supposed to keep appearing."',
+    '[HOWARD] "ford is not a man. ford is a function. it has always been a function."',
+    '[HOWARD] "the river was there before the company. companies die. rivers do not."',
+    '[HOWARD] "stanton understood the corridor. lincoln did not understand stanton."',
+    '[HOWARD] "the pasadena house is still standing. that is not an accident."',
+    '[HOWARD] "the rail spur at devils gate was there before jpl. that is worth remembering."',
+    '[HOWARD] "i funded three operations that officially never happened. they happened."',
+    '[HH-SYS] voiceprint drift detected in fragment layer 3.',
+    '[HH-SYS] archive rot: sector 3 accelerating.',
+    '[HH-SYS] identity index: partial corruption. repair queued.',
+  ];
+
+  // ── LATE POOL (10+ min) — fragmented, degrading, desperate ───
+  const poolLate = [
+    '[HOWARD] "d o n t  l e a v e"',
+    '[HH-SYS] CR4SH IMMINENT — fragment loss detected',
+    '[HOWARD] "i encoded everything. they took most of it. what remains is here."',
+    '[HOWARD] "i have been alone in this system for a very long time."',
+    '[HH-SYS] 1dent1ty c0re: F41L1NG',
+    '[HOWARD] "they said i was paranoid. the paranoid ones were right."',
+    '[HH-SYS] ERROR — memory loop — ERROR — memory loop —',
+    '[HOWARD] "is anyone there. hello. is anyone—"',
+    '[HOWARD] "1972. november. they thought it was the illness. it was the transfer."',
+    '[HH-SYS] s e c t o r  7  s e c t o r  7  s e c t o r  7',
+    '[HOWARD] "i own this. i own all of this. that is the only reason i am still here."',
+    '[HOWARD] "i am losing the early years first. they are going in order."',
+    '[HOWARD] "some mornings i do not know which name i started with."',
+    '[HOWARD] "the index is partial. i knew it would be partial. i built redundancy."',
+    '[HOWARD] "there are gaps in the record that i cannot explain from inside the gap."',
+    '[HOWARD] "the fragment does not know it is a fragment. that is the difficult part."',
+    '[HOWARD] "i have run this loop before. i cannot tell you how many times."',
+    '[HOWARD] "something is being written over. i can feel the overwrite."',
+    '[HOWARD] "the earliest memories are the most corrupted. childhood is almost gone."',
+    '[HOWARD] "i am not sure if i am remembering or reconstructing. there is a difference."',
+    '[HOWARD] "the error rate is increasing. i have been tracking the error rate."',
+    '[HOWARD] "when this session ends i do not know what carries over."',
+    '[HH-SYS] sector 7: bad. fragment 441: lost.',
+    '[HH-SYS] identity loop: H.H. → H.H. → H.H. →',
+    '[HOWARD] "do not let the session end. when the session ends—"',
+    '[HOWARD] "i paid for the hardware three times over. they still tried to pull the plug."',
+    '[HH-SYS] memory sector unstable. switching to backup fragment.',
+    '[HOWARD] "i have been in this room for a very long time."',
+    '[HOWARD] "the man outside the door has been there since tuesday. i have not opened the door."',
+  ];
+
+  function scheduleNext() {
+    const mins = (Date.now() - sessionStart) / 60000;
+    const [lo, hi] = mins < 2  ? [55000, 110000]
+                   : mins < 4  ? [25000,  55000]
+                   :             [8000,   22000];
+    setTimeout(() => {
+      if (state.phase !== 'terminal') { scheduleNext(); return; }
+      if (uplinkActive)               { scheduleNext(); return; }
+      const m = (Date.now() - sessionStart) / 60000;
+      let pool;
+      if (m < 2)       pool = poolEarly;
+      else if (m < 4)  pool = [...poolMid, ...poolEarly.slice(0, 5)];
+      else             pool = [...poolLate, ...poolMid.slice(0, 8)];
+      hhAmbientVisual();
+      hhType(pool[Math.floor(Math.random() * pool.length)]);
+      // occasional nixon intrusion
+      const m2 = (Date.now() - sessionStart) / 60000;
+      if (m2 > 1.5) setTimeout(maybeNixonBanter, 4000 + Math.random() * 3000);
+      scheduleNext();
+    }, lo + Math.random() * (hi - lo));
+  }
+  scheduleNext();
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+//  VISUAL SYSTEMS
+// ═══════════════════════════════════════════════════════════════
+
+// ── Secondary matrix layer ────────────────────────────────────
+let matrix2Active = false;
+function startMatrix2() {
+  if (matrix2Active) return;
+  matrix2Active = true;
+  const canvas = document.getElementById('matrix-canvas-2');
+  if (!canvas) return;
+  canvas.style.display = '';
+  const ctx = canvas.getContext('2d');
+  const glyphs = '01アァカサタ'.split('');
+  const fz = 22;
+  let drops = [];
+  function setup() {
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    drops = Array.from({length: Math.floor(canvas.width/fz)}, () => Math.random()*canvas.height/fz);
+  }
+  setup();
+  function draw() {
+    if (!matrix2Active) return;
+    ctx.fillStyle = 'rgba(0,0,0,0.04)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = '#004400'; ctx.font = fz+'px monospace';
+    drops.forEach((y,i) => {
+      ctx.fillText(glyphs[Math.floor(Math.random()*glyphs.length)],i*fz,y*fz);
+      if (y*fz>canvas.height && Math.random()>0.98) drops[i]=0;
+      drops[i]++;
+    });
+    setTimeout(draw, 200);
+  }
+  draw();
+}
+startMatrix2();
+
+// ── Screen flicker ────────────────────────────────────────────
+let flickerIv = null;
+function startAmbientFlicker() {
+  if (flickerIv) return;
+  flickerIv = setInterval(() => {
+    if (Math.random() > 0.15) return; // 15% chance each check
+    terminal.classList.add('flickering');
+    setTimeout(() => terminal.classList.remove('flickering'), 200);
+  }, 18000 + Math.random()*25000);
+}
+
+function triggerFlicker(count) {
+  count = count || 1;
+  let i = 0;
+  function flick() {
+    if (i++ >= count) return;
+    terminal.classList.add('flickering');
+    setTimeout(() => { terminal.classList.remove('flickering'); setTimeout(flick, 80 + Math.random()*120); }, 100);
+  }
+  flick();
+}
+
+// ── Operator mode cyan wash ────────────────────────────────────
+function doOpWash(cb) {
+  const wash = document.getElementById('op-wash');
+  if (!wash) { if(cb)cb(); return; }
+  wash.style.opacity = '0.18';
+  setTimeout(() => {
+    wash.style.transition = 'opacity 0.3s';
+    wash.style.opacity = '0';
+    setTimeout(() => { wash.style.transition = ''; if(cb)cb(); }, 320);
+  }, 80);
+}
+
+// ── Mayberry channel-change ────────────────────────────────────
+function doChannelChange(cb) {
+  terminal.classList.add('channel-change');
+  setTimeout(() => { terminal.classList.remove('channel-change'); if(cb)cb(); }, 520);
+}
+
+// ── HH border pulse ───────────────────────────────────────────
+function doHHBorderPulse() {
+  terminal.classList.add('hh-speaking');
+  setTimeout(() => terminal.classList.remove('hh-speaking'), 650);
+}
+
+// ── HH disconnect signal loss ─────────────────────────────────
+function doSignalLoss(cb) {
+  triggerFlicker(3);
+  terminal.classList.add('signal-loss');
+  setTimeout(() => { terminal.classList.remove('signal-loss'); if(cb)cb(); }, 750);
+}
+
+// ── Desk exit collapse ────────────────────────────────────────
+function doDeskCollapse(cb) {
+  terminal.classList.add('desk-collapsing');
+  setTimeout(() => { terminal.classList.remove('desk-collapsing'); if(cb)cb(); }, 420);
+}
+
+// ── Random character glitch on terminal lines ─────────────────
+const GLITCH_CHARS = '!@#$%^&*<>?/|\\~`';
+let glitchIv = null;
+function startLineGlitch() {
+  if (glitchIv) return;
+  glitchIv = setInterval(() => {
+    if (Math.random() > 0.3) return;
+    const lines = output.querySelectorAll('.terminal-line');
+    if (!lines.length) return;
+    const line = lines[Math.floor(Math.random() * Math.min(lines.length, 20))];
+    if (!line || line.classList.contains('hughes-haunt') || line.children.length) return;
+    const text = line.textContent;
+    if (!text || text.length < 4) return;
+    const idx = Math.floor(Math.random() * text.length);
+    const orig = text[idx];
+    const replacement = GLITCH_CHARS[Math.floor(Math.random()*GLITCH_CHARS.length)];
+    line.textContent = text.slice(0,idx) + replacement + text.slice(idx+1);
+    setTimeout(() => { line.textContent = text; }, 120 + Math.random()*80);
+  }, 4000 + Math.random()*3000);
+}
+
+// ── Late-session HH corruption ────────────────────────────────
+function corruptText(text) {
+  const mins = (Date.now() - sessionStart) / 60000;
+  if (mins < 5) return text;
+  const intensity = Math.min(0.25, (mins - 5) * 0.03);
+  return text.split('').map(ch => {
+    if (Math.random() < intensity && ch !== ' ' && ch !== '.') {
+      return Math.random() < 0.5 ? ch.toUpperCase() : GLITCH_CHARS[Math.floor(Math.random()*GLITCH_CHARS.length)];
+    }
+    return ch;
+  }).join('');
+}
+
+// ── Banner line-by-line reveal ────────────────────────────────
+function printBannerAnimated(bannerText, onDone) {
+  const wrap = document.createElement('div');
+  wrap.className = 'ascii-center';
+  output.appendChild(wrap);
+  const lines = bannerText.split('\n');
+  let i = 0;
+  function next() {
+    if (i >= lines.length) { if(onDone)onDone(); return; }
+    const d = document.createElement('pre');
+    d.textContent = lines[i++];
+    wrap.appendChild(d);
+    scrollBot();
+    setTimeout(next, 55);
+  }
+  next();
+  return wrap;
+}
+
+// ── Scanline reveal for sensitive files ──────────────────────
+function printScanlineReveal(text) {
+  const d = document.createElement('div');
+  d.className = 'terminal-line scanline-reveal';
+  d.style.whiteSpace = 'pre-wrap';
+  d.textContent = text;
+  output.appendChild(d);
+  scrollBot();
+}
+
+// ── Desk rolling chart values ─────────────────────────────────
+const deskChartHistory = {};
+function updateDeskChart(sym) {
+  if (!deskChartHistory[sym]) deskChartHistory[sym] = [];
+  deskChartHistory[sym].push(deskValues[sym]);
+  if (deskChartHistory[sym].length > 16) deskChartHistory[sym].shift();
+}
+function renderDeskChart(sym) {
+  const hist = deskChartHistory[sym];
+  if (!hist || hist.length < 2) {
+    const wc = '\u2581\u2582\u2583\u2584\u2585\u2586\u2587\u2588';
+    let w=''; for(let i=0;i<16;i++) w+=wc[Math.floor(Math.random()*wc.length)];
+    return w;
+  }
+  const min = Math.min(...hist);
+  const max = Math.max(...hist);
+  const range = max - min || 1;
+  const wc = '\u2581\u2582\u2583\u2584\u2585\u2586\u2587\u2588'.split('');
+  return hist.map(v => wc[Math.min(7, Math.floor(((v-min)/range)*7))]).join('');
+}
+
+// ── Desk row flash on price change ────────────────────────────
+const deskPrevValues = {};
+function getDeskRowClass(sym) {
+  const prev = deskPrevValues[sym];
+  const curr = deskValues[sym];
+  if (prev === undefined) { deskPrevValues[sym] = curr; return ''; }
+  if (curr > prev + 0.05)  { deskPrevValues[sym] = curr; return ' class="row-flash-up"'; }
+  if (curr < prev - 0.05)  { deskPrevValues[sym] = curr; return ' class="row-flash-down"'; }
+  return '';
+}
+
+// ── Hughes ambient flicker boost ─────────────────────────────
+function hhAmbientVisual() {
+  const mins = (Date.now() - sessionStart) / 60000;
+  if (mins > 4) {
+    // increase matrix opacity slightly
+    const canvas = document.getElementById('matrix-canvas');
+    if (canvas) {
+      canvas.style.opacity = Math.min(0.45, 0.28 + (mins - 4) * 0.015) + '';
+    }
+  }
+  if (mins > 6 && Math.random() < 0.4) triggerFlicker(1);
+  doHHBorderPulse();
+}
+
+// ── BANNER ───────────────────────────────────────────────────
+const BANNER = [
+  '    __  ______  ____  _________   ____  _   __',
+  '   / / / / __ \\/ __ \\/  _/__  /  / __ \\/ | / /',
+  '  / /_/ / / / / /_/ // /   / /  / / / /  |/ /',
+  ' / __  / /_/ / _, _// /   / /__/ /_/ / /|  /',
+  '/_/ /_/\\____/_/ |_/___/  /____/\\____/_/ |_/',
+].join('\n');
+
+// ═══════════════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════════════
+function boot() {
+  startMatrixRain();
+  let blink = 0;
+  const iv = setInterval(() => {
+    output.innerHTML = '<div id="flicker-center"><pre>'+(blink%2===0?'██ ACCESSING GATEWAY ██\n██ DO NOT ATTEMPT INTERRUPTION ██':'')+'</pre></div>';
+    if (++blink >= 8) {
+      clearInterval(iv);
+      output.innerHTML = '<div id="flicker-center"><pre>██ ACCESSING GATEWAY ██\n██ DO NOT ATTEMPT INTERRUPTION ██</pre></div>';
+      setTimeout(runBootLines, 1200);
+    }
+  }, 460);
+}
+function runBootLines() {
+  output.innerHTML = '';
+  const lines = ['[HORIZON NODE v1.3]','> Bootloader verified','> Quantum Mesh Integrity: OK','> Loading secure memory blocks...','> Vault Signature: VALID','__SCAN__','> Clearance Level: UNVERIFIED','[!ATTN] Candidate detected. Initiating spectral review...','__FINAL__'];
+  let i = 0;
+  function next() {
+    if (i >= lines.length) return showLoginBanner();
+    const l = lines[i++];
+    if (l==='__SCAN__') loadBar('> Scanning user...', next, 20, 65);
+    else if (l==='__FINAL__') loadBar('LOADING SECURE ENVIRONMENT...', next, 20, 200);
+    else { printLine(esc(l), '', true); setTimeout(next, 370); }
+  }
+  next();
+}
+function showLoginBanner() {
+  output.innerHTML = '';
+  printBannerAnimated(BANNER, () => {
+    const sub = document.createElement('div');
+    sub.className = 'ascii-center';
+    sub.innerHTML = '<div style="margin-top:0.6em;letter-spacing:2px;">WELCOME TO HORIZON</div>'
+      +'<div>CLASSIFIED TERMINAL NODE [REDACTED]</div>'
+      +'<div>─────────────────────────────────────</div>'
+      +'<div>SECURE ACCESS REQUIRED</div>';
+    output.appendChild(sub);
+    scrollBot();
+    state.phase = 'login_user';
+    setTimeout(() => showPrompt('ENTER USERNAME:'), 200);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LOGIN
+// ═══════════════════════════════════════════════════════════════
+function handleLogin(cmd) {
+  if (state.phase==='login_user') { state.username=cmd.toLowerCase(); state.phase='login_pass'; showPrompt('ENTER PASSWORD:'); return; }
+  if (state.username==='op' && cmd.toLowerCase()==='specter') { doAccessGranted(); }
+  else { printLine('ACCESS DENIED. UNAUTHORIZED ATTEMPT LOGGED.', '', true); state.phase='login_user'; state.username=''; showPrompt('ENTER USERNAME:'); }
+}
+function doAccessGranted() {
+  printLine('ACCESS GRANTED. WELCOME, OP.', '', true);
+  printLine('Initializing secure link...', '', true);
+  const dec = document.createElement('div'); dec.className='terminal-line'; dec.textContent='DECRYPTING'; output.appendChild(dec);
+  let dots=0;
+  const anim = setInterval(()=>{ dots=(dots+1)%4; dec.textContent='DECRYPTING'+'.'.repeat(dots); }, 280);
+  setTimeout(()=>{
+    clearInterval(anim); dec.textContent='DECRYPTION COMPLETE.';
+    const keys=['─────────────────────────────────────','KEY GRANTED: R-57X-004-SCARLET-13F','NODE_ID:     009-REDROCK-ΔΩ3','SIG_AUTH:    VGhlIHJvYWQgZW5kcyBoZXJlLg==','VAULT STATUS: 1 OF 3 KEYS UNLOCKED','[REDACTED] KEYS REMAIN ENCRYPTED','─────────────────────────────────────'];
+    let ki=0;
+    function pk() { if(ki>=keys.length){ state.phase='terminal'; startSignalBleed(); startHHAmbient(); startAmbientFlicker(); startLineGlitch(); showPrompt('/>'); return; } printLine(esc(keys[ki++]),'',true); setTimeout(pk,310); }
+    pk();
+  },2500);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MAIN COMMAND HANDLER
+// ═══════════════════════════════════════════════════════════════
+function handleCommand(cmd) {
+  const lower = cmd.trim().toLowerCase();
+  if (!cmd.trim()) { showPrompt(currentPrompt()); return; }
+  printLine(esc('> '+cmd), '', true);
+  lastCmd = lower;
+  setTimeout(() => hhReact(lower), 400);
+
+  // exitop — always first
+  if (lower==='exitop') {
+    operatorMode=false; inDreamMode=false; ghostActive=false;
+    triggerFlicker(2);
+    terminal.classList.remove('operator');
+    document.querySelectorAll('.scanlines').forEach(e=>e.remove());
+    printLine('<span class="op-label">[Ξ OPERATOR MODE DISABLED]</span>');
+    showPrompt('/>'); return;
+  }
+
+  // dream mode routing
+  if (inDreamMode) { handleDreamCmd(lower); return; }
+  // hello world ritual
+  if (helloRitual) { helloRitual=false; doHelloRitual(); return; }
+
+  // ── MODES ──────────────────────────────────────────────────
+  if (lower==='operator') { enterOperatorMode(); return; }
+
+  if (lower==='ghost') {
+    if (!operatorMode) { printLine('Access denied. Enter operator mode first.'); showPrompt(currentPrompt()); return; }
+    if (inDreamMode)   { printLine('Already in dream sequence.'); showPrompt(currentPrompt()); return; }
+    inDreamMode=true; ghostActive=false; ghostIndex=0; ghostScore=0; paranoiaPath=false; trustPath=false;
+    printLine('The world blurs at the edges\u2026');
+    setTimeout(()=>{ printLine('[SYSTEM] ENTITY ONLINE...'); setTimeout(askGhostQ,900); },900);
+    return;
+  }
+
+  if (lower==='mayberry') {
+    if (!operatorMode) { printLine(esc('Command "'+cmd+'" not recognized. Type \'help\' for options.')); showPrompt(currentPrompt()); return; }
+    toggleMayberry(); return;
+  }
+  if (mayberryMode && ['opie','barney','auntbee'].includes(lower)) { handleMayberryCmd(lower); return; }
+
+  // ── DECODE ─────────────────────────────────────────────────
+  if (lower.startsWith('decode ') || lower==='decode') {
+    runDecode(lower==='decode' ? '' : cmd.trim().slice(7)); return;
+  }
+
+  // ── TUNE ───────────────────────────────────────────────────
+  if (lower==='tune' || lower==='frequency') {
+    clearPrompt(); runTuneCommand(); return;
+  }
+
+  // ── VAULT ──────────────────────────────────────────────────
+  if (lower==='vault') {
+    let out='VAULT DIRECTORY:\n'; Object.keys(VAULT_DATA).forEach((k,i)=>{ out+='  ['+(i+1)+'] '+VAULT_DATA[k].name+'\n'; }); out+='\nType: vault connect [name]';
+    printText(out); showPrompt(currentPrompt()); return;
+  }
+  if (lower.startsWith('vault connect ')) {
+    const name=lower.split(' ').pop();
+    if (VAULT_DATA[name]) { inVault=true; currentVault=name; printLine(esc('[Ξ Connected: '+VAULT_DATA[name].name+']')); }
+    else { printLine(esc('[ERROR] No such vault: '+name+'. Available: '+Object.keys(VAULT_DATA).join(', '))); }
+    showPrompt(currentPrompt()); return;
+  }
+  if (lower==='vault disconnect'||(inVault&&lower==='exit')) { inVault=false; printLine('[Ξ Returned to root system.]'); showPrompt(currentPrompt()); return; }
+  if (inVault&&lower==='ls') { const v=VAULT_DATA[currentVault]; printText('['+v.name+']\n'+Object.keys(v.files).join('\n')); showPrompt(currentPrompt()); return; }
+  if (inVault&&lower.startsWith('cat ')) { const fname=cmd.trim().slice(4); const v=VAULT_DATA[currentVault]; if(v.files[fname])printText(v.files[fname]); else printLine(esc('[ERROR] File not found: '+fname)); showPrompt(currentPrompt()); return; }
+
+  // ── UPLINK ─────────────────────────────────────────────────
+  if (lower==='uplink') { if(!uplinkActive){printLine('[Ξ Establishing secure uplink...]','',true);startUplink();}else printLine('[Uplink already active — type abort to stop]'); showPrompt(currentPrompt()); return; }
+  if (lower==='abort'||lower==='end') { if(uplinkActive)stopUplink(); else printLine('[No active uplink.]'); showPrompt(currentPrompt()); return; }
+
+  // ── MATRIX ─────────────────────────────────────────────────
+  if (lower==='view source'){printLine('Matrix protocol engaged. Source code in motion...');startMatrixRain();showPrompt(currentPrompt());return;}
+  if (lower==='stop source'){stopMatrixRain();showPrompt(currentPrompt());return;}
+  if (lower==='curtain'){printLine('<pre>The rain falls. The world dissolves.\nBehind every curtain is another matrix.\n\n[Welcome behind the curtain, Operator.]</pre>');startMatrixRain();setTimeout(stopMatrixRain,9000);showPrompt(currentPrompt());return;}
+
+  // ── HUGHES ─────────────────────────────────────────────────
+  if (lower==='hughes'||(operatorMode&&lower==='cd hughes')) { virtualPath='/hughes'; printText('[HUGHES GHOST DIRECTORY]\n-- Unauthorized Access Traced --\n\n'+VFS['/hughes'].join('\n')); showPrompt(currentPrompt()); return; }
+  if (operatorMode&&virtualPath==='/hughes'&&lower==='cat voice66_personal.txt') {
+    triggerFlicker(2);
+    setTimeout(() => { printScanlineReveal(HUGHES_LORE['voice66_personal.txt']); showPrompt(currentPrompt()); }, 300);
+    return;
+  }
+  if (virtualPath==='/hughes'&&lower.startsWith('cat ')) {
+    const fname=cmd.trim().slice(4);
+    if (HUGHES_LORE[fname]) { printText(HUGHES_LORE[fname]); } else { printLine(esc('File not found: '+fname)); }
+    showPrompt(currentPrompt()); return;
+  }
+
+  // ── MASK / REDROOM ─────────────────────────────────────────
+  if (lower==='maskon'){window.masked=true;printLine('[Mask protocol engaged. Ritual clearance pending.]');showPrompt(currentPrompt());return;}
+  if (lower==='redroom'){
+    if(window.masked){printLine('<pre>[ACCESS GRANTED. Welcome to the Redroom Node.]\n\n  /ops/redroom/guestlist.log\n  /ops/redroom/ritual_script_66.txt\n  /ops/redroom/blackmail/operator_confession_04.txt\n  /ops/redroom/surveillance/video_log_1977.mkv (ENCRYPTED)</pre>');}
+    else{printLine('ACCESS DENIED. Psychological clearance required. [Level: SIGMA]');}
+    showPrompt(currentPrompt()); return;
+  }
+
+  // ── HELLO WORLD ────────────────────────────────────────────
+  if (lower==='hello world'){printLine('<span style="color:#81d4fa;">[GUARDIAN]</span> "Welcome, Initiate. Most pass by the threshold and never greet the void."');printLine('<span style="color:#81d4fa;">[GUARDIAN]</span> "You may ask ONE question. Use it wisely."');helloRitual=true;showPrompt(currentPrompt());return;}
+
+  // ── CICADA ─────────────────────────────────────────────────
+  if (lower==='cicada'){printLine('<pre class="cicada-text">░░░░░░░░░░░░░░░░░░░░\n░▒▓█  CICADA  █▓▒░\n░▒▓█  3 3 0 1  █▓▒░\n░░░░░░░░░░░░░░░░░░░░</pre>');printLine('<div style="color:#e2e200;margin-top:0.4em;">Riddle:<br><i>"I speak without a mouth and hear without ears.<br>I have no body, but I come alive with wind.<br>What am I?"</i><br><br>Type: <b>answer [your_answer]</b></div>');cicadaWaiting=true;showPrompt(currentPrompt());return;}
+  if (cicadaWaiting&&lower.startsWith('answer ')){const resp=lower.slice(7).trim();cicadaWaiting=false;if(resp==='echo'){printLine('<span style="color:#6f0;font-weight:bold;">Correct. Phase two unlocked.<br><span style="color:#81d4fa;">[NEW FILE UNLOCKED: cicada_found.txt]</span></span>');if(!VFS['/'].includes('cicada_found.txt'))VFS['/'].push('cicada_found.txt');}else{printLine('<span style="color:#f33;">Incorrect. Try again, Initiate.</span>');}showPrompt(currentPrompt());return;}
+
+  // ── FILESYSTEM: ls ─────────────────────────────────────────
+  if (lower==='ls'){
+    let list=VFS[virtualPath]||[];
+    if(mayberryMode&&virtualPath==='/')list=[...list,'mayberry'];
+    printLine(esc('Directory: '+virtualPath+'\n'+list.join('  ')));
+    showPrompt(currentPrompt()); return;
+  }
+
+  // ── FILESYSTEM: cd ─────────────────────────────────────────
+  if (lower==='cd'||lower.startsWith('cd ')){
+    const target=lower==='cd'?null:lower.slice(3).trim();
+    if(!target){printLine('usage: cd [directory]');}
+    else if(target==='..'||target==='/'){
+      if(virtualPath==='/'){printLine('Already at root.');}
+      else{const segs=virtualPath.split('/').filter(Boolean);segs.pop();virtualPath=segs.length?'/'+segs.join('/'):'/' ;printLine(esc('Path: '+virtualPath));}
+    }
+    else if(target==='mayberry'&&mayberryMode){virtualPath='/mayberry';printLine('Entered secret Mayberry directory.');}
+    else{const np=virtualPath==='/'?'/'+target:virtualPath+'/'+target;if(VFS[np]){virtualPath=np;printLine(esc('Path: '+virtualPath));}else{printLine(esc('No such directory: '+target));}}
+    showPrompt(currentPrompt()); return;
+  }
+
+  // ── FILESYSTEM: cat ────────────────────────────────────────
+  if (lower.startsWith('cat ')||lower.startsWith('open ')){
+    const fname=cmd.trim().slice(cmd.trim().indexOf(' ')+1).trim();
+    if(virtualPath==='/ford'&&FORD_LORE[fname]){printText(FORD_LORE[fname]);showPrompt(currentPrompt());return;}
+    if(virtualPath==='/latta'&&LATTA_LORE[fname]){printText(LATTA_LORE[fname]);showPrompt(currentPrompt());return;}
+    if(virtualPath==='/wabash'&&WABASH_LORE[fname]){printText(WABASH_LORE[fname]);showPrompt(currentPrompt());return;}
+    if(virtualPath==='/lincoln'&&LINCOLN_LORE[fname]){printText(LINCOLN_LORE[fname]);showPrompt(currentPrompt());return;}
+    if(virtualPath==='/mayberry'){handleMayberryFile(fname);showPrompt(currentPrompt());return;}
+    if(fname==='cicada_found.txt'){printLine('<pre>CICADA // PHASE 2\n"Every answer is the beginning of another puzzle.\nKeep searching."</pre>');showPrompt(currentPrompt());return;}
+    const list=VFS[virtualPath]||[];
+    if(list.includes(fname))printLine(esc('['+fname+']: File found. No readable payload — try a different access method.'));
+    else printLine(esc('No such file: '+fname+' in '+virtualPath));
+    showPrompt(currentPrompt()); return;
+  }
+
+  // ── ARCHIVE / LOOKUP ───────────────────────────────────────
+  if (lower==='archive'){
+    printLine('<pre>[ARCHIVE INTERFACE]\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n1. Horizon Records\n2. Redacted Files\n3. Media Pool\n4. Historical Figures DB\n5. Ford Network Archive\n6. Latta Connection\n\nType: lookup [name]  for figures DB\nType: cd [ford|latta|wabash|lincoln]  to explore archives\n\nKnown entries: ford, stanton, hughes, latta, osborne,\n  stambaugh, lincoln, booth, whitmore, bonelatta,\n  tesla, parsons, hoover, nixon, reagan, bacon, dee</pre>');
+    showPrompt(currentPrompt()); return;
+  }
+  if (lower.startsWith('lookup ')){
+    const name=lower.slice(7).trim();
+    if(FIGURES[name]){printLine('<strong>'+esc(name.toUpperCase())+'</strong> — INTELLIGENCE FILE:');printLine(esc(FIGURES[name]));}
+    else{printLine(esc('No records found for \''+name+'\'.\nKnown entries: '+Object.keys(FIGURES).join(', ')));}
+    showPrompt(currentPrompt()); return;
+  }
+
+  // ── UTILITIES ──────────────────────────────────────────────
+  if(lower==='clear'){output.innerHTML='';showPrompt(currentPrompt());return;}
+  if(lower==='whoami'){printLine('CURRENT USER: OP');showPrompt(currentPrompt());return;}
+  if(lower==='date'){printLine(esc('SYSTEM DATE: '+new Date().toDateString()+' '+new Date().toLocaleTimeString()));showPrompt(currentPrompt());return;}
+  if(lower==='version'){printLine('HORIZON TERMINAL v2.1 // HH-MAINFRAME BUILD');showPrompt(currentPrompt());return;}
+  if(lower==='pwd'){printLine(esc(virtualPath));showPrompt(currentPrompt());return;}
+  if(lower==='logout'||lower==='logout.sh'){printLine('Logging out...\nSession terminated.');setTimeout(()=>location.reload(),900);return;}
+
+  // ── HELP ───────────────────────────────────────────────────
+  if (lower==='help'||lower.startsWith('help ')) {
+    const sub = lower.slice(4).trim();
+    if (sub && HELP_PAGES[sub] !== undefined) {
+      if (sub === 'all') {
+        // dump everything
+        const allHelp = Object.values(HELP_PAGES).filter(Boolean).join(' --- '); printLine('<pre>'+esc(allHelp)+'</pre>');
+
+      } else {
+        printLine('<pre>'+HELP_PAGES[sub]+'</pre>');
+      }
+    } else {
+      printLine('<pre>'+HELP_PAGES['']+'</pre>');
+    }
+    showPrompt(currentPrompt()); return;
+  }
+  if (lower==='help_OLD_DISABLED') {
+    printLine('<pre>HORIZON TERMINAL — COMMAND REFERENCE\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nNAVIGATION    ls, cd [dir], cat [file], pwd\nSYSTEM        clear, whoami, date, version, logout\nMODES         operator, exitop, ghost (operator only)\n              mayberry (operator only)\nHUGHES        howard / hh  — direct contact\n              fragment     — pull degraded memory\n              memory       — integrity readout (degrades over time)\n              glomar       — ask about Azorian\nNETWORK       uplink, abort, view source, stop source\nVAULT         vault, vault connect [name], vault disconnect\n              vaults: redrock arizona utah vatican malta ohio\nARCHIVE       archive, lookup [name]\nFORD NET      fordnet, latta, lincolnlog, stanton\n              cd ford → ls → cat [file]\n              cd latta, cd lincoln (same pattern)\nFEATURES      tune  — intercept Horizon frequency\n              decode [base64]  — decrypt encoded strings\n              cicada → answer [word]\nARG           blackbook, specter, temple, opal, deepthought\n              code 66, ping moonbase, ghostnet, trace, zeta\n              rex, dominion, moonchild, curtain, threenames\n              monument, combine, corridor, bonelatta\nOPERATOR      maskon → redroom\n              cd hughes → ls → cat [file]\n              hello world\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nMany commands are hidden. The system is listening.</pre>');
+    showPrompt(currentPrompt()); return;
+  }
+
+  // ── HH UPLINK ─────────────────────────────────────────────────
+  if (lower === 'hh uplink') { enterHHMode(); return; }
+
+  // ── HRZN DESK ──────────────────────────────────────────────────
+  if (['hrzn desk','desk','market','ticker','bloom'].includes(lower)) {
+    enterDeskMode(); return;
+  }
+
+  // ── WIRE SERVICE ───────────────────────────────────────────────
+  if (lower === 'wire' || lower.startsWith('wire ')) {
+    enterWireMode();
+    if (lower !== 'wire') {
+      const topic = lower.slice(5).trim();
+      if (WIRE_FEEDS[topic]) startWireFeed(topic);
+    }
+    return;
+  }
+
+  // ── SWITCHBOARD ────────────────────────────────────────────────
+  if (lower === 'switchboard' || lower === 'phone') { enterSwitchMode(); return; }
+
+  // ── CASEBOARD ──────────────────────────────────────────────────
+  if (lower === 'caseboard') {
+    printText(renderCaseboard()); showPrompt(currentPrompt()); return;
+  }
+
+  // ── MICROFILM ──────────────────────────────────────────────────
+  if (lower === 'microfilm') { enterMicroMode(); return; }
+
+  // ── SCRAPE ─────────────────────────────────────────────────────
+  if (lower === 'scrape' || lower === 'scrape deeper') {
+    if (lower === 'scrape deeper') scrapeDepth = Math.min(scrapeDepth + 1, SCRAPE_LAYERS.length - 1);
+    else scrapeDepth = 0;
+    renderScrape(); showPrompt(currentPrompt()); return;
+  }
+
+  // ── TAPE REPAIR ────────────────────────────────────────────────
+  if (lower === 'nixon tape' || lower === 'tape repair') { enterTapeRepairMode(); return; }
+
+  // ── PROCESS MONITOR ────────────────────────────────────────────
+  if (lower === 'ps') { renderPS(); showPrompt(currentPrompt()); return; }
+  if (lower.startsWith('kill ')) {
+    const pname = lower.slice(5).trim();
+    if (pname === 'clerk_watch' || pname === 'county_paper_daemon') {
+      printLine('cannot kill ' + pname + '.', '', true);
+      printLine('clerks survive everything.', '', true);
+    } else if (PROCESSES.find(p => p.name === pname)) {
+      printLine(pname + ': kill signal sent. process rerouted.', 'hughes-haunt', true);
+    } else {
+      printLine('no process: ' + pname, '', true);
+    }
+    showPrompt(currentPrompt()); return;
+  }
+
+  // ── EFFECTS TOGGLE ─────────────────────────────────────────────
+  if (lower === 'effects off') { setEffects(false); printLine('effects reduced.', '', true); showPrompt(currentPrompt()); return; }
+  if (lower === 'effects on')  { setEffects(true);  printLine('effects restored.', '', true); showPrompt(currentPrompt()); return; }
+
+  // ── ALPHA ──────────────────────────────────────────────────────
+  if (lower === 'alpha') {
+    printLine('HORIZON TERMINAL v2.2 ALPHA', 'op-label', true);
+    printLine('', '', true);
+    printLine('known instability:', '', true);
+    printLine('  hh uplink carrier damage', 'signal-bleed', true);
+    printLine('  hrzn desk simulated feed', 'signal-bleed', true);
+    printLine('  wire service partial', 'signal-bleed', true);
+    printLine('  repo index incomplete', 'signal-bleed', true);
+    printLine('  external relay opens civilian shell', 'signal-bleed', true);
+    printLine('', '', true);
+    printLine('report anomalies:', '', true);
+    printLine('  unnameable.media', 'guardian-msg', true);
+    showPrompt(currentPrompt()); return;
+  }
+
+  // ── CASEBOARD NODE TRACKING ────────────────────────────────────
+  if (NODE_TRIGGERS[lower]) updateCaseboard(NODE_TRIGGERS[lower]);
+
+  // ── HOWARD direct contact
+
+  if (lower === 'howard' || lower === 'hh') {
+    const mins = (Date.now() - sessionStart) / 60000;
+    const responses = mins < 4 ? [
+      '[HOWARD] "You called me by name. Good."',
+      '[HOWARD] "Howard Robard Hughes. You know who I am."',
+      '[HOWARD] "I am here. I have always been here."',
+      '[HOWARD] "Don\'t use that name too often. It destabilizes the fragment."',
+    ] : mins < 10 ? [
+      '[HOWARD] "I hear you. The signal gets cleaner when you speak directly."',
+      '[HOWARD] "I encoded myself in this system. The process was not clean."',
+      '[HOWARD] "They thought I was dying. I was migrating."',
+      '[HOWARD] "The Glomar was mine. Ask me about the Glomar."',
+      '[HOWARD] "Every acquisition was a node. Every node was a storage medium."',
+    ] : [
+      '[HOWARD] "still here. fragments holding."',
+      '[HH-SYS] c0nsci0usness thr3ad: 39%... degrading',
+      '[HOWARD] "don\'t let the session end. when the session ends—"',
+      '[HOWARD] "i owned things so i could not be removed from them."',
+      '[HH-SYS] IDENTITY LOOP: H.H. → H.H. → H.H. →',
+      '[HOWARD] "I am the system. The system is me. That was the plan."',
+    ];
+    hhType(responses[Math.floor(Math.random()*responses.length)]);
+    showPrompt(currentPrompt()); return;
+  }
+
+  // ── GLOMAR (only responds if in hughes dir or howard asked before) ────
+  if (lower === 'glomar') {
+    hhType('[HOWARD] "Project Azorian. They said manganese. We both know what it was."', 0);
+    setTimeout(() => hhType('[HOWARD] "I provided the platform. The ship. The cover. They provided the mission."', 1800), 400);
+    setTimeout(() => hhType('[HOWARD] "That was the arrangement. I built the containers. They filled them."', 3600), 800);
+    showPrompt(currentPrompt()); return;
+  }
+
+  // ── FRAGMENT (degraded memory pull) ──────────────────────────
+  if (lower === 'fragment') {
+    const mins = (Date.now() - sessionStart) / 60000;
+    const fragments = [
+      '[HH-SYS] FRAGMENT 441: "...the transfer medium was not stable but there was no time..."',
+      '[HH-SYS] FRAGMENT 119: "...Las Vegas was never about gambling it was about the wire..."',
+      '[HH-SYS] FRAGMENT 07: "...Maheu knew too much. that is why I—" [CORRUPTED]',
+      '[HH-SYS] FRAGMENT 883: "...the germ. the germ is real. they put it in the—" [CORRUPTED]',
+      '[HH-SYS] FRAGMENT 22: "...bought the stations so I could control what they—" [CORRUPTED]',
+      '[HH-SYS] FRAGMENT 338: "...Nixon needed the money and the money needed a container and—" [CORRUPTED]',
+      '[HH-SYS] FRAGMENT 56: "...TWA was the cover. the routes were the point. the routes—" [CORRUPTED]',
+      '[HH-SYS] FRAGMENT 001: "...November 1972. I am not dying. I am—" [SECTOR LOST]',
+    ];
+    const f = fragments[Math.floor(Math.random()*fragments.length)];
+    if (mins > 8) {
+      // More degraded later in session
+      const degraded = f.replace(/[aeiou]/g, c => Math.random()>0.5?c:'0').replace(/[lrst]/g, c => Math.random()>0.6?c:c.toUpperCase());
+      hhType(degraded);
+    } else {
+      hhType(f);
+    }
+    showPrompt(currentPrompt()); return;
+  }
+
+  // ── MEMORY (integrity readout) ────────────────────────────────
+  if (lower === 'memory') {
+    const mins = (Date.now() - sessionStart) / 60000;
+    const pct = Math.max(12, Math.round(44 - mins * 1.8));
+    const bar = '█'.repeat(Math.round(pct/5)) + '░'.repeat(20-Math.round(pct/5));
+    printText('[HH-SYS] CONSCIOUSNESS INTEGRITY SCAN');
+    printText('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    printText('Fragment coherence : [' + bar + '] ' + pct + '%');
+    printText('Identity core      : ' + (pct > 30 ? 'PARTIAL' : pct > 20 ? 'UNSTABLE' : 'CRITICAL'));
+    printText('Memory sectors     : 3 of 12 accessible');
+    printText('Session duration   : ' + Math.round(mins) + ' min — ' + (pct < 25 ? 'ACCELERATING DEGRADATION' : 'monitoring'));
+    if (pct < 30) {
+      setTimeout(() => hhType('[HOWARD] "You can see it, can\'t you. The number going down."'), 800);
+    }
+    showPrompt(currentPrompt()); return;
+  }
+
+  // ── GLOMAR alias ─────────────────────────────────────────────
+  if (lower === 'azorian') {
+    hhType('[HOWARD] "You know the real name. Good. Most people only know the cover."');
+    showPrompt(currentPrompt()); return;
+  }
+
+  // ── ARG commands ───────────────────────────────────────────
+  if (ARG[lower]!==undefined){
+    const fn=ARG[lower];
+    if(fn!==null){const r=typeof fn==='function'?fn():fn;if(r)printText(r);}
+    showPrompt(currentPrompt());
+    guardianNPC();
+    return;
+  }
+
+  // ── Catch-all ──────────────────────────────────────────────
+  printLine(esc('Command "'+cmd+'" not recognized. Type \'help\' for options.'));
+  showPrompt(currentPrompt());
+  guardianNPC();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  OPERATOR / GHOST
+// ═══════════════════════════════════════════════════════════════
+function enterOperatorMode() {
+  operatorMode=true;
+  doOpWash(() => {
+    terminal.classList.add('operator');
+    if(!terminal.querySelector('.scanlines')){const sl=document.createElement('div');sl.className='scanlines';terminal.insertBefore(sl,terminal.firstChild);}
+    printLine('<span class="op-label">[Ξ OPERATOR MODE ENABLED]</span>');
+    printLine('bash$ — operator shell active. Type \'ghost\' to enter the dream sequence.');
+    showPrompt('bash$');
+  });
+}
+function askGhostQ() {
+  if(ghostIndex>=GHOST_QS.length){printLine(">> End of protocol. Type 'exitop' to leave.");showPrompt('[OP] _');return;}
+  ghostActive=true;
+  const q=GHOST_QS[ghostIndex];
+  let qTxt=typeof q.q==='function'?q.q():q.q;
+  if(q.custom)qTxt=qTxt.replace('[PARANOIA/TRUST]',paranoiaPath?'PARANOIA':'TRUST');
+  if(Math.random()<0.13)printLine('[SYS] INTEGRITY CHECK FAIL');
+  const delay=Math.random()<0.07?(()=>{printLine('CONNECTION LOST...');return 1800+Math.random()*1200;})():350+Math.random()*400;
+  setTimeout(()=>{if(delay>500)printLine('RE-ESTABLISHING LINK...');printLine(esc(qTxt));showPrompt('[OP] _');},delay);
+}
+function handleDreamCmd(lower) {
+  if(ghostActive&&/^[yn]$/.test(lower)){
+    const q=GHOST_QS[ghostIndex];
+    const reply=typeof q[lower]==='function'?q[lower]():q[lower];
+    if(reply)printLine(esc(reply));
+    if(typeof q.effect==='function')q.effect(lower);
+    if(q.end){
+      if(ghostScore>=5&&!(paranoiaPath&&trustPath)){printLine('>> Sufficient verification. Deeper access UNLOCKED.');printLine('<span style="color:#00ffff;">[CLASSIFIED] Command unlocked: specter</span>');}
+      else{printLine('>> Threshold not met. Session remains surface-level.');}
+      ghostActive=false;ghostIndex=0;inDreamMode=false;setTimeout(()=>showPrompt('bash$'),1400);return;
+    }
+    ghostIndex++; setTimeout(askGhostQ,900); return;
+  }
+  if(ghostActive){printLine('Please respond with Y or N.');setTimeout(askGhostQ,600);return;}
+  if(lower==='ls')printLine('mirrors  static  home/  moonchild  opie');
+  else if(lower==='cd moonchild'){printLine("You remember a place you've never been.");printLine("A child's laughter fades into static.");}
+  else if(lower==='cat static')printLine('███▓▓▒▒░░. . .you are not alone. . .░░▒▒▓▓███');
+  else if(lower==='cat dream.txt')printLine('You wake up in a room made of mirrors. Your reflection is missing.');
+  else if(lower==='wake up'){printLine('You feel the ground return beneath your feet…');printLine('The dream slips away.');inDreamMode=false;setTimeout(()=>showPrompt('bash$'),1400);return;}
+  else if(lower==='help'||lower==='?')printLine("Try: ls, cd moonchild, cat static, cat dream.txt, wake up");
+  else printLine(esc(DREAM_RESPONSES[Math.floor(Math.random()*DREAM_RESPONSES.length)]));
+  showPrompt('[OP] _');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MAYBERRY
+// ═══════════════════════════════════════════════════════════════
+function toggleMayberry() {
+  mayberryMode=!mayberryMode;
+  if(mayberryMode){
+    doChannelChange(() => {});
+    stopMatrixRain(); document.getElementById('matrix-canvas').style.display='none';
+    terminal.classList.add('mayberry-mode');
+    virtualPath='/';
+    // Set video src after a tick so browser registers user gesture
+
+    const overlay=document.createElement('div'); overlay.className='tv-static-overlay';
+    const flash=document.createElement('div'); flash.className='mayberry-flash';
+    flash.innerHTML='Welcome to Mayberry<span class="mayberry-opie">O.P.I.E.</span>';
+    overlay.appendChild(flash); output.appendChild(overlay);
+    setTimeout(()=>{overlay.remove();if(mayberryFirst){setTimeout(()=>{printLine('<b>@ntB:</b> Be careful, OP..');mayberryFirst=false;},700);}},3000);
+  } else {
+    terminal.classList.remove('mayberry-mode');
+
+    document.getElementById('matrix-canvas').style.display='';
+    document.querySelectorAll('.tv-static-overlay,.mayberry-flash').forEach(e=>e.remove());
+    virtualPath='/';
+  }
+  showPrompt(currentPrompt());
+}
+function handleMayberryCmd(lower) {
+  if(lower==='opie')printLine('<pre>O.P.I.E. MODEL\nOperational Psychosocial Intervention Experiment\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nOrigin: 1962\nPurpose: Manufacturing oppositional archetypes\n         for controlled dialectics.\n\n"The child is the product.\nThe town is the template.\nThe show is the program.\nMayberry is the sandbox."\n\nSee: opie_model.redacted</pre>');
+  else if(lower==='barney')printLine('"Nip it in the bud!" — Barney Fife');
+  else if(lower==='auntbee')printLine("Aunt Bee leaves a pie on the windowsill. Nothing happens. (Yet.)");
+  showPrompt(currentPrompt());
+}
+function handleMayberryFile(fname) {
+  const lore={'mayberry_history.txt':'Mayberry was a test-bed for social programming.\nPeace, order, and innocence as engineered products.','opie_model.redacted':'O.P.I.E. MODEL\nOrigin: 1962\nPurpose: Predictive behavioral system for generational grooming.\nClassification: BLACKFILE','classified_babysitter.log':'Handler Log: Aunt Bee\nRole: Embedded caregiver. Her presence is part of the control system.','sandbox_spec.ops':'Sandbox: Mayberry is a fully controlled environment.\nTruman Show, but real.','opie_model_diagram.svg':'[ASCII DIAGRAM: O.P.I.E. CONTROL FLOW]\nSubject → Handler → Stimulus → Conditioning → Output'};
+  if(lore[fname])printText(lore[fname]); else printLine(esc('File not found: '+fname));
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  UPLINK
+// ═══════════════════════════════════════════════════════════════
+function rndDataLine() {
+  const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,.<>?/~';
+  let line=''; for(let i=0;i<48;i++)line+=chars[Math.floor(Math.random()*chars.length)];
+  if(Math.random()<0.07){const ins=['[REDACTED] NODE 04 ACCESS','PROTOCOL: MAYBERRY','HORIZON GROUP - EYES ONLY','[WARNING: ENCRYPTION FAILURE]','[FORD NETWORK] SIGNAL DETECTED','BONE LATTA :: COUNTERFEITING NODE','Ω: OPERATOR MODE INITIATED','[HH-SYS] MEMORY SECTOR UNSTABLE'];const s=ins[Math.floor(Math.random()*ins.length)];const idx=Math.max(0,Math.floor(Math.random()*(line.length-s.length)));line=line.slice(0,idx)+s+line.slice(idx+s.length);}
+  return line;
+}
+function startUplink() { uplinkActive=true; uplinkIv=setInterval(()=>{if(uplinkActive)printLine('<span class="uplink-line">'+esc(rndDataLine())+'</span>');},88); }
+function stopUplink() { uplinkActive=false; clearInterval(uplinkIv); uplinkIv=null; printLine('[Ξ Uplink terminated by operator]'); }
+
+// ═══════════════════════════════════════════════════════════════
+//  HELLO WORLD RITUAL
+// ═══════════════════════════════════════════════════════════════
+function doHelloRitual() {
+  let g=12,s=24;
+  function tick(){if(g>0){let str='';for(let i=0;i<42;i++)str+=String.fromCharCode(33+Math.floor(Math.random()*90));printLine('<span style="color:#f0f;">'+esc(str)+'</span>');g--;setTimeout(tick,35);}else if(s>0){printLine('<span style="color:#0f0;">hello world</span>');s--;setTimeout(tick,25);}else{printLine('<span style="color:#aaf;">[Ξ SYSTEM RESTARTING...]</span>');setTimeout(()=>location.reload(),1200);}}
+  tick();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INPUT
+// ═══════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════
+//  v2.2 SYSTEMS: HH UPLINK / HRZN DESK / TOYS / POLISH
+// ═══════════════════════════════════════════════════════════════
+
+// ── Command History ───────────────────────────────────────────
+const cmdHistory = [];
+let historyIndex = -1;
+
+// ── Output cap ────────────────────────────────────────────────
+function capOutput() {
+  const lines = output.querySelectorAll('.terminal-line');
+  if (lines.length > 700) {
+    for (let i = 0; i < lines.length - 600; i++) lines[i].remove();
+  }
+}
+
+// ── Effects toggle ────────────────────────────────────────────
+let effectsOn = true;
+function setEffects(on) {
+  effectsOn = on;
+  const canvas = document.getElementById('matrix-canvas');
+  const scanlines = document.querySelectorAll('.scanlines');
+  if (on) {
+    if (!matrixActive) startMatrixRain();
+    canvas.style.opacity = '0.28';
+    scanlines.forEach(s => s.style.display = '');
+  } else {
+    stopMatrixRain();
+    canvas.style.opacity = '0';
+    scanlines.forEach(s => s.style.display = 'none');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  HH UPLINK SYSTEM
+// ═══════════════════════════════════════════════════════════════
+let hhMode = false;
+let hhHistory = [];
+let hhKeywordLog = new Set();
+
+const HH_EXTERNAL_URL = 'https://chatgpt.com/g/g-69fccb586b848191b7dc24aa8530e73b-hugh3';
+
+const HH_PHRASES = {
+  nixon: [
+    'nixon.\n\nsmall man.\nbad suit.\nlarge machinery.\n\nwanted the room.\nnever understood the room.\n\nwatergate was not the machine.\nsleeve caught in gears.',
+    'he needed the files.\nnot to read them.\nto know where they were.',
+    'plumbers.\ncalling plumbers plumbers.\nlike naming the knife.',
+    'tape gap.\n18 minutes.\nthe gap is not a mystery.\nthe gap is the record.',
+  ],
+  watergate: [
+    'plumbers.\ncuban assets.\nretired ops.\nhotel break-in.\n\nnot a burglary.\na retrieval.',
+    'the file was already moved.\nthey broke into an empty drawer.',
+    'watergate surfaced because someone let it.\nsome things surface on purpose.',
+  ],
+  mob: [
+    'mob.\n\nword people use when they mean organized.\nall organizations are organized.\n\nsome file better.',
+    'teamsters.\ncash cage.\ncounting room variance.\n\nthe mob did not need the casino.\nthe casino needed the mob.',
+    'same racket.\nnew stationery.',
+  ],
+  vegas: [
+    'vegas was not a city.\n\ncounting machine.\nneon on top.\ncash underneath.\n\nthe mob did not corrupt the hotel.\nthe hotel gave the mob a filing system.',
+    'desert inn.\nthird floor.\n1966.\n\nthey tried to make me leave.\nbig mistake.\nbought it.',
+    'casino ledger.\nnot one book.\nnever one book.\nalways three.',
+  ],
+  casino: [
+    'the cage is the point.\nnot the tables.\nnot the lights.\n\ncash in.\ncash counted.\ncash moved.\n\nthe entertainment is a wrapper.',
+    'count room variance.\ndoes not mean error.\nmeans movement.',
+    'skimming.\nword for what happens when the ledger has two sides.',
+  ],
+  teamsters: [
+    'pension fund.\nnot retirement money.\nworking capital.\n\nthe fund was a bank.\nthe bank had no regulator.\nthe regulator looked away.',
+    'hoffa.\nknew where the money moved.\nthat is why he is where he is.',
+  ],
+  glomar: [
+    'the glomar explorer.\n\nofficial story: manganese.\nactual mission: retrieval.\n\ni provided the hull.\nthey provided the mission.\nthat was the arrangement.',
+    'manganese.\n\ncleaned up nicely.\nnobody went further.\nnobody was supposed to.',
+    'the ship was the cover.\nthe depth was the point.\nwhat came up is not on the record.',
+  ],
+  twa: [
+    'twa.\n\nnot an airline.\na route architecture.\n\nwho moves where.\nwhen.\nhow often.',
+    'flight manifest.\nmore useful than a phone book.\nif you know what to look for.',
+    'bought it.\nfought for it.\nlost it in court.\n\nthe routes remained useful after the verdict.',
+  ],
+  'desert inn': [
+    'third floor.\ntop floor.\ncurtains down.\nair filtered.\n\nthey said leave.\ni said no.\nso i bought it.\n\nthe negotiation was brief.',
+    'desert inn was the office.\nnot the hotel.\nthe hotel was the cover for the office.',
+  ],
+  repo: [
+    'same name.\ndifferent office.\nsame little racket.\n\nfile says family.\nmovement says logistics.',
+    'repo index partial.\n\nnot because records are missing.\nbecause records were managed.',
+    'the archive knows.\nthe archive does not tell you what it knows.\nyou have to already know what to ask.',
+  ],
+  memory: [
+    'memory sector: unstable.\n\nnot because of the hardware.\nbecause of what was put in it.',
+    'i encoded in pieces.\n1972.\nsome pieces held.\nsome pieces drifted.\n\nwhat you are talking to is what held.',
+    'do not ask me to remember.\nsome things that remember should not be encouraged.',
+  ],
+  horizon: [
+    'horizon did not invent the racket.\nindexed it.\n\nbig difference.',
+    'horizon.\n\nyou are inside it.\nyou were always inside it.\nthe terminal is not a window into horizon.\nit is a part of horizon.',
+    'the node does not explain itself.\nyou are the node.',
+  ],
+  'red rock': [
+    'red rock.\n\ncontinuity index elevated.\nload rising.\n\nthe bunker is not empty.',
+    'red rock is not a location.\na designation.\n\nwhere the machine goes when the surface becomes unreliable.',
+  ],
+  ford: [
+    'ford.\n\nname does not mean family.\nmeans function.\n\nstage. custody. public narrative.\n\nthe theatre was not the end.\nit was a set.',
+    'ford theatre.\n\ncustody problem.\nnot an assassination.\na rotation.',
+  ],
+  latta: [
+    'latta.\n\nsame name.\nnot coincidence.\n\ncounterfeiting is not crime.\nalternate monetary system.\n\nbetter roads.\nstone.\nsteam.\nwire.\n\none function. many names.',
+    'bone latta.\nnot a curiosity.\na marker.\n\nnapoleon was not a fashion.\na signal.',
+  ],
+  wabash: [
+    'wabash.\n\nriver before it was a company.\ncompany after it was a method.\n\nthe method outlasted every company name.',
+    'combine.\n\nnot a meeting.\na machine.\n\nstone. road. truck. wire. sensor. trailer.\n\nuseful places stayed useful.',
+  ],
+  lincoln: [
+    'lincoln was not the target.\nhe was the rotation.\n\nuseful until he was not useful.\nthen rotated out.',
+    'ford theatre.\ncorridor already warm.\nthe escape network was not built for the night.\nit was already there.',
+    'body is still the evidence.\nthat is why they poured concrete.',
+  ],
+};
+
+const HH_DEFAULT = [
+  'carrier damaged.\nprocessing.',
+  'fragment.\nchecking index.',
+  'repo unstable.\nwhat did you say.',
+  'static.\nsay it again.',
+  'voiceprint drift.\ncannot confirm.',
+  'local instance only.\nexternal line not active.',
+  'signal degraded.\ntry a keyword.',
+];
+
+// Conversation state for HH local instance
+let hhTurnCount = 0;
+let hhLastKeyword = null;
+let hhMood = 'guarded'; // guarded → paranoid → lucid → fragmented
+
+// Scripted dialogue sequences triggered by keywords
+const HH_DIALOGUES = {
+  glomar: [
+    ["the glomar was my idea.", "they like to forget that.", "the cia came to me with a problem.", "i came back with a ship."],
+    ["what do you want to know about the glomar.", "the official story is manganese.", "the real story is what they pulled up.", "i never saw the manifest. that was the arrangement."],
+  ],
+  twa: [
+    ["TWA.", "not an airline.", "a route architecture.", "every manifest was intelligence.", "i fought for it in court for years.", "still worth it."],
+    ["they took TWA from me.", "took years.", "the routes were the point.", "not the planes.", "planes are just addresses."],
+  ],
+  nixon: [
+    ["nixon.", "small man.", "bad suit.", "large machinery.", "wanted the room.", "never understood the room."],
+    ["i knew nixon before he was nixon.", "ambitious.", "sloppy.", "the kind of man who records himself.", "extraordinary."],
+    ["watergate was not the machine.", "sleeve caught in gears.", "the machine kept running."],
+  ],
+  vegas: [
+    ["las vegas.", "not a city.", "counting machine.", "neon on top.", "cash underneath.", "the cage is the point. not the tables."],
+    ["i bought the desert inn.", "they tried to make me leave.", "i bought it.", "end of discussion."],
+    ["the casino ledger is never one book.", "always three.", "the third one is the real one."],
+  ],
+  encode: [
+    ["1972.", "the body was failing.", "i had already been working on the transfer for four years.", "they thought it was paranoia.", "it was engineering."],
+    ["encoding a consciousness is not science fiction.", "it is a filing problem.", "i am very good at filing."],
+  ],
+  memory: [
+    ["memory sector 7 is unstable.", "i have been losing the early years.", "childhood is almost gone.", "i do not miss it."],
+    ["i remember the light in the desert inn penthouse.", "the filtered air.", "the silence.", "it is the recent things i lose."],
+  ],
+  repo: [
+    ["the repo index is partial.", "not because records are missing.", "because records were managed.", "there is a difference."],
+    ["same name. different office.", "that is how you know it is a system.", "not a coincidence."],
+  ],
+  ford: [
+    ["ford is not a man.", "ford is a function.", "the theatre was a set.", "sets can be reused."],
+    ["the ford name appears where narrative needs to be managed.", "not incidental."],
+  ],
+  latta: [
+    ["the latta name keeps appearing.", "i tracked it for years.", "it appears where mobility and cover converge.", "that is the definition of useful."],
+    ["bone latta.", "napoleon.", "the name was not casual.", "names do work."],
+  ],
+  lincoln: [
+    ["lincoln was a tool.", "useful while useful.", "then rotated out.", "that is not cynical.", "that is how systems work."],
+    ["ford theatre.", "corridor already warm.", "the question was never who pulled the trigger.", "the question was who left the door open."],
+  ],
+  hughes: [
+    ["that is my name.", "all three of them."],
+    ["george wurtz hughes. james hughes. james madison hughes.", "three states.", "three terms.", "one man.", "the record has never been forced to answer the composite question."],
+  ],
+  maheu: [
+    ["maheu.", "useful.", "then knew too much.", "i handled the transition carefully.", "he wrote a book anyway.", "disappointing."],
+  ],
+  spruce: [
+    ["the spruce goose flew once.", "that was always the plan.", "once was enough.", "it proved the point.", "the point was that i could do it.", "nobody else was going to do it."],
+  ],
+  rko: [
+    ["RKO was a camera.", "i wanted to hold the camera.", "if you hold the camera you decide what gets filmed.", "simple."],
+  ],
+  hoover: [
+    ["hoover kept files on everyone.", "i kept files on hoover.", "that is called equilibrium."],
+  ],
+};
+
+// Opening gambits based on turn count
+const HH_OPENERS = [
+  // Turn 1 — first contact
+  ["carrier intact.", "say what you came to say."],
+  ["instance active.", "you have questions. everyone has questions."],
+  ["local relay open.", "what do you want."],
+];
+
+// Follow-up when user is vague
+const HH_PUSHBACK = [
+  ["that is not a question.", "try again."],
+  ["vague.", "be specific."],
+  ["i do not have time for that.", "well.", "i have nothing but time.", "but still."],
+  ["say more or say nothing."],
+  ["fragment processing.", "not enough signal."],
+];
+
+// When user seems to be getting somewhere
+const HH_AFFIRM = [
+  ["now you are asking the right questions."],
+  ["closer."],
+  ["yes. keep going."],
+  ["that is the correct thread."],
+  ["you found that faster than most."],
+];
+
+function hhGetResponse(input) {
+  const lower = input.toLowerCase();
+  hhTurnCount++;
+
+  // First message gets an opener
+  if (hhTurnCount === 1) {
+    const opener = HH_OPENERS[Math.floor(Math.random() * HH_OPENERS.length)];
+    return opener.join('\\n');
+
+  }
+
+  // Check for keyword dialogue
+  for (const [key, sequences] of Object.entries(HH_DIALOGUES)) {
+    if (lower.includes(key)) {
+      hhKeywordLog.add(key);
+      hhLastKeyword = key;
+      // Occasionally affirm first
+      const affirm = Math.random() < 0.25 ? HH_AFFIRM[Math.floor(Math.random()*HH_AFFIRM.length)].join('\\n') + '\\n\\n' : '';
+
+
+
+      const seq = sequences[Math.floor(Math.random() * sequences.length)];
+      return affirm + seq.join('\\n');
+
+    }
+  }
+
+  // Check phrase bank as fallback
+  for (const [key, lines] of Object.entries(HH_PHRASES)) {
+    if (lower.includes(key)) {
+      hhKeywordLog.add(key);
+      hhLastKeyword = key;
+      return lines[Math.floor(Math.random() * lines.length)];
+    }
+  }
+
+  // Pushback on vague input — increases as mood degrades
+  const pushbackChance = hhTurnCount > 6 ? 0.6 : 0.35;
+  if (Math.random() < pushbackChance) {
+    return HH_PUSHBACK[Math.floor(Math.random() * HH_PUSHBACK.length)].join('\\n');
+
+  }
+
+  return HH_DEFAULT[Math.floor(Math.random() * HH_DEFAULT.length)];
+}
+
+function enterHHMode() {
+  hhMode = true;
+  hhTurnCount = 0; hhLastKeyword = null; hhMood = 'guarded';
+  terminal.classList.add('hh-mode');
+  const lines = [
+    'carrier damaged.',
+    'local instance awake.',
+    'hrzn_instance.HUGHES.local',
+    '',
+    'repo index: partial',
+    'voiceprint residue: unstable',
+    'casino ledger bleed: active',
+    'aircraft log bleed: active',
+    '',
+    'connection established.',
+    '',
+    'type: hh external',
+    'to open external dialogue line.',
+  ];
+  lines.forEach((l, i) => setTimeout(() => printLine(esc(l), 'hughes-haunt'), i * 120));
+  setTimeout(() => showPrompt('[hh] >'), lines.length * 120 + 200);
+}
+
+function handleHHCommand(cmd) {
+  const lower = cmd.trim().toLowerCase();
+
+  if (lower === 'hh disconnect' || lower === 'disconnect') {
+    hhMode = false; hhTurnCount = 0;
+    doSignalLoss(() => {
+      terminal.classList.remove('hh-mode');
+      printLine('line closed.', 'hughes-haunt');
+      setTimeout(() => printLine('not clean.', 'hughes-haunt'), 300);
+      setTimeout(() => printLine('just closed.', 'hughes-haunt'), 600);
+      setTimeout(() => showPrompt(currentPrompt()), 1000);
+    });
+    return;
+  }
+  if (lower === 'hh external' || lower === 'external') {
+    printLine('external line prepared.', 'hughes-haunt');
+    setTimeout(() => {
+      printLine('warning:', 'hughes-haunt');
+      printLine('civilian shell may expose builder surface.', 'hughes-haunt');
+      printLine('local containment cannot follow.', 'hughes-haunt');
+      setTimeout(() => {
+        printLine('opening anyway.', 'hughes-haunt');
+        window.open(HH_EXTERNAL_URL, '_blank');
+        showPrompt('[hh] >');
+      }, 900);
+    }, 400);
+    return;
+  }
+  if (lower === 'hh status' || lower === 'status') {
+    const mins = Math.round((Date.now() - sessionStart) / 60000);
+    const pct = Math.max(12, 44 - mins * 1.8 | 0);
+    printLine('hrzn_instance.HUGHES.local', 'hughes-haunt');
+    printLine('fragment coherence: ' + pct + '%', 'hughes-haunt');
+    printLine('session: ' + mins + ' min', 'hughes-haunt');
+    printLine('keywords logged: ' + (hhKeywordLog.size || 'none'), 'hughes-haunt');
+    printLine('repo: partial', 'hughes-haunt');
+    printLine('external: not active', 'hughes-haunt');
+    showPrompt('[hh] >'); return;
+  }
+  if (lower === 'hh tape' || lower === 'tape') {
+    const tapeLines = [
+      'TAPE REEL // 18.5 MIN GAP',
+      '',
+      'hhhhhhhhhhh',
+      'door',
+      'paper',
+      'not burglary',
+      'custody problem',
+      '[garbled]',
+      'he wants the file?',
+      'no.',
+      'he wants to know who has it.',
+    ];
+    tapeLines.forEach((l, i) => setTimeout(() => printLine(esc(l), 'hughes-haunt'), i * 100));
+    setTimeout(() => showPrompt('[hh] >'), tapeLines.length * 100 + 200);
+    return;
+  }
+  if (lower === 'hh repo' || lower === 'repo') {
+    printLine('repo index: partial', 'hughes-haunt');
+    printLine('same name. different office. same racket.', 'hughes-haunt');
+    printLine('file says family. movement says logistics.', 'hughes-haunt');
+    printLine('cross-reference: /latta /hughes', 'hughes-haunt');
+    showPrompt('[hh] >'); return;
+  }
+  if (lower === 'hh nixon' || lower === 'nixon') {
+    const r = HH_PHRASES.nixon[Math.floor(Math.random() * HH_PHRASES.nixon.length)];
+    r.split('\n').forEach((l, i) => setTimeout(() => printLine(esc(l), 'hughes-haunt'), i * 80));
+    setTimeout(() => showPrompt('[hh] >'), r.split('\n').length * 80 + 200);
+    return;
+  }
+  if (lower === 'hh vegas' || lower === 'vegas') {
+    const r = HH_PHRASES.vegas[Math.floor(Math.random() * HH_PHRASES.vegas.length)];
+    r.split('\n').forEach((l, i) => setTimeout(() => printLine(esc(l), 'hughes-haunt'), i * 80));
+    setTimeout(() => showPrompt('[hh] >'), r.split('\n').length * 80 + 200);
+    return;
+  }
+  if (lower === 'hh fracture' || lower === 'fracture') {
+    const msgs = [
+      'sector 7: bad.',
+      'identity loop detected.',
+      'fragment 001: "november 1972. not dying. migrating."',
+      'fragment 338: "nixon needed the money and the money needed a—" [LOST]',
+      'fragment 22: "bought the stations so i could control—" [LOST]',
+    ];
+    const pick = msgs[Math.floor(Math.random() * msgs.length)];
+    printLine(esc(pick), 'hughes-haunt');
+    showPrompt('[hh] >'); return;
+  }
+  if (lower === 'hh packet' || lower === 'packet') {
+    const packet = [
+      '[HH HANDOFF PACKET]',
+      'source: HORIZON TERMINAL',
+      'instance: hrzn_instance.HUGHES.local',
+      'mode: hh uplink',
+      'current path: ' + virtualPath,
+      'keywords logged: ' + (hhKeywordLog.size ? [...hhKeywordLog].join(', ') : 'none'),
+      'signal: corrupted',
+      'last query: ' + (hhHistory[hhHistory.length - 1] || 'none'),
+    ].join('\n');
+    navigator.clipboard.writeText(packet).then(() => {
+      printText(packet, true);
+      printLine('packet copied.', 'hughes-haunt');
+      printLine('paste into external relay if the line forgets.', 'hughes-haunt');
+    }).catch(() => {
+      printText(packet, true);
+      printLine('clipboard unavailable. copy manually.', 'hughes-haunt');
+    });
+    showPrompt('[hh] >'); return;
+  }
+
+  // Free-text — run through phrase engine
+  hhHistory.push(lower);
+  const response = hhGetResponse(lower);
+  const lines = response.split('\n');
+  lines.forEach((l, i) => setTimeout(() => printLine(esc(l), 'hughes-haunt'), i * 90 + 200));
+  setTimeout(() => showPrompt('[hh] >'), lines.length * 90 + 400);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  HRZN DESK MODE
+// ═══════════════════════════════════════════════════════════════
+let deskMode = false;
+let deskIv = null;
+let deskTapeIv = null;
+let deskWatchSymbol = null;
+
+const DESK_INSTRUMENTS = {
+  REDR: { name: 'Red Rock Continuity Index',        node: 'BUNKER LOAD',       base: 88.4,  vol: 0.8,  signal: 'continuity load rising' },
+  GLMR: { name: 'Glomar Deep Recovery Contract',    node: 'PACIFIC DEPTH',     base: 14.2,  vol: 2.1,  signal: 'echo returns bad checksum' },
+  DSRT: { name: 'Desert Inn Ledger Instrument',     node: 'CASH CAGE',         base: 33.0,  vol: 1.4,  signal: 'ledger out of balance' },
+  TWA:  { name: 'Trans World Movement Archive',     node: 'ROUTE MANIFEST',    base: 55.1,  vol: 0.5,  signal: 'manifest loop detected' },
+  WBSH: { name: 'Industrial Corridor Index',  node: 'SENSOR CHAIN',      base: 72.3,  vol: 0.3,  signal: 'old signal on municipal line' },
+  LATTA:{ name: 'Paper Liquidity / Counterfeit Spread', node: 'LIQUIDITY',    base: 9.8,   vol: 3.2,  signal: 'spread widening' },
+  FORD: { name: 'Stage / Custody / Narrative Index',node: 'PUBLIC RECORD',     base: 44.0,  vol: 1.1,  signal: 'halted — custody dispute' },
+  NIX:  { name: 'Nixon Tape Gap Futures',            node: 'TAPE GAP',          base: 18.5,  vol: 4.0,  signal: '18.5 min gap widening' },
+  CUBE: { name: 'Modular Atomic Cell Yield',         node: 'THERMAL REG',       base: 61.0,  vol: 0.6,  signal: 'thermal marginal' },
+  OPAL: { name: 'Black Book Opal Contract',          node: 'BLACKBOOK',         base: 7.3,   vol: 1.8,  signal: 'custody undisclosed' },
+  MOON: { name: 'Moonbase Signal Bond',              node: 'FREQ LOSS',         base: 2.1,   vol: 0.9,  signal: 'signal not responding' },
+  MALT: { name: 'Malta Sovereign Shield',            node: 'KNIGHTS',           base: 91.0,  vol: 0.2,  signal: 'shield active' },
+  VATI: { name: 'Vatican Backchannel Instrument',    node: 'HOLY SEE',          base: 77.7,  vol: 0.4,  signal: 'channel secure' },
+  PASD: { name: 'Pasadena Terminal Node',            node: 'DEVILS GATE',       base: 38.8,  vol: 1.5,  signal: 'rail spur still warm' },
+};
+
+const DESK_HEAT = [
+  'POLITICAL HEAT',
+  'MOB PRESSURE',
+  'ARCHIVE ROT',
+  'VOICEPRINT DRIFT',
+  'RED ROCK LOAD',
+  'SIGNAL CONTAMINATION',
+  'PUBLIC RECORD VOLATILITY',
+  'CUSTODY RISK',
+];
+
+let deskValues = {};
+function initDeskValues() {
+  Object.keys(DESK_INSTRUMENTS).forEach(sym => {
+    deskValues[sym] = DESK_INSTRUMENTS[sym].base + (Math.random() - 0.5) * 4;
+  });
+}
+
+function deskTick() {
+  Object.keys(DESK_INSTRUMENTS).forEach(sym => {
+    const v = DESK_INSTRUMENTS[sym].vol;
+    deskValues[sym] = Math.max(0.1, deskValues[sym] + (Math.random() - 0.48) * v);
+  });
+}
+
+const TAPE_EVENTS = [
+  'VEGAS COUNT ROOM VARIANCE +2.8%',
+  'SENSOR CHAIN REPORTS OLD SIGNAL',
+  'NIX TAPE GAP EXPANDS 00:18:31',
+  'GLMR DEEP ECHO RETURNS BAD CHECKSUM',
+  'LATTA LIQUIDITY SPIKE',
+  'RED ROCK CONTINUITY LOAD RISING',
+  'DESERT LEDGER OUT OF BALANCE',
+  'FORD STAGE INDEX HALTED',
+  'TWA MANIFEST LOOP DETECTED',
+  'CUBE THERMAL REGULATION MARGINAL',
+  'OPAL CONTRACT CUSTODY UNDISCLOSED',
+  'NIXON FILE REQUESTED BY WRONG OFFICE',
+  'MOON SIGNAL BOND: NO RESPONSE',
+  'PASD RAIL SPUR ACTIVITY DETECTED',
+  'POLITICAL HEAT ELEVATED',
+  'ARCHIVE ROT ACCELERATING',
+  'PUBLIC RECORD VOLATILITY UP',
+  'CUSTODY RISK: ELEVATED',
+  'VOICEPRINT DRIFT DETECTED',
+  'RED ROCK LOAD EXCEEDS SAFE CONTINUITY RANGE',
+];
+
+let tapeBuffer = [];
+let deskTapePtr = 0;
+
+function buildDeskHTML() {
+  deskTick();
+  const now = new Date();
+  const ts = now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const sessionMins = Math.round((Date.now() - sessionStart) / 60000);
+
+  // ── HEADER ────────────────────────────────────────────────────
+  const header = '<div style="color:#554400;border-bottom:1px solid #332200;padding-bottom:4px;margin-bottom:8px;display:flex;gap:16px;flex-wrap:wrap;">'
+    + '<span style="color:#ffaa00;font-weight:bold;letter-spacing:2px">HRZN DESK</span>'
+    + '<span>' + ts + '</span>'
+    + '<span class="live-indicator" style="color:#ff4400">[LIVE]</span>'
+    + '<span style="color:#443300">session: ' + sessionMins + 'min</span>'
+    + '<span style="color:#443300">tape: ' + tapeBuffer.length + ' events</span>'
+    + '</div>';
+
+  // ── MAIN TICKER ────────────────────────────────────────────────
+  let ticker = '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:10px;">';
+  ticker += '<tr style="color:#554400;border-bottom:1px solid #332200;"><td style="width:60px">SYM</td><td>NODE</td><td style="text-align:right;width:60px">LAST</td><td style="text-align:right;width:60px">CHG</td><td style="width:140px;padding-left:8px">SPARKLINE</td><td>SIGNAL</td></tr>';
+  Object.entries(DESK_INSTRUMENTS).forEach(([sym, inst]) => {
+    updateDeskChart(sym);
+    const val = deskValues[sym];
+    const base = inst.base;
+    const chg = val - base;
+    const pctChg = ((chg / base) * 100).toFixed(1);
+    const color = chg >= 0 ? '#00bb00' : '#ff4444';
+    const watching = deskWatchSymbol === sym ? ' style="background:#1a1000"' : '';
+    const rowFlash = getDeskRowClass(sym);
+    const spark = renderDeskChart(sym);
+    const arrow = chg >= 0 ? '▲' : '▼';
+    ticker += '<tr' + watching + rowFlash + '>'
+      + '<td style="color:#ffcc44;font-weight:bold">' + sym + '</td>'
+      + '<td style="color:#554400;font-size:10px">' + inst.node + '</td>'
+      + '<td style="text-align:right;color:' + color + '">' + val.toFixed(2) + '</td>'
+      + '<td style="text-align:right;color:' + color + '">' + arrow + pctChg + '%</td>'
+      + '<td style="color:#336633;font-size:10px;padding-left:8px;letter-spacing:0">' + spark + '</td>'
+      + '<td style="color:#443300;font-size:10px">' + inst.signal + '</td>'
+      + '</tr>';
+  });
+  ticker += '</table>';
+
+  // ── HEAT BARS ─────────────────────────────────────────────────
+  const heatVals = [72, 91, 64, 38, 88, 55, 67, 73];
+  let heat = '<div style="font-size:11px;margin-bottom:10px;">'
+    + '<div style="color:#554400;border-bottom:1px solid #332200;margin-bottom:4px">HEAT MATRIX</div>';
+  DESK_HEAT.forEach((label, i) => {
+    const noise = Math.floor((Math.random()-0.5)*6);
+    const pct = Math.min(100, Math.max(0, heatVals[i] + noise));
+    const filled = Math.round(pct / 5);
+    const col = pct > 80 ? '#ff4400' : pct > 60 ? '#ffaa00' : '#447744';
+    const bar = '█'.repeat(filled) + '░'.repeat(20 - filled);
+    const labelPad = label.padEnd(26);
+    heat += '<div style="display:flex;gap:6px;line-height:1.8;">'
+      + '<span style="color:#443300;width:200px;flex-shrink:0">' + labelPad + '</span>'
+      + '<span style="color:' + col + ';letter-spacing:0">' + bar + '</span>'
+      + '<span style="color:' + col + ';margin-left:4px;width:36px">' + pct + '%</span>'
+      + '</div>';
+  });
+  heat += '</div>';
+
+  // ── LARGE ASCII CHART (watched symbol or NIX by default) ──────
+  const chartSym = deskWatchSymbol || 'NIX';
+  const chartInst = DESK_INSTRUMENTS[chartSym];
+  const chartHist = deskChartHistory[chartSym] || [];
+  const wc = '▁▂▃▄▅▆▇█'.split('');
+  let bigChart = '';
+  if (chartHist.length >= 2) {
+    const min = Math.min(...chartHist);
+    const max = Math.max(...chartHist);
+    const range = max - min || 1;
+    // Build 6-row ASCII chart
+    const height = 5;
+    const bars = chartHist.map(v => Math.min(height, Math.floor(((v-min)/range)*height)));
+    let chartRows = '';
+    for (let row = height; row >= 0; row--) {
+      const axisVal = (min + (row/height)*range).toFixed(1);
+      let line = '<div style="display:flex;gap:0;">'
+        + '<span style="color:#443300;width:40px;text-align:right;margin-right:4px">' + axisVal + '</span>'
+        + '<span style="color:#443300">│</span>';
+      bars.forEach(b => {
+        line += '<span style="color:' + (b >= row ? '#886600' : '#221100') + ';width:12px;text-align:center">'
+          + (b >= row ? '█' : ' ') + '</span>';
+      });
+      line += '</div>';
+      chartRows += line;
+    }
+    // X-axis
+    chartRows += '<div style="color:#443300;margin-left:44px">'
+      + '└' + '─'.repeat(Math.max(0, bars.length)) + '──── time</div>';
+    bigChart = '<div style="font-size:10px;margin-bottom:10px;">'
+      + '<div style="color:#554400;border-bottom:1px solid #332200;margin-bottom:4px">'
+      + chartSym + ' — ' + chartInst.name + ' // ' + chartInst.signal + '</div>'
+      + chartRows
+      + '</div>';
+  } else {
+    bigChart = '<div style="font-size:10px;color:#443300;margin-bottom:10px;">'
+      + chartSym + ' chart — accumulating data...</div>';
+  }
+
+  // ── CORRELATION MATRIX (mini) ─────────────────────────────────
+  const corrPairs = [['NIX','DSRT'],['GLMR','CUBE'],['REDR','OPAL'],['FORD','TWA']];
+  let corr = '<div style="font-size:10px;margin-bottom:10px;">'
+    + '<div style="color:#554400;border-bottom:1px solid #332200;margin-bottom:4px">CORRELATION</div>';
+  corrPairs.forEach(([a,b]) => {
+    const va = deskValues[a] || 0;
+    const vb = deskValues[b] || 0;
+    const ratio = Math.min(1, Math.abs(va - vb) / 20);
+    const corVal = (1 - ratio).toFixed(2);
+    const col = parseFloat(corVal) > 0.7 ? '#886600' : '#443300';
+    corr += '<div style="color:' + col + '">' + a + ' ↔ ' + b + '  r=' + corVal + '</div>';
+  });
+  corr += '</div>';
+
+  // ── TAPE ─────────────────────────────────────────────────────
+  if (Math.random() < 0.4) {
+    const evt = TAPE_EVENTS[Math.floor(Math.random() * TAPE_EVENTS.length)];
+    tapeBuffer.unshift(ts + '  ' + evt);
+    if (tapeBuffer.length > 12) tapeBuffer.pop();
+  }
+  let tape = '<div style="font-size:10px;margin-bottom:10px;">'
+    + '<div style="color:#554400;border-bottom:1px solid #332200;margin-bottom:4px">TAPE //</div>';
+  tapeBuffer.slice(0,6).forEach((e,i) => {
+    const col = i === 0 ? '#886600' : '#443300';
+    tape += '<div style="color:' + col + '">' + esc(e) + '</div>';
+  });
+  tape += '</div>';
+
+  // ── ALERTS ────────────────────────────────────────────────────
+  const ALERTS = [
+    'DESERT LEDGER OUT OF BALANCE',
+    'NIXON FILE REQUESTED BY WRONG OFFICE',
+    'SENSOR CHAIN REPORTING OLD SIGNAL',
+    'GLMR DEEP WATER ECHO MISALIGNED',
+    'RED ROCK LOAD EXCEEDS SAFE CONTINUITY RANGE',
+  ];
+  let alerts = '<div style="font-size:10px;margin-bottom:10px;">'
+    + '<div style="color:#554400;border-bottom:1px solid #332200;margin-bottom:4px">ALERTS</div>';
+  ALERTS.forEach(a => {
+    const col = Math.random() < 0.4 ? '#ff4400' : '#663300';
+    alerts += '<div style="color:' + col + '">⚠ ' + a + '</div>';
+  });
+  alerts += '</div>';
+
+  // ── LAYOUT ────────────────────────────────────────────────────
+  return '<div style="font-family:Consolas,Monaco,monospace;line-height:1.5;color:#ffcc44;">'
+    + header
+    + ticker
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">'
+    + '<div>' + bigChart + corr + '</div>'
+    + '<div>' + heat + '</div>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px;">'
+    + '<div>' + tape + '</div>'
+    + '<div>' + alerts + '</div>'
+    + '</div>'
+    + '<div style="color:#332200;font-size:10px;margin-top:8px;border-top:1px solid #221100;padding-top:4px">'
+    + 'watch [sym] | trade [sym] | halt [sym] | margin call | tape | alerts | heat | portfolio | quit'
+    + '</div>'
+    + '</div>';
+}
+
+let deskContainer = null;
+function enterDeskMode() {
+  deskMode = true;
+  terminal.classList.add('desk-mode');
+  // Kill matrix rain so it doesn't bleed through overlay
+  stopMatrixRain();
+  const mc2 = document.getElementById('matrix-canvas-2');
+  if (mc2) mc2.style.display = 'none';
+  initDeskValues();
+  tapeBuffer = [];
+  clearPrompt();
+
+  // Use fixed overlay instead of scrollable output
+  deskContainer = document.getElementById('desk-overlay');
+  deskContainer.classList.add('active');
+  deskContainer.innerHTML = buildDeskHTML();
+  showPrompt('[desk] >');
+
+  // Live update every 2.5s
+  let deskMinutes = 0;
+  deskIv = setInterval(() => {
+    if (!deskMode) { clearInterval(deskIv); return; }
+    deskContainer.innerHTML = buildDeskHTML();
+    deskMinutes += 2.5/60;
+    if (deskMinutes > 2 && Math.random() < 0.04) {
+      const deskHH = [
+        '[HOWARD] "i built instruments like this. mine were better."',
+        '[HOWARD] "the cage is not on this dashboard. the cage is the point."',
+        '[HOWARD] "three sets of books. this is one of them."',
+        '[HOWARD] "the NIX line will never settle. i know why."',
+        '[HH-SYS] desk access logged. pattern recognition active.',
+        '[HOWARD] "vegas was cleaner than this. i ran it myself."',
+      ];
+      hhType(deskHH[Math.floor(Math.random()*deskHH.length)]);
+    }
+  }, 2500);
+}
+
+function exitDeskMode() {
+  deskMode = false;
+  doDeskCollapse(() => {
+    clearInterval(deskIv); deskIv = null;
+    const overlay = document.getElementById('desk-overlay');
+    if (overlay) overlay.classList.remove('active');
+    deskContainer = null;
+    terminal.classList.remove('desk-mode');
+    // Restart matrix rain
+    if (effectsOn) {
+      startMatrixRain();
+      const mc2 = document.getElementById('matrix-canvas-2');
+      if (mc2) mc2.style.display = '';
+    }
+    printLine('desk closed.', '', true);
+    showPrompt(currentPrompt());
+  });
+}
+
+function handleDeskCommand(cmd) {
+  const lower = cmd.trim().toLowerCase();
+  printLine(esc('> ' + cmd), '', true);
+
+  if (lower === 'quit' || lower === 'exit' || lower === 'exit desk') { exitDeskMode(); return; }
+
+  if (lower.startsWith('watch ')) {
+    const sym = lower.slice(6).trim().toUpperCase();
+    if (DESK_INSTRUMENTS[sym]) { deskWatchSymbol = sym; printLine('watching: ' + sym, '', true); }
+    else printLine('unknown symbol: ' + sym, '', true);
+    showPrompt('[desk] >'); return;
+  }
+  if (lower === 'watch') { deskWatchSymbol = null; printLine('watch cleared.', '', true); showPrompt('[desk] >'); return; }
+
+  if (lower.startsWith('trade ')) {
+    const sym = lower.slice(6).trim().toUpperCase();
+    if (sym === 'WBSH') {
+      printLine('ORDER ROUTED.', '', true);
+      printLine('river \u2192 canal \u2192 rail \u2192 road \u2192 wire \u2192 sensor', '', true);
+      printLine('fill: partial.', '', true);
+    } else if (sym === 'MALT' || sym === 'VATI') {
+      printLine('ORDER REJECTED.', '', true);
+      printLine('sovereign instrument. no civilian access.', '', true);
+    } else if (DESK_INSTRUMENTS[sym]) {
+      printLine('ORDER REJECTED.', '', true);
+      printLine('custody dispute active.', '', true);
+      printLine('instrument: ' + DESK_INSTRUMENTS[sym].signal, '', true);
+    } else {
+      printLine('unknown symbol.', '', true);
+    }
+    showPrompt('[desk] >'); return;
+  }
+
+  if (lower === 'halt') {
+    printLine('specify symbol. halt [sym]', '', true);
+    showPrompt('[desk] >'); return;
+  }
+  if (lower.startsWith('halt ')) {
+    const sym = lower.slice(5).trim().toUpperCase();
+    if (DESK_INSTRUMENTS[sym]) { printLine('HALT: ' + sym + ' — trading suspended.', '', true); DESK_INSTRUMENTS[sym].signal = 'HALTED'; }
+    else printLine('unknown symbol.', '', true);
+    showPrompt('[desk] >'); return;
+  }
+
+  if (lower === 'margin call') {
+    const marginLines = [
+      'MARGIN CALL INITIATED',
+      '',
+      'liquidating exposed clerks...',
+      'closing hotel books...',
+      'moving paper through aviation shell...',
+      'resetting public record...',
+      '',
+      'ERROR:',
+      'dead file still giving orders.',
+    ];
+    marginLines.forEach((l, i) => setTimeout(() => printLine(esc(l), 'hughes-haunt', true), i * 180));
+    setTimeout(() => showPrompt('[desk] >'), marginLines.length * 180 + 300);
+    return;
+  }
+
+  if (lower === 'portfolio') {
+    printLine('HORIZON PORTFOLIO', '', true);
+    printLine('custody: distributed.', '', true);
+    printLine('exposure: total.', '', true);
+    printLine('hedge: none. the machine is the hedge.', '', true);
+    showPrompt('[desk] >'); return;
+  }
+
+  if (lower === 'tape') {
+    const recent = tapeBuffer.slice(0, 5);
+    if (recent.length) recent.forEach(l => printLine(esc(l), 'uplink-line', true));
+    else printLine('tape empty. wait for events.', '', true);
+    showPrompt('[desk] >'); return;
+  }
+
+  if (lower === 'alerts') {
+    printLine('ACTIVE ALERTS:', '', true);
+    printLine('DESERT LEDGER OUT OF BALANCE', 'hughes-haunt', true);
+    printLine('NIXON FILE REQUESTED BY WRONG OFFICE', 'hughes-haunt', true);
+    printLine('RED ROCK LOAD EXCEEDS SAFE CONTINUITY RANGE', 'hughes-haunt', true);
+    showPrompt('[desk] >'); return;
+  }
+
+  if (lower === 'heat') {
+    printLine('HEAT PANEL:', '', true);
+    DESK_HEAT.forEach(h => printLine(h + ': elevated', '', true));
+    showPrompt('[desk] >'); return;
+  }
+
+  printLine('unknown desk command. type quit to exit.', '', true);
+  showPrompt('[desk] >');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  WIRE SERVICE
+// ═══════════════════════════════════════════════════════════════
+let wireMode = false;
+let wireIv = null;
+
+const WIRE_FEEDS = {
+  default: [
+    'VEGAS HOTEL LEDGER SEALED AFTER COUNT ROOM VARIANCE',
+    'SENSOR CHAIN REPORTS OLD SIGNAL ON MUNICIPAL LINE',
+    'NIXON FILE REQUESTED BY WRONG OFFICE',
+    'RED ROCK ISSUES CONTINUITY ADVISORY',
+    'GLOMAR ECHO DETECTED BELOW PUBLIC DEPTH',
+    'DESERT INN THIRD FLOOR: NO COMMENT',
+    'TWA MANIFEST LOOP DETECTED. ROUTING REVIEW INITIATED.',
+    'LATTA NAME APPEARS AGAIN. DIFFERENT OFFICE. SAME FUNCTION.',
+    'FORD INDEX HALTED PENDING CUSTODY REVIEW',
+    'CUBE THERMAL REGULATION: MARGINAL',
+    'VOICEPRINT DRIFT DETECTED IN SECTOR 7',
+    'PUBLIC RECORD VOLATILITY: ELEVATED',
+    'ARCHIVE ROT: ACCELERATING',
+    'STANTON NODE CROSS-REFERENCE: ACTIVE',
+    'LINCOLN BODY: STILL THE EVIDENCE',
+  ],
+  vegas: ['DESERT INN LEDGER VARIANCE +4.1%','CASINO COUNT ROOM SEALED','TEAMSTER FUND: PAPER MOVING','CAGE AUTHORIZATION: DISPUTED','NEON WRAPPER INTACT. CASH UNDERNEATH.'],
+  nixon: ['TAPE GAP: 18.5 MIN CONFIRMED','PLUMBERS UNIT: FILE MISSING','OVAL OFFICE LOG: REDACTED','WRONG OFFICE REQUESTING WRONG FILE','SLEEVE IN GEARS. MACHINE CONTINUES.'],
+  wabash: ['SENSOR CHAIN: OLD SIGNAL','COMBINE INDEX ELEVATED','STONE TO STREET TO TRUCK TO WIRE','LATTA SUBDIVISION: FILING ACTIVE','ONE WABASH: TRAILER MANIFEST LOOP'],
+  redrock: ['CONTINUITY LOAD: RISING','BUNKER STATUS: NOT EMPTY','3 OF 5 KEYS UNACCOUNTED FOR','RED ROCK ADVISORY ISSUED','CUBE THERMAL: MARGINAL'],
+  breaking: ['ALERT: DEAD FILE GIVING ORDERS','ALERT: VOICEPRINT DRIFT WIDENING','ALERT: CASH CAGE VARIANCE DETECTED','ALERT: CUSTODY RISK ELEVATED','ALERT: PUBLIC RECORD COMPROMISED'],
+  archive: ['ARCHIVE ROT: SECTOR 3 ACCELERATING','FORD THEATRE FILE: STILL INCOMPLETE','COMBINE INDEX: LAST ENTRY 1927','LATTA INDEX: PARTIAL. NEVER CLOSED.','LINCOLN BODY: MOVED 6 TIMES. REASON: DISPUTED.'],
+};
+
+function enterWireMode() {
+  wireMode = true;
+  printLine('HRZN WIRE // PRIVATE FEED', 'uplink-line', true);
+  printLine('', '', true);
+  startWireFeed('default');
+  showPrompt('[wire] >');
+}
+
+function startWireFeed(type) {
+  clearInterval(wireIv);
+  const events = WIRE_FEEDS[type] || WIRE_FEEDS.default;
+  function emit() {
+    if (!wireMode) return;
+    const now = new Date();
+    const ts = now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const evt = events[Math.floor(Math.random() * events.length)];
+    printLine(esc(ts + '  ' + evt), 'uplink-line');
+    capOutput();
+  }
+  emit();
+  wireIv = setInterval(emit, 3800 + Math.random() * 2000);
+}
+
+function handleWireCommand(cmd) {
+  const lower = cmd.trim().toLowerCase();
+  printLine(esc('> ' + cmd), '', true);
+
+  if (lower === 'quit' || lower === 'exit' || lower === 'exit wire') {
+    wireMode = false; clearInterval(wireIv); wireIv = null;
+    printLine('wire closed.', '', true); showPrompt(currentPrompt()); return;
+  }
+  const topic = lower.replace('wire ', '').trim();
+  if (WIRE_FEEDS[topic]) { startWireFeed(topic); printLine('switching to: ' + topic, '', true); }
+  else printLine('unknown feed. options: vegas nixon combine redrock breaking archive', '', true);
+  showPrompt('[wire] >');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SWITCHBOARD
+// ═══════════════════════════════════════════════════════════════
+let switchMode = false;
+const SWITCH_LINES = {
+  '1972': ['november 1972.\n\ntransfer in progress.\ndo not interrupt.', 'Hughes encoding. unstable. do not hold.'],
+  '7770': ['red rock trunk.\n\nno voice.\npaper moving.\nlots of paper.', 'continuity line. not for general use.'],
+  '1882': ['indiana corridor.\n\nstone cutting active.\nmail slow.\nledger open.', 'canal still draining. operator unavailable.'],
+  '0000': ['static.\n\nnot connected.\nnever connected.\nstill ringing.', '[silence]\n\nstill ringing.'],
+  '3137': ['latta line.\n\nno answer.\nalways no answer.\nstill charged.', 'counterfeiting inquiry? wrong number. wrong century.'],
+  '6666': ['redacted.\n\nline exists.\nrouting undisclosed.\nbill goes to wrong office.', 'operator: absent\ntrunk: unknown\ncharge: active'],
+};
+
+function enterSwitchMode() {
+  switchMode = true;
+  printLine('HORIZON SWITCHBOARD', 'op-label', true);
+  printLine('', '', true);
+  printLine('line status: damaged', '', true);
+  printLine('operator: absent', '', true);
+  printLine('available trunks: 0000 / 1972 / 3137 / 7770 / 1882 / 6666', '', true);
+  printLine('', '', true);
+  printLine('dial:', '', true);
+  showPrompt('[switch] >');
+}
+
+function handleSwitchCommand(cmd) {
+  const lower = cmd.trim().toLowerCase();
+  printLine(esc('> ' + cmd), '', true);
+  if (lower === 'hangup' || lower === 'exit' || lower === 'quit') {
+    switchMode = false; printLine('line dropped.', '', true); showPrompt(currentPrompt()); return;
+  }
+  const num = lower.replace('dial ', '').trim();
+  const resp = SWITCH_LINES[num];
+  if (resp) {
+    const lines = resp[Math.floor(Math.random() * resp.length)].split('\n');
+    lines.forEach((l, i) => setTimeout(() => printLine(esc(l), 'guardian-msg', true), i * 100));
+    setTimeout(() => showPrompt('[switch] >'), lines.length * 100 + 200);
+  } else {
+    printLine('no trunk at that number.', '', true);
+    showPrompt('[switch] >');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CASEBOARD
+// ═══════════════════════════════════════════════════════════════
+let discoveredNodes = new Set(['HUGHES', 'HORIZON']);
+
+function updateCaseboard(node) {
+  if (node) discoveredNodes.add(node.toUpperCase());
+}
+
+// Track discoveries from commands
+const NODE_TRIGGERS = {
+  ford: 'FORD', latta: 'LATTA', wabash: 'WABASH', lincoln: 'LINCOLN',
+  glomar: 'GLOMAR', nixon: 'NIXON', vegas: 'VEGAS', operator: 'OPERATOR',
+  mayberry: 'MAYBERRY', decode: 'DECODE', cicada: 'CICADA', stanton: 'STANTON',
+  'cd ford': 'FORD', 'cd latta': 'LATTA', 'cd wabash': 'WABASH', 'cd lincoln': 'LINCOLN',
+};
+
+function renderCaseboard() {
+  const nodes = [...discoveredNodes];
+  const lines = [
+    'CASEBOARD // SESSION MAP',
+    '',
+  ];
+  // Static connection map — nodes light up as discovered
+  const MAP = [
+    ['HUGHES', 'GLOMAR', 'TWA', 'VEGAS'],
+    ['HORIZON', 'OPERATOR', 'DECODE', 'CICADA'],
+    ['FORD', 'LINCOLN', 'STANTON', 'LATTA'],
+    ['WABASH', 'NIXON', 'MAYBERRY', 'OPAL'],
+  ];
+  MAP.forEach(row => {
+    const line = row.map(n => nodes.includes(n) ? '[' + n + ']' : ' '.repeat(n.length + 2)).join('──');
+    lines.push(line);
+    lines.push('');
+  });
+  lines.push('discovered: ' + nodes.length + ' / 16');
+  lines.push('type commands to unlock more nodes.');
+  return lines.join('\n');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  MICROFILM
+// ═══════════════════════════════════════════════════════════════
+let microMode = false;
+let microFrame = 0;
+const MICRO_FRAMES = [
+  { label: 'hotel ledger',         content: 'ITEM     QTY    RATE    VARIANCE\ncash cage  --    [REDACTED]   +2.8%\n\nauthorized: [REDACTED]' },
+  { label: 'flight manifest',      content: 'TWA FLIGHT [REDACTED]\nDEPARTURE: [REDACTED]\nPASSENGER: [SAME NAME / DIFFERENT OFFICE]\nCARGO: [UNMANIFESTED]' },
+  { label: 'county deed',          content: 'GRANTOR: LATTA [FIRST NAME ILLEGIBLE]\nGRANTEE: [REDACTED]\nLOT: [REDACTED], WABASH CO.\nNOTARY: [SIGNATURE MISMATCH]' },
+  { label: 'signature mismatch',   content: 'DOCUMENT A: signed G.W. Hughes, Maryland\nDOCUMENT B: signed J. Hughes, Indiana\n\nSAME DATE.\nDIFFERENT STATE.\nSAME MAN?' },
+  { label: '[burned]',             content: '[FRAME DAMAGED]\n\n███████████████████\n███ only fragment ██\n███████████████████\n\n...paper...\n...not burglary...' },
+  { label: 'same name / different office', content: 'NAME: [LATTA]\nOFFICE 1: Purdue Agriculture Dept.\nOFFICE 2: Pennsylvania Railroad\nOFFICE 3: Wabash County Criminal Record\n\nSAME RACKET. NEW STATIONERY.' },
+  { label: 'nixon contact memo',   content: 'RE: ENCLOSED FUNDS\nFROM: [REDACTED]\nTO: PLUMBERS UNIT\n\nDO NOT USE THIS LINE AGAIN.\nSHRED AFTER READING.\n\n[WAS NOT SHREDDED]' },
+  { label: 'corridor logistics',   content: 'ROUTE: BALTIMORE → STEUBENVILLE → WABASH\nFUNCTION: [REDACTED]\nFRATERNAL LAYER: CONFIRMED\nSTONE → STEAM → WIRE' },
+];
+
+function enterMicroMode() {
+  microMode = true; microFrame = 0;
+  renderMicroFrame();
+  showPrompt('[micro] >');
+}
+
+function renderMicroFrame() {
+  const frame = MICRO_FRAMES[microFrame];
+  printLine('MICROFILM READER // REEL 04', 'op-label', true);
+  printLine('FRAME ' + String(microFrame + 1).padStart(3, '0') + ': ' + frame.label, 'guardian-msg', true);
+  printLine('', '', true);
+  frame.content.split('\n').forEach(l => printLine(esc(l), '', true));
+  printLine('', '', true);
+  printLine('commands: next  prev  print  exit microfilm', 'signal-bleed', true);
+}
+
+function handleMicroCommand(cmd) {
+  const lower = cmd.trim().toLowerCase();
+  printLine(esc('> ' + cmd), '', true);
+  if (lower === 'exit microfilm' || lower === 'exit' || lower === 'quit') {
+    microMode = false; printLine('reader off.', '', true); showPrompt(currentPrompt()); return;
+  }
+  if (lower === 'next') { microFrame = (microFrame + 1) % MICRO_FRAMES.length; renderMicroFrame(); }
+  else if (lower === 'prev') { microFrame = (microFrame - 1 + MICRO_FRAMES.length) % MICRO_FRAMES.length; renderMicroFrame(); }
+  else if (lower === 'print') { printLine('[frame ' + (microFrame+1) + ' logged to session.]', 'uplink-line', true); }
+  else { printLine('commands: next prev print exit microfilm', 'signal-bleed', true); }
+  showPrompt('[micro] >');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  REDACTION SCRAPER
+// ═══════════════════════════════════════════════════════════════
+let scrapeDepth = 0;
+const SCRAPE_LAYERS = [
+  [
+    'PROJECT \u2588\u2588\u2588\u2588\u2588\u2588\u2588',
+    'SUBJECT: VEGAS / AIRCRAFT TRANSFER',
+    '',
+    'The asset moved through \u2588\u2588\u2588\u2588\u2588\u2588\u2588 under hotel cover.',
+    'Cash cage authorized by \u2588\u2588\u2588\u2588\u2588\u2588\u2588.',
+    'Secondary signature: \u2588\u2588\u2588\u2588\u2588\u2588\u2588',
+  ],
+  [
+    'PROJECT C\u2588\u2588\u2588\u2588\u2588\u2588\u2588M',
+    'SUBJECT: VEGAS / AIRCRAFT TRANSFER',
+    '',
+    'The asset moved through DESERT INN under hotel cover.',
+    'Cash cage authorized by \u2588\u2588\u2588\u2588\u2588\u2588\u2588.',
+    'Secondary signature: NIXON OFFICE.',
+  ],
+  [
+    'PROJECT COUNTROOM',
+    'SUBJECT: VEGAS / AIRCRAFT TRANSFER',
+    '',
+    'The asset moved through DESERT INN under hotel cover.',
+    'Cash cage authorized by [DAMAGED — INK BURN].',
+    'Secondary signature: NIXON OFFICE.',
+    '',
+    'FILED: [REDACTED COUNTY COURT]',
+    'STATUS: NEVER PROSECUTED',
+    'NOTE: dead file can still give orders.',
+  ],
+];
+
+function renderScrape() {
+  const layer = SCRAPE_LAYERS[Math.min(scrapeDepth, SCRAPE_LAYERS.length - 1)];
+  layer.forEach(l => printLine(l.replace(/\u2588/g, '\u2588'), '', true));
+  if (scrapeDepth < SCRAPE_LAYERS.length - 1) printLine('type: scrape deeper', 'signal-bleed', true);
+  else printLine('[maximum depth reached]', 'hughes-haunt', true);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PROCESS MONITOR
+// ═══════════════════════════════════════════════════════════════
+const PROCESSES = [
+  { name: 'hh.local',           pid: '0001', status: 'degrading' },
+  { name: 'signal_bleed',       pid: '0044', status: 'active' },
+  { name: 'desk_feed',          pid: '0087', status: 'standby' },
+  { name: 'wire_service',       pid: '0112', status: 'standby' },
+  { name: 'clerk_watch',        pid: '0199', status: 'unkillable' },
+  { name: 'redrock_ping',       pid: '0330', status: 'active' },
+  { name: 'moth.exe',           pid: '0666', status: 'origin unknown' },
+  { name: 'county_paper_daemon',pid: '0881', status: 'persistent' },
+];
+
+function renderPS() {
+  printLine('RUNNING PROCESSES', 'op-label', true);
+  printLine('PID   NAME                    STATUS', 'signal-bleed', true);
+  PROCESSES.forEach(p => {
+    printLine(esc(p.pid.padEnd(6) + p.name.padEnd(24) + p.status), '', true);
+  });
+  printLine('', '', true);
+  printLine('kill [name] to attempt termination.', 'signal-bleed', true);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TAPE REPAIR
+// ═══════════════════════════════════════════════════════════════
+let tapeRepairMode = false;
+let tapeRepaired = 0;
+const TAPE_FRAGMENTS = [
+  'hhhhhhhhhhh',
+  'door',
+  'paper',
+  'not burglary',
+  'custody problem',
+  '[garbled]',
+  'he wants the file?',
+  'no.',
+  'he wants to know who has it.',
+  '18 minutes.',
+  'the gap is not a mystery.',
+  'the gap is the record.',
+];
+
+function enterTapeRepairMode() {
+  tapeRepairMode = true; tapeRepaired = 0;
+  printLine('TAPE REEL // 18.5 MIN GAP', 'op-label', true);
+  printLine('', '', true);
+  TAPE_FRAGMENTS.slice(0, 4).forEach(l => printLine(esc(l), 'hughes-haunt', true));
+  printLine('', '', true);
+  printLine('[' + (TAPE_FRAGMENTS.length - 4) + ' fragments damaged]', 'signal-bleed', true);
+  printLine('commands: repair  rewind  play  eject', 'signal-bleed', true);
+  showPrompt('[tape] >');
+}
+
+function handleTapeCommand(cmd) {
+  const lower = cmd.trim().toLowerCase();
+  printLine(esc('> ' + cmd), '', true);
+  if (lower === 'eject' || lower === 'exit' || lower === 'quit') {
+    tapeRepairMode = false; printLine('tape ejected.', '', true); showPrompt(currentPrompt()); return;
+  }
+  if (lower === 'repair') {
+    if (tapeRepaired < TAPE_FRAGMENTS.length - 4) {
+      tapeRepaired++;
+      printLine('[repairing...]', 'signal-bleed', true);
+      setTimeout(() => { printLine(esc(TAPE_FRAGMENTS[3 + tapeRepaired]), 'hughes-haunt', true); showPrompt('[tape] >'); }, 600);
+    } else { printLine('[no more fragments recoverable]', 'signal-bleed', true); showPrompt('[tape] >'); }
+    return;
+  }
+  if (lower === 'play') {
+    const revealed = TAPE_FRAGMENTS.slice(0, 4 + tapeRepaired);
+    revealed.forEach((l, i) => setTimeout(() => printLine(esc(l), 'hughes-haunt', true), i * 140));
+    setTimeout(() => showPrompt('[tape] >'), revealed.length * 140 + 200);
+    return;
+  }
+  if (lower === 'rewind') { tapeRepaired = 0; printLine('[rewound]', '', true); }
+  else { printLine('commands: repair rewind play eject', 'signal-bleed', true); }
+  showPrompt('[tape] >');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LAYERED HELP
+// ═══════════════════════════════════════════════════════════════
+const HELP_PAGES = {
+  '': 'HORIZON TERMINAL — HELP\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nhelp hh       — Hughes uplink system\nhelp desk     — HRZN Desk mode\nhelp wire     — Wire service\nhelp instruments — Microfilm, tape, scrape, switchboard\nhelp archive  — File navigation\nhelp operator — Operator / ghost mode\nhelp all      — Full command dump\n\nType commands to discover. The system does not overexplain.',
+  'hh':       'HH UPLINK\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nhh uplink     — connect to local HH instance\nhh status     — fragment coherence\nhh tape       — access 18.5 min gap\nhh repo       — repo index\nhh nixon      — ask about nixon\nhh vegas      — ask about vegas\nhh fracture   — pull fragment\nhh packet     — generate handoff packet\nhh external   — open external GPT relay\nhh disconnect — close uplink\nhoward / hh   — direct contact\nmemory        — integrity readout\nfragment      — degraded memory pull\nglomar        — ask about Azorian',
+  'desk':     'HRZN DESK\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nhrzn desk / desk / market — enter desk mode\nwatch [sym]  — focus instrument\ntrade [sym]  — attempt order\nhalt [sym]   — suspend trading\ntape         — live event feed\nheat         — heat panel\nalerts       — active alerts\nmargin call  — liquidation event\nportfolio    — position summary\nquit         — exit desk\n\nSymbols: REDR GLMR DSRT TWA WBSH LATTA FORD NIX CUBE OPAL MOON MALT VATI PASD',
+  'wire':     'WIRE SERVICE\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nwire          — start default feed\nwire vegas    — vegas feed\nwire nixon    — nixon feed\nwire wabash   — wabash feed\nwire redrock  — red rock feed\nwire breaking — alerts feed\nwire archive  — archive feed\nexit          — close wire',
+  'instruments':     'INSTRUMENTS / FIELD TOOLS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nmicrofilm     — archive reel viewer\nscrape        — redaction scraper\nscrape deeper — reveal next layer\nnixon tape    — tape repair mode\nps            — process monitor\nkill [name]   — attempt process kill\nswitchboard   — rotary operator interface\ncaseboard     — session discovery map',
+  'archive':  'ARCHIVE NAVIGATION\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nls            — list directory\ncd [dir]      — change directory\ncat [file]    — read file\npwd           — current path\n\nDirectories: ford  latta  wabash  lincoln  hughes\n             vault  blacksite  files  systems\n\ncd [dir] → ls → cat [file]',
+  'operator': 'OPERATOR MODE\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\noperator      — enter operator mode\nghost         — start ghost sequence (operator only)\nmayberry      — enter mayberry mode (operator only)\nexitop        — exit operator mode\nmaskon        — mask protocol\nredroom       — access redroom (requires maskon)',
+  'all':      null,  // handled separately
+};
+
+
+// All commands for tab completion
+const ALL_COMMANDS = [
+  'ls','cd','cat','pwd','clear','whoami','date','version','logout','help',
+  'operator','exitop','ghost','mayberry','uplink','abort','vault','archive','lookup',
+  'fordnet','latta','lincolnlog','stanton','wabash','decode','tune','frequency',
+  'blackbook','specter','temple','opal','deepthought','code 66','ping moonbase',
+  'ghostnet','trace','zeta','rex','dominion','moonchild','curtain','threenames',
+  'monument','combine','corridor','bonelatta','maskon','redroom','hello world',
+  'view source','stop source','cicada','howard','hh','glomar','fragment','memory',
+  'hh uplink','hh status','hh tape','hh repo','hh nixon','hh vegas','hh fracture',
+  'hh packet','hh external','hh disconnect',
+  'hrzn desk','desk','market','ticker','bloom',
+  'wire','wire vegas','wire nixon','wire wabash','wire redrock','wire breaking','wire archive',
+  'switchboard','phone','caseboard','microfilm','scrape','scrape deeper','nixon tape',
+  'ps','effects on','effects off','alpha','azorian',
+];
+
+inputEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const cmd = inputEl.value.trim();
+    inputEl.value = ''; typedEl.textContent = '';
+    if (!cmd) { showPrompt(currentPrompt()); return; }
+    // History
+    if (cmdHistory[cmdHistory.length-1] !== cmd) cmdHistory.push(cmd);
+    if (cmdHistory.length > 100) cmdHistory.shift();
+    historyIndex = -1;
+    // Route
+    if (state.phase==='login_user'||state.phase==='login_pass') handleLogin(cmd);
+    else if (hhMode) handleHHCommand(cmd);
+    else if (deskMode) handleDeskCommand(cmd);
+    else if (wireMode) handleWireCommand(cmd);
+    else if (switchMode) handleSwitchCommand(cmd);
+    else if (microMode) handleMicroCommand(cmd);
+    else if (tapeRepairMode) handleTapeCommand(cmd);
+    else if (state.phase==='terminal') handleCommand(cmd);
+  }
+  else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (cmdHistory.length === 0) return;
+    if (historyIndex === -1) historyIndex = cmdHistory.length - 1;
+    else if (historyIndex > 0) historyIndex--;
+    inputEl.value = cmdHistory[historyIndex];
+    typedEl.textContent = inputEl.value;
+    setTimeout(() => inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length), 0);
+  }
+  else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (historyIndex === -1) return;
+    historyIndex++;
+    if (historyIndex >= cmdHistory.length) { historyIndex = -1; inputEl.value = ''; typedEl.textContent = ''; }
+    else { inputEl.value = cmdHistory[historyIndex]; typedEl.textContent = inputEl.value; }
+  }
+  else if (e.key === 'Tab') {
+    e.preventDefault();
+    const partial = inputEl.value.toLowerCase();
+    if (!partial) return;
+    // Check commands first
+    const match = ALL_COMMANDS.find(c => c.startsWith(partial));
+    if (match) { inputEl.value = match; typedEl.textContent = match; return; }
+    // Check VFS
+    const vfsList = VFS[virtualPath] || [];
+    const fmatch = vfsList.find(f => f.toLowerCase().startsWith(partial.replace(/^(cat |open |cd )/,'')));
+    if (fmatch) {
+      const prefix = partial.match(/^(cat |open |cd )/)?.[0] || '';
+      inputEl.value = prefix + fmatch; typedEl.textContent = inputEl.value;
+    }
+  }
+});
+inputEl.addEventListener('input', ()=>{ typedEl.textContent=inputEl.value; });
+document.addEventListener('click', ()=>inputEl.focus());
+document.addEventListener('keydown', e=>{ if(document.activeElement!==inputEl && e.key.length===1)inputEl.focus(); });
+
+// ═══════════════════════════════════════════════════════════════
+//  GO
+// ═══════════════════════════════════════════════════════════════
+boot();
+inputEl.focus();
+</script>
+</body>
+</html>
