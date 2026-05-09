@@ -141,6 +141,10 @@
 
     /* Input stays above keyboard on mobile */
     #input-line { position: sticky; bottom: 0; background: #000; z-index: 10; }
+
+    /* Login mode — prompt flows inline right under the banner */
+    #terminal.login-mode #output { flex: 0 0 auto; overflow-y: visible; }
+    #terminal.login-mode #input-line { position: relative !important; bottom: auto !important; background: transparent !important; }
     #terminal.mayberry-mode #input-line { background: #fff; }
     /* ── CRT vignette ── */
     #terminal::before {
@@ -303,6 +307,7 @@ let helloRitual   = false;
 let cicadaWaiting = false;
 let virtualPath   = '/';
 let inDreamMode   = false;
+let bbsMode       = false;
 let ghostActive   = false;
 let ghostIndex    = 0;
 let ghostScore    = 0;
@@ -393,6 +398,7 @@ function loadBar(label, onDone, steps, delay) {
   }, delay);
 }
 function currentPrompt() {
+  if (bbsMode)      return 'COMMAND >';
   if (inDreamMode)  return '[OP] _';
   if (inVault)      return '[vault/' + currentVault + '] >';
   if (operatorMode) return 'bash$';
@@ -2038,9 +2044,355 @@ const BANNER = [
 ].join('\n');
 
 // ═══════════════════════════════════════════════════════════════
+//  LIVE DATA FEEDS
+// ═══════════════════════════════════════════════════════════════
+let liveWeather = null;
+let liveGeo     = null;
+let liveCrypto  = {};
+let liveNews    = [];
+
+const CRYPTO_IDS = {
+  NIX:  'bitcoin',       GLMR: 'ethereum',      MOON: 'solana',
+  LATTA:'dogecoin',      TWA:  'ripple',         DSRT: 'binancecoin',
+  FORD: 'cardano',       OPAL: 'polkadot',       MALT: 'tether',
+  VATI: 'usd-coin',      REDR: 'chainlink',      CUBE: 'avalanche-2',
+  WBSH: 'matic-network', PASD: 'uniswap',
+};
+
+async function fetchLasVegasWeather() {
+  try {
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=36.1699&longitude=-115.1398&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m&temperature_unit=fahrenheit&wind_speed_unit=mph');
+    const d = await r.json();
+    const c = d.current;
+    liveWeather = { temp: Math.round(c.temperature_2m), condition: wxCode(c.weather_code), wind: Math.round(c.wind_speed_10m), humidity: Math.round(c.relative_humidity_2m) };
+  } catch(e) { liveWeather = null; }
+}
+function wxCode(n) {
+  if (n===0) return 'CLEAR'; if (n<=3) return 'PARTLY CLOUDY'; if (n<=9) return 'OVERCAST';
+  if (n<=29) return 'DRIZZLE'; if (n<=49) return 'RAIN'; if (n<=59) return 'SLEET';
+  if (n<=79) return 'SNOW'; if (n<=84) return 'SHOWERS'; return 'THUNDERSTORM';
+}
+
+async function fetchGeoData() {
+  try {
+    const r = await fetch('https://ipapi.co/json/');
+    const d = await r.json();
+    const org = (d.org||'').toLowerCase();
+    const vpn = ['vpn','hosting','cloud','aws','digitalocean','linode','vultr','hetzner'].some(x=>org.includes(x));
+    liveGeo = { city: d.city, region: d.region, country: d.country_name, org: d.org||'', isVpn: vpn };
+  } catch(e) { liveGeo = null; }
+}
+
+async function fetchCryptoPrices() {
+  try {
+    const ids = [...new Set(Object.values(CRYPTO_IDS))].join(',');
+    const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`);
+    const d = await r.json();
+    Object.entries(CRYPTO_IDS).forEach(([sym, id]) => {
+      if (d[id]) liveCrypto[sym] = { usd: d[id].usd, change24h: d[id].usd_24h_change || 0 };
+    });
+  } catch(e) { /* fail silently — desk runs on fictional values */ }
+}
+
+async function fetchNews() {
+  const sources = [
+    'https://feeds.bbci.co.uk/news/rss.xml',
+    'https://feeds.bbci.co.uk/news/world/rss.xml',
+    'https://feeds.npr.org/1001/rss.xml',
+  ];
+  const all = [];
+  for (const url of sources) {
+    try {
+      const res = await fetch('https://corsproxy.io/?' + encodeURIComponent(url));
+      if (!res.ok) continue;
+      const text = await res.text();
+      const doc = new DOMParser().parseFromString(text, 'text/xml');
+      const items = doc.querySelectorAll('item');
+      items.forEach((item, i) => {
+        if (i >= 12) return;
+        const title = item.querySelector('title')?.textContent?.trim() || '';
+        if (title) all.push(hrznVoice(title));
+      });
+    } catch(e) { /* try next source */ }
+  }
+  // Deduplicate and shuffle
+  liveNews = [...new Set(all)].sort(() => Math.random() - 0.5);
+}
+
+function hrznVoice(title) {
+  return (title||'').toUpperCase()
+    .replace(/['"]/g,'').replace(/\bSAYS?\b/g,':').replace(/\bREPORTS?\b/g,':')
+    .replace(/\bACCORDING TO\b/g,'—').replace(/,/g,' /').replace(/\bTHE\b/g,'')
+    .replace(/\s{2,}/g,' ').trim().slice(0, 76);
+}
+
+function getMoonPhase() {
+  const jd = Date.now() / 86400000 + 2440587.5;
+  let f = ((jd - 2451549.5) / 29.53058867) % 1;
+  if (f < 0) f += 1;
+  return ['NEW MOON','WAXING CRESCENT','FIRST QUARTER','WAXING GIBBOUS',
+          'FULL MOON','WANING GIBBOUS','LAST QUARTER','WANING CRESCENT'][Math.round(f*8)%8];
+}
+
+async function initLiveData() {
+  await Promise.allSettled([fetchLasVegasWeather(), fetchGeoData(), fetchCryptoPrices(), fetchNews()]);
+}
+
+// ── Wikipedia lookup ──────────────────────────────────────────
+async function wikiLookup(query) {
+  try {
+    const base = 'https://en.wikipedia.org/w/api.php';
+
+    // Step 1 — find best matching title
+    const searchRes = await fetch(
+      base + '?action=query&list=search&srsearch=' +
+      encodeURIComponent(query) + '&format=json&origin=*&srlimit=3'
+    );
+    if (!searchRes.ok) return '[WIKI ERROR] Search request failed: ' + searchRes.status;
+    const searchData = await searchRes.json();
+    const hits = searchData?.query?.search;
+    if (!hits || !hits.length) return '[WIKI] No results found for: ' + query;
+
+    const title = hits[0].title;
+
+    // Step 2 — fetch plain-text extract for that title
+    const extractRes = await fetch(
+      base + '?action=query&prop=extracts&exintro=true&explaintext=true' +
+      '&exsentences=4&titles=' + encodeURIComponent(title) +
+      '&format=json&origin=*'
+    );
+    if (!extractRes.ok) return '[WIKI ERROR] Extract request failed: ' + extractRes.status;
+    const extractData = await extractRes.json();
+    const pages = extractData?.query?.pages;
+    if (!pages) return '[WIKI ERROR] No pages in response';
+    const page = Object.values(pages)[0];
+    if (!page || !page.extract) return '[WIKI ERROR] No extract for: ' + title;
+
+    return formatWikiHRZN({ title: page.title, extract: page.extract }, query);
+  } catch(e) { return '[WIKI ERROR] ' + e.message; }
+}
+
+function formatWikiHRZN(d, query) {
+  const sentences = (d.extract || '').split(/(?<=[.!?])\s+/);
+  const excerpt = sentences.slice(0, 3).join(' ').trim();
+
+  // Light redaction pass
+  let processed = excerpt;
+  ['was born','died in','served as','appointed by','known for','became the'].forEach(t => {
+    if (Math.random() < 0.35) processed = processed.replace(new RegExp(t, 'i'), '[REDACTED]');
+  });
+
+  const SEP = '\u2501'.repeat(38);
+  return [
+    '[WIKI CROSS-REFERENCE // PUBLIC RECORD]',
+    SEP,
+    'QUERY:   ' + query.toUpperCase(),
+    'MATCH:   ' + d.title.toUpperCase(),
+    '',
+    processed,
+    '',
+    'SOURCE:  PUBLIC RECORD \u2014 UNCLASSIFIED',
+    'NOTE:    Cross-reference HORIZON ARCHIVE for depth.',
+    SEP,
+    '[Ξ END CROSS-REFERENCE]',
+  ].join('\n');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BBS MAIN MENU SYSTEM
+// ═══════════════════════════════════════════════════════════════
+function makeBar(pct, width) {
+  width = width || 10;
+  const filled = Math.round((pct / 100) * width);
+  return '[' + '▓'.repeat(filled) + '░'.repeat(width - filled) + ']';
+}
+
+function showBBSMenu() {
+  bbsMode = true;
+  terminal.classList.remove('login-mode');
+  output.innerHTML = '';
+  const now = new Date();
+  const localTime = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  const courtTime = new Date(now.getTime() - 7000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  const mins = (Date.now() - sessionStart) / 60000;
+  const tapePct = Math.max(20, Math.round(64 - mins * 0.8));
+  const h = now.getHours();
+  const greeting = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  const uname = state.username ? state.username.charAt(0).toUpperCase() + state.username.slice(1) : 'Operator';
+
+  // ── Live data strings ───────────────────────────────────────
+  const wxStr = liveWeather
+    ? liveWeather.temp + '\u00b0F  ' + liveWeather.condition + '  WIND ' + liveWeather.wind + 'mph  HUM ' + liveWeather.humidity + '%'
+    : '[NO SIGNAL — ROCK UNRESPONSIVE]';
+
+  const outsiderStr = liveGeo
+    ? (liveGeo.isVpn
+        ? 'ELEVATED  [MASKED: ' + liveGeo.org.slice(0,24) + ']'
+        : 'LOW  [' + [liveGeo.city, liveGeo.region].filter(Boolean).join(', ') + ']')
+    : 'UNKNOWN';
+
+  const btcStr = liveCrypto['NIX']
+    ? 'LIVE  [BTC $' + Math.round(liveCrypto['NIX'].usd).toLocaleString() + '  ETH $' + Math.round(liveCrypto['GLMR'] ? liveCrypto['GLMR'].usd : 0).toLocaleString() + ']'
+    : 'STANDBY';
+
+  const wireStr = liveNews.length > 0
+    ? 'LIVE  [' + liveNews.length + ' DISPATCHES LOADED]'
+    : 'STANDBY';
+
+  const lines = [
+    '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550',
+    '  HRZN CIVIC INFORMATION SYSTEM',
+    '  County Operations Console v2.7.4',
+    '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550',
+    '',
+    '  ' + greeting + ', ' + uname + '.',
+    '',
+    '  CIVIC STATUS',
+    '  \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+    '  Town Stability:    91%  ' + makeBar(91) + '   NOMINAL',
+    '  Rumor Pressure:    18%  ' + makeBar(18) + '   MANAGEABLE',
+    '  Outsider Risk:     ' + outsiderStr,
+    '  Moon Phase:        ' + getMoonPhase(),
+    '  Barney Protocol:   ARMED / UNSUPERVISED',
+    '',
+    '  SYSTEM STATUS',
+    '  \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+    '  Las Vegas Weather: ' + wxStr,
+    '  Hughes Signal:     DEGRADED',
+    '  Ford Network:      DORMANT',
+    '  Tape Integrity:    ' + tapePct + '%  ' + makeBar(tapePct),
+    '  Wire Room:         ' + wireStr,
+    '  HRZN Desk:         ' + btcStr,
+    '  Vault Seal:        INTACT',
+    '  Signal 3301:       QUIET',
+    '',
+    '  SESSION',
+    '  \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+    '  Opened:   ' + localTime + '  [LOCAL]',
+    '            ' + courtTime + '  [COURTHOUSE]',
+    '',
+    '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550',
+    '',
+    '  [1] Archive          [6] Caseboard',
+    '  [2] Wire Room        [7] Uplink',
+    '  [3] Switchboard      [8] Tape Repair',
+    '  [4] HRZN Desk        [9] HRZN Hidden Layer',
+    '  [5] Microfilm',
+    '',
+    '  [H] Help   [M] Main Menu   [L] Logout',
+    '',
+    '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550',
+    '',
+  ];
+
+  lines.forEach(l => printLine(esc(l), '', true));
+  showPrompt('COMMAND >');
+}
+
+function returnToBBS() {
+  setTimeout(() => showBBSMenu(), 200);
+}
+
+function handleBBSCommand(cmd) {
+  const lower = cmd.trim().toLowerCase();
+  printLine(esc('> ' + cmd), '', true);
+
+  if (lower === '1') {
+    bbsMode = false;
+    printLine('[ARCHIVE — filesystem loaded]', 'signal-bleed', true);
+    setTimeout(() => {
+      virtualPath = '/';
+      printLine(esc('Directory: /\n' + (VFS['/'] || []).join('  ')), '', true);
+      printLine('', '', true);
+      printLine('Commands: ls  cd [dir]  cat [file]  pwd', 'signal-bleed', true);
+      printLine('Type M to return to main menu.', 'signal-bleed', true);
+      showPrompt('/>');
+    }, 400);
+    return;
+  }
+  if (lower === '2') { bbsMode = false; enterWireMode(); return; }
+  if (lower === '3') { bbsMode = false; enterSwitchMode(); return; }
+  if (lower === '4') { bbsMode = false; enterDeskMode(); return; }
+  if (lower === '5') { bbsMode = false; enterMicroMode(); return; }
+  if (lower === '6') {
+    bbsMode = false;
+    printText(renderCaseboard());
+    printLine('', '', true);
+    printLine('Type M to return to main menu.', 'signal-bleed', true);
+    showPrompt('/>');
+    return;
+  }
+  if (lower === '7') { bbsMode = false; enterHHMode(); return; }
+  if (lower === '8') { bbsMode = false; enterTapeRepairMode(); return; }
+  if (lower === '9') {
+    bbsMode = false;
+    printLine('[ACCESSING RESTRICTED LAYER...]', 'signal-bleed', true);
+    triggerFlicker(3);
+    setTimeout(() => enterOperatorMode(), 600);
+    return;
+  }
+  if (lower === 'h' || lower === 'help') {
+    const helpLines = [
+      '',
+      '  HRZN CIVIC INFORMATION SYSTEM — HELP',
+      '  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      '  [1] Archive       File system. ls / cd / cat.',
+      '  [2] Wire Room     Live intelligence feed.',
+      '  [3] Switchboard   Rotary operator interface.',
+      '  [4] HRZN Desk     Market instruments and tape.',
+      '  [5] Microfilm     Archive reel viewer.',
+      '  [6] Caseboard     Session discovery map.',
+      '  [7] Uplink        HH consciousness connection.',
+      '  [8] Tape Repair   Nixon 18.5 min gap repair.',
+      '  [9] Hidden Layer  Restricted. Operator access.',
+      '  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      '  [M] Return to this menu from any subsystem.',
+      '  [L] Logout and terminate session.',
+      '',
+    ];
+    helpLines.forEach(l => printLine(esc(l), '', true));
+    showPrompt('COMMAND >');
+    return;
+  }
+  if (lower === 'm' || lower === 'menu') { showBBSMenu(); return; }
+  if (lower === 'l' || lower === 'logout') {
+    printLine('Logging out...', '', true);
+    printLine('Session terminated.', '', true);
+    setTimeout(() => location.reload(), 900);
+    return;
+  }
+
+  // Pass-through commands that work from anywhere
+  if (lower === 'lookup' || lower.startsWith('lookup ')) {
+    const name = lower.startsWith('lookup ') ? lower.slice(7).trim() : '';
+    if (!name) { printLine('Usage: lookup [name]', 'signal-bleed', true); showPrompt('COMMAND >'); return; }
+    printLine('[CROSS-REFERENCING ARCHIVE...]', 'signal-bleed', true);
+    wikiLookup(name).then(result => {
+      if (result && result.startsWith('[WIKI')) {
+        // Error string — show it, then fall back to local data
+        printLine(esc(result), 'signal-bleed', true);
+        if (FIGURES[name]) { printLine('<strong>'+esc(name.toUpperCase())+'</strong> — LOCAL FILE:'); printLine(esc(FIGURES[name])); }
+      } else if (result) {
+        printText(result);
+      } else if (FIGURES[name]) {
+        printLine('<strong>'+esc(name.toUpperCase())+'</strong> — INTELLIGENCE FILE:'); printLine(esc(FIGURES[name]));
+      } else {
+        printLine(esc('[NO RECORD FOUND: '+name.toUpperCase()+']'), 'signal-bleed', true);
+      }
+      showPrompt('COMMAND >');
+    });
+    return;
+  }
+
+  printLine(esc('Command not recognized. Select [1]-[9], [H] Help, or [L] Logout.'), 'signal-bleed', true);
+  showPrompt('COMMAND >');
+}
+
+// ═══════════════════════════════════════════════════════════════
 //  BOOT
 // ═══════════════════════════════════════════════════════════════
 function boot() {
+  initLiveData(); // fire-and-forget — loads in background during boot animation
   startMatrixRain();
   let blink = 0;
   const iv = setInterval(() => {
@@ -2067,6 +2419,7 @@ function runBootLines() {
 }
 function showLoginBanner() {
   output.innerHTML = '';
+  terminal.classList.add('login-mode');
   printBannerAnimated(BANNER, () => {
     const sub = document.createElement('div');
     sub.className = 'ascii-center';
@@ -2099,7 +2452,12 @@ function doAccessGranted() {
     clearInterval(anim); dec.textContent='DECRYPTION COMPLETE.';
     const keys=['─────────────────────────────────────','KEY GRANTED: R-57X-004-SCARLET-13F','NODE_ID:     009-REDROCK-ΔΩ3','SIG_AUTH:    VGhlIHJvYWQgZW5kcyBoZXJlLg==','VAULT STATUS: 1 OF 3 KEYS UNLOCKED','[REDACTED] KEYS REMAIN ENCRYPTED','─────────────────────────────────────'];
     let ki=0;
-    function pk() { if(ki>=keys.length){ state.phase='terminal'; startSignalBleed(); startHHAmbient(); startAmbientFlicker(); startLineGlitch(); showPrompt('/>'); return; } printLine(esc(keys[ki++]),'',true); setTimeout(pk,310); }
+    function pk() { if(ki>=keys.length){ state.phase='terminal'; startSignalBleed(); startHHAmbient(); startAmbientFlicker(); startLineGlitch();
+      // Refresh live data periodically
+      setInterval(fetchCryptoPrices, 60000);
+      setInterval(fetchNews, 300000);
+      setInterval(fetchLasVegasWeather, 600000);
+      showBBSMenu(); return; } printLine(esc(keys[ki++]),'',true); setTimeout(pk,310); }
     pk();
   },2500);
 }
@@ -2245,20 +2603,36 @@ function handleCommand(cmd) {
     showPrompt(currentPrompt()); return;
   }
 
-  // ── ARCHIVE / LOOKUP ───────────────────────────────────────
+// ── ARCHIVE / LOOKUP ───────────────────────────────────────
   if (lower==='archive'){
     printLine('<pre>[ARCHIVE INTERFACE]\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n1. Horizon Records\n2. Redacted Files\n3. Media Pool\n4. Historical Figures DB\n5. Ford Network Archive\n6. Latta Connection\n\nType: lookup [name]  for figures DB\nType: cd [ford|latta|wabash|lincoln]  to explore archives\n\nKnown entries: ford, stanton, hughes, latta, osborne,\n  stambaugh, lincoln, booth, whitmore, bonelatta,\n  tesla, parsons, hoover, nixon, reagan, bacon, dee</pre>');
     showPrompt(currentPrompt()); return;
   }
-  if (lower.startsWith('lookup ')){
-    const name=lower.slice(7).trim();
-    if(FIGURES[name]){printLine('<strong>'+esc(name.toUpperCase())+'</strong> — INTELLIGENCE FILE:');printLine(esc(FIGURES[name]));}
-    else{printLine(esc('No records found for \''+name+'\'.\nKnown entries: '+Object.keys(FIGURES).join(', ')));}
-    showPrompt(currentPrompt()); return;
+  if (lower === 'lookup' || lower.startsWith('lookup ')) {
+    const name = lower.startsWith('lookup ') ? lower.slice(7).trim() : '';
+    if (!name) { printLine('Usage: lookup [name]  — searches archive and Wikipedia.', 'signal-bleed', true); showPrompt(currentPrompt()); return; }
+    clearPrompt();
+    printLine('[CROSS-REFERENCING ARCHIVE...]', 'signal-bleed', true);
+    wikiLookup(name).then(result => {
+      if (result && result.startsWith('[WIKI')) {
+        printLine(esc(result), 'signal-bleed', true);
+        if (FIGURES[name]) { printLine('<strong>'+esc(name.toUpperCase())+'</strong> — LOCAL FILE:'); printLine(esc(FIGURES[name])); }
+      } else if (result) {
+        printText(result);
+      } else if (FIGURES[name]) {
+        printLine('<strong>'+esc(name.toUpperCase())+'</strong> — INTELLIGENCE FILE:');
+        printLine(esc(FIGURES[name]));
+      } else {
+        printLine(esc('[NO RECORD FOUND: '+name.toUpperCase()+']\nKnown local entries: '+Object.keys(FIGURES).join(', ')));
+      }
+      showPrompt(currentPrompt());
+    });
+    return;
   }
 
   // ── UTILITIES ──────────────────────────────────────────────
   if(lower==='clear'){output.innerHTML='';showPrompt(currentPrompt());return;}
+  if(lower==='m'||lower==='menu'||lower==='main menu'){showBBSMenu();return;}
   if(lower==='whoami'){printLine('CURRENT USER: OP');showPrompt(currentPrompt());return;}
   if(lower==='date'){printLine(esc('SYSTEM DATE: '+new Date().toDateString()+' '+new Date().toLocaleTimeString()));showPrompt(currentPrompt());return;}
   if(lower==='version'){printLine('HORIZON TERMINAL v2.1 // HH-MAINFRAME BUILD');showPrompt(currentPrompt());return;}
@@ -2876,7 +3250,7 @@ function handleHHCommand(cmd) {
       printLine('line closed.', 'hughes-haunt');
       setTimeout(() => printLine('not clean.', 'hughes-haunt'), 300);
       setTimeout(() => printLine('just closed.', 'hughes-haunt'), 600);
-      setTimeout(() => showPrompt(currentPrompt()), 1000);
+      setTimeout(() => returnToBBS(), 1000);
     });
     return;
   }
@@ -3023,7 +3397,14 @@ const DESK_HEAT = [
 let deskValues = {};
 function initDeskValues() {
   Object.keys(DESK_INSTRUMENTS).forEach(sym => {
-    deskValues[sym] = DESK_INSTRUMENTS[sym].base + (Math.random() - 0.5) * 4;
+    const inst = DESK_INSTRUMENTS[sym];
+    if (liveCrypto[sym] && liveCrypto[sym].change24h !== undefined) {
+      // Real 24h % change applied to fictional base — market volatility is real, values stay in-fiction
+      const drift = liveCrypto[sym].change24h / 100;
+      deskValues[sym] = Math.max(0.1, inst.base * (1 + drift) + (Math.random() - 0.5) * inst.vol);
+    } else {
+      deskValues[sym] = inst.base + (Math.random() - 0.5) * 4;
+    }
   });
 }
 
@@ -3067,12 +3448,14 @@ function buildDeskHTML() {
   const sessionMins = Math.round((Date.now() - sessionStart) / 60000);
 
   // ── HEADER ────────────────────────────────────────────────────
+  const btcLive = liveCrypto['NIX'] ? ' BTC $' + Math.round(liveCrypto['NIX'].usd).toLocaleString() + '  ETH $' + Math.round(liveCrypto['GLMR']?.usd||0).toLocaleString() + '  SOL $' + Math.round(liveCrypto['MOON']?.usd||0) : '';
   const header = '<div style="color:#554400;border-bottom:1px solid #332200;padding-bottom:4px;margin-bottom:8px;display:flex;gap:16px;flex-wrap:wrap;">'
     + '<span style="color:#ffaa00;font-weight:bold;letter-spacing:2px">HRZN DESK</span>'
     + '<span>' + ts + '</span>'
     + '<span class="live-indicator" style="color:#ff4400">[LIVE]</span>'
     + '<span style="color:#443300">session: ' + sessionMins + 'min</span>'
     + '<span style="color:#443300">tape: ' + tapeBuffer.length + ' events</span>'
+    + (btcLive ? '<span style="color:#886600;font-size:10px">' + esc(btcLive) + '</span>' : '')
     + '</div>';
 
   // ── MAIN TICKER ────────────────────────────────────────────────
@@ -3273,7 +3656,7 @@ function exitDeskMode() {
       if (mc2) mc2.style.display = '';
     }
     printLine('desk closed.', '', true);
-    showPrompt(currentPrompt());
+    returnToBBS();
   });
 }
 
@@ -3418,7 +3801,18 @@ function startWireFeed(type) {
     if (!wireMode) return;
     const now = new Date();
     const ts = now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    const evt = events[Math.floor(Math.random() * events.length)];
+    let evt;
+    if (type === 'news') {
+      // News-only feed — all real headlines
+      evt = liveNews.length > 0
+        ? liveNews[Math.floor(Math.random() * liveNews.length)]
+        : '[GLOBAL WIRE] NO SIGNAL — FEED UNREACHABLE';
+    } else if (type === 'default' && liveNews.length > 0 && Math.random() < 0.65) {
+      // Default feed — 65% real headlines, 35% fictional HRZN events
+      evt = '[GLOBAL WIRE] ' + liveNews[Math.floor(Math.random() * liveNews.length)];
+    } else {
+      evt = events[Math.floor(Math.random() * events.length)];
+    }
     printLine(esc(ts + '  ' + evt), 'uplink-line');
     capOutput();
   }
@@ -3432,11 +3826,21 @@ function handleWireCommand(cmd) {
 
   if (lower === 'quit' || lower === 'exit' || lower === 'exit wire') {
     wireMode = false; clearInterval(wireIv); wireIv = null;
-    printLine('wire closed.', '', true); showPrompt(currentPrompt()); return;
+    printLine('wire closed.', '', true); returnToBBS(); return;
+  }
+  if (lower === 'wire news' || lower === 'news') {
+    if (liveNews.length === 0) {
+      printLine('no live feed loaded. fetching...', 'signal-bleed', true);
+      fetchNews().then(() => { startWireFeed('news'); showPrompt('[wire] >'); });
+    } else {
+      startWireFeed('news');
+    }
+    printLine('switching to: GLOBAL WIRE // LIVE HEADLINES', 'uplink-line', true);
+    showPrompt('[wire] >'); return;
   }
   const topic = lower.replace('wire ', '').trim();
   if (WIRE_FEEDS[topic]) { startWireFeed(topic); printLine('switching to: ' + topic, '', true); }
-  else printLine('unknown feed. options: vegas nixon combine redrock breaking archive', '', true);
+  else printLine('unknown feed. options: news vegas nixon wabash redrock breaking archive', '', true);
   showPrompt('[wire] >');
 }
 
@@ -3469,7 +3873,7 @@ function handleSwitchCommand(cmd) {
   const lower = cmd.trim().toLowerCase();
   printLine(esc('> ' + cmd), '', true);
   if (lower === 'hangup' || lower === 'exit' || lower === 'quit') {
-    switchMode = false; printLine('line dropped.', '', true); showPrompt(currentPrompt()); return;
+    switchMode = false; printLine('line dropped.', '', true); returnToBBS(); return;
   }
   const num = lower.replace('dial ', '').trim();
   const resp = SWITCH_LINES[num];
@@ -3559,7 +3963,7 @@ function handleMicroCommand(cmd) {
   const lower = cmd.trim().toLowerCase();
   printLine(esc('> ' + cmd), '', true);
   if (lower === 'exit microfilm' || lower === 'exit' || lower === 'quit') {
-    microMode = false; printLine('reader off.', '', true); showPrompt(currentPrompt()); return;
+    microMode = false; printLine('reader off.', '', true); returnToBBS(); return;
   }
   if (lower === 'next') { microFrame = (microFrame + 1) % MICRO_FRAMES.length; renderMicroFrame(); }
   else if (lower === 'prev') { microFrame = (microFrame - 1 + MICRO_FRAMES.length) % MICRO_FRAMES.length; renderMicroFrame(); }
@@ -3669,7 +4073,7 @@ function handleTapeCommand(cmd) {
   const lower = cmd.trim().toLowerCase();
   printLine(esc('> ' + cmd), '', true);
   if (lower === 'eject' || lower === 'exit' || lower === 'quit') {
-    tapeRepairMode = false; printLine('tape ejected.', '', true); showPrompt(currentPrompt()); return;
+    tapeRepairMode = false; printLine('tape ejected.', '', true); returnToBBS(); return;
   }
   if (lower === 'repair') {
     if (tapeRepaired < TAPE_FRAGMENTS.length - 4) {
@@ -3739,6 +4143,7 @@ inputEl.addEventListener('keydown', e => {
     else if (switchMode) handleSwitchCommand(cmd);
     else if (microMode) handleMicroCommand(cmd);
     else if (tapeRepairMode) handleTapeCommand(cmd);
+    else if (bbsMode) handleBBSCommand(cmd);
     else if (state.phase==='terminal') handleCommand(cmd);
   }
   else if (e.key === 'ArrowUp') {
