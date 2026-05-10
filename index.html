@@ -58,6 +58,16 @@
       align-items: center; text-align: center; margin: 1rem 0; line-height: 1.4;
     }
     .ascii-center pre { margin: 0; }
+
+    /* Center menu screens without centering the terminal text itself.
+       Each menu line keeps left-aligned monospace columns inside a centered block. */
+    .terminal-line.menu-line {
+      width: min(var(--menu-width, 72ch), calc(100vw - 44px));
+      max-width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: left;
+    }
     /* Operator Mode */
     #terminal.operator,
     #terminal.operator #output,
@@ -530,85 +540,6 @@
       z-index: 0 !important;
     }
 
-  
-
-    /* ── WDLS center alignment patch ──────────────────────────
-       Centers visible terminal output, prompt/input, Mayberry,
-       HH mode, and desk/dashboard content without changing logic.
-    */
-    #output,
-    .terminal-line,
-    #input-line,
-    #prompt-label,
-    #typed,
-    #desk-overlay,
-    #flicker-center,
-    .ascii-center,
-    .hughes-haunt,
-    .guardian-msg,
-    .signal-bleed,
-    .uplink-line,
-    .hh-type,
-    .load-bar {
-      text-align: center !important;
-    }
-
-    #output {
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .terminal-line {
-      width: 100%;
-      margin-left: auto !important;
-      margin-right: auto !important;
-    }
-
-    #input-line {
-      padding-left: 22px !important;
-      padding-right: 22px !important;
-      border-left: none !important;
-    }
-
-    #terminal.desk-mode #input-line {
-      left: 0;
-      right: 0;
-      text-align: center !important;
-    }
-
-    #desk-overlay table,
-    #output table,
-    .terminal-line table {
-      margin-left: auto !important;
-      margin-right: auto !important;
-    }
-
-    #desk-overlay th,
-    #desk-overlay td,
-    #output th,
-    #output td,
-    .terminal-line th,
-    .terminal-line td {
-      text-align: center !important;
-    }
-
-    #desk-overlay pre,
-    #output pre,
-    .terminal-line pre,
-    .ascii-center pre {
-      text-align: center !important;
-      margin-left: auto !important;
-      margin-right: auto !important;
-    }
-
-    @media (max-width: 600px) {
-      #input-line {
-        padding-left: 10px !important;
-        padding-right: 10px !important;
-      }
-    }
-
   </style>
 </head>
 <body>
@@ -679,15 +610,24 @@ window.masked     = false;
 const pQueue = [];
 let pBusy    = false;
 let promptPending = null;
+let menuLineWidth = null;
 
 function printLine(html, cls, instant) {
   const lineClass = cls || '';
   if (lineClass.includes('hughes-haunt') || lineClass.includes('hh-type')) hhSpeakBoost();
-  pQueue.push({ html, cls: lineClass, instant: !!instant });
+  const menuWidth = lineClass.includes('menu-line') ? menuLineWidth : null;
+  pQueue.push({ html, cls: lineClass, instant: !!instant, menuWidth });
   if (!pBusy) drainPQueue();
 }
 function printText(text, instant) {
   String(text).split('\n').forEach(l => printLine(esc(l), '', instant));
+}
+function printMenuLines(lines, cls) {
+  const arr = Array.isArray(lines) ? lines : String(lines).split('\n');
+  const prevWidth = menuLineWidth;
+  menuLineWidth = Math.max(1, ...arr.map(l => String(l).length));
+  arr.forEach(l => printLine(esc(l), cls ? 'menu-line ' + cls : 'menu-line', true));
+  menuLineWidth = prevWidth;
 }
 function drainPQueue() {
   if (pQueue.length === 0) {
@@ -699,9 +639,10 @@ function drainPQueue() {
     return;
   }
   pBusy = true;
-  const { html, cls, instant } = pQueue.shift();
+  const { html, cls, instant, menuWidth } = pQueue.shift();
   const d = document.createElement('div');
   d.className = 'terminal-line' + (cls ? ' ' + cls : '');
+  if (menuWidth) d.style.setProperty('--menu-width', menuWidth + 'ch');
   output.appendChild(d);
   scrollBot();
   if (output.querySelectorAll('.terminal-line').length > 700) capOutput();
@@ -2803,7 +2744,7 @@ function showBBSMenu() {
     '',
   ];
 
-  lines.forEach(l => printLine(esc(l), '', true));
+  printMenuLines(lines);
   showPrompt('COMMAND >');
 }
 
@@ -2868,7 +2809,7 @@ function handleBBSCommand(cmd) {
       '  [L] Logout and terminate session.',
       '',
     ];
-    helpLines.forEach(l => printLine(esc(l), '', true));
+    printMenuLines(helpLines);
     showPrompt('COMMAND >');
     return;
   }
