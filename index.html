@@ -533,7 +533,7 @@
 
 <div id="terminal">
   <div id="hh-uplink-bg" aria-hidden="true">
-    <img id="hh-uplink-face" src="assets/hh-uplink.png" alt="">
+    <img id="hh-uplink-face" src="assets/audio/hh-uplink.png" alt="">
     <div class="hh-uplink-scanlines"></div>
     <div class="hh-uplink-noise"></div>
     <div class="hh-uplink-vignette"></div>
@@ -3819,6 +3819,10 @@ function setEffects(on) {
 // ── HH Uplink visual apparition ───────────────────────────────
 let hhGlitchIv = null;
 const HH_UPLINK_IMAGE_CANDIDATES = [
+  'assets/audio/hh-uplink.png',
+  './assets/audio/hh-uplink.png',
+  '/assets/audio/hh-uplink.png',
+  '/terminal/assets/audio/hh-uplink.png',
   'assets/hh-uplink.png',
   './assets/hh-uplink.png',
   '/assets/hh-uplink.png',
@@ -4142,9 +4146,21 @@ function enterHHMode() {
   hhTurnCount = 0; hhLastKeyword = null; hhMood = 'guarded';
   clearPrompt();
   output.innerHTML = '';
-  stopMatrixRain();
-  const mc2 = document.getElementById('matrix-canvas-2');
-  if (mc2) mc2.style.display = 'none';
+
+  // Keep the Matrix rain alive during HH Uplink.
+  // HH is now an apparition layered over the existing terminal field,
+  // not a separate blackout screen.
+  if (effectsOn) {
+    startMatrixRain();
+    const mc = document.getElementById('matrix-canvas');
+    if (mc) {
+      mc.style.display = '';
+      mc.style.opacity = '0.28';
+    }
+    const mc2 = document.getElementById('matrix-canvas-2');
+    if (mc2) mc2.style.display = '';
+  }
+
   terminal.classList.add('hh-mode');
   requestAnimationFrame(() => enterHHVisual());
   const lines = [
