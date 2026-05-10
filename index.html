@@ -2654,6 +2654,13 @@ function makeBar(pct, width) {
   return '[' + '▓'.repeat(filled) + '░'.repeat(width - filled) + ']';
 }
 
+function centerText(text, width) {
+  width = width || 58;
+  const s = String(text);
+  const pad = Math.max(0, Math.floor((width - s.length) / 2));
+  return ' '.repeat(pad) + s;
+}
+
 function showBBSMenu() {
   bbsMode = true;
   terminal.classList.remove('login-mode');
@@ -2692,15 +2699,15 @@ function showBBSMenu() {
 
   const lines = [
     '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550',
-    '  HRZN CIVIC INFORMATION SYSTEM',
-    '  WABASH DATA LINK SYSTEMS',
-    '  CIVIC TELEMETRY RELAY NODE',
+    centerText('HRZN CIVIC INFORMATION SYSTEM'),
+    centerText('WABASH DATA LINK SYSTEMS'),
+    centerText('CIVIC TELEMETRY RELAY NODE'),
     '',
-    '  EST. 1882 // COURTHOUSE ELECTRIC LIGHT CIRCUIT',
-    '  REBUILT FROM FIRE RECORDS // 1870 INDEX DAMAGE',
-    '  MUNICIPAL SIGNAL STACK ACTIVE',
+    centerText('EST. 1882 // COURTHOUSE ELECTRIC LIGHT CIRCUIT'),
+    centerText('REBUILT FROM FIRE RECORDS // 1870 INDEX DAMAGE'),
+    centerText('MUNICIPAL SIGNAL STACK ACTIVE'),
     '',
-    '  County Operations Console v2.7.4 // WDLS-CIVIC-NODE',
+    centerText('County Operations Console v2.7.4 // WDLS-CIVIC-NODE'),
     '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550',
     '',
     '  ' + greeting + ', ' + uname + '.',
