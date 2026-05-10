@@ -3026,10 +3026,10 @@ function toggleMayberry() {
     if (!mayberryTheme) {
       mayberryTheme = new Audio('./assets/audio/theme.mp3');
       mayberryTheme.loop = true;
-      mayberryTheme.volume = 0.5;
+      mayberryTheme.volume = 0.375;
     }
     mayberryTheme.currentTime = 0;
-    mayberryTheme.play().catch((e) => { console.error('MAYBERRY AUDIO ERROR:', e); });
+    mayberryTheme.play().catch((e) => { /* autoplay blocked */ });
     const iframe = document.getElementById('mayberry-iframe');
     iframe.src = 'https://www.youtube-nocookie.com/embed/MANrEcniveE?autoplay=1&rel=0&modestbranding=1&mute=1';
     document.getElementById('mayberry-player').classList.add('visible');
@@ -3051,7 +3051,7 @@ function toggleMayberry() {
         } else {
           mayberryTheme.pause();
           mayberryTheme.currentTime = 0;
-          mayberryTheme.volume = 0.5;
+          mayberryTheme.volume = 0.375;
           clearInterval(fadeOut);
         }
       }, 80);
