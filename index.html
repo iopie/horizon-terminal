@@ -3029,7 +3029,7 @@ function toggleMayberry() {
       mayberryTheme.volume = 0.5;
     }
     mayberryTheme.currentTime = 0;
-    mayberryTheme.play().catch(() => {});
+    mayberryTheme.play().catch((e) => { console.error('MAYBERRY AUDIO ERROR:', e); });
     const iframe = document.getElementById('mayberry-iframe');
     iframe.src = 'https://www.youtube-nocookie.com/embed/MANrEcniveE?autoplay=1&rel=0&modestbranding=1&mute=1';
     document.getElementById('mayberry-player').classList.add('visible');
