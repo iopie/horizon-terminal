@@ -530,6 +530,85 @@
       z-index: 0 !important;
     }
 
+  
+
+    /* ── WDLS center alignment patch ──────────────────────────
+       Centers visible terminal output, prompt/input, Mayberry,
+       HH mode, and desk/dashboard content without changing logic.
+    */
+    #output,
+    .terminal-line,
+    #input-line,
+    #prompt-label,
+    #typed,
+    #desk-overlay,
+    #flicker-center,
+    .ascii-center,
+    .hughes-haunt,
+    .guardian-msg,
+    .signal-bleed,
+    .uplink-line,
+    .hh-type,
+    .load-bar {
+      text-align: center !important;
+    }
+
+    #output {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .terminal-line {
+      width: 100%;
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
+
+    #input-line {
+      padding-left: 22px !important;
+      padding-right: 22px !important;
+      border-left: none !important;
+    }
+
+    #terminal.desk-mode #input-line {
+      left: 0;
+      right: 0;
+      text-align: center !important;
+    }
+
+    #desk-overlay table,
+    #output table,
+    .terminal-line table {
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
+
+    #desk-overlay th,
+    #desk-overlay td,
+    #output th,
+    #output td,
+    .terminal-line th,
+    .terminal-line td {
+      text-align: center !important;
+    }
+
+    #desk-overlay pre,
+    #output pre,
+    .terminal-line pre,
+    .ascii-center pre {
+      text-align: center !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
+
+    @media (max-width: 600px) {
+      #input-line {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+      }
+    }
+
   </style>
 </head>
 <body>
