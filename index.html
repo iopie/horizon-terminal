@@ -480,6 +480,43 @@
         opacity: 0.26;
       }
     }
+
+    /* ── HH visual hardening patch ───────────────────────────── */
+    #terminal.hh-mode::before {
+      z-index: 2;
+    }
+    #terminal.hh-mode #hh-uplink-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 4;
+      display: block;
+      background: radial-gradient(ellipse at center, rgba(0,255,0,0.035) 0%, transparent 58%, rgba(0,0,0,0.28) 100%);
+    }
+    #terminal.hh-mode #hh-uplink-bg.active {
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+    #terminal.hh-mode #hh-uplink-face {
+      opacity: 0.46;
+    }
+    #terminal.hh-mode #output,
+    #terminal.hh-mode #input-line {
+      position: relative;
+      z-index: 7;
+    }
+    #hh-uplink-bg.no-image::before {
+      content: 'HH VISUAL CARRIER // IMAGE NOT FOUND';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: rgba(0,255,0,0.32);
+      font-size: 15px;
+      letter-spacing: 0.18em;
+      text-shadow: 0 0 18px rgba(0,255,0,0.35);
+      white-space: nowrap;
+    }
+
   </style>
 </head>
 <body>
@@ -496,7 +533,7 @@
 
 <div id="terminal">
   <div id="hh-uplink-bg" aria-hidden="true">
-    <img id="hh-uplink-face" src="assets/hh-uplink.png" alt="" onerror="this.onerror=null; this.src='/assets/hh-uplink.png';">
+    <img id="hh-uplink-face" src="assets/hh-uplink.png" alt="">
     <div class="hh-uplink-scanlines"></div>
     <div class="hh-uplink-noise"></div>
     <div class="hh-uplink-vignette"></div>
@@ -3781,9 +3818,51 @@ function setEffects(on) {
 
 // ── HH Uplink visual apparition ───────────────────────────────
 let hhGlitchIv = null;
+const HH_UPLINK_IMAGE_CANDIDATES = [
+  'assets/hh-uplink.png',
+  './assets/hh-uplink.png',
+  '/assets/hh-uplink.png',
+  '/terminal/assets/hh-uplink.png',
+  'hh-uplink.png'
+];
+let hhUplinkImageResolved = false;
+let hhUplinkImageResolving = false;
+
+function resolveHHUplinkImage() {
+  if (!hhUplinkFace || hhUplinkImageResolved || hhUplinkImageResolving) return;
+  hhUplinkImageResolving = true;
+  if (hhUplinkBg) hhUplinkBg.classList.remove('no-image');
+
+  let i = 0;
+  function tryNext() {
+    if (i >= HH_UPLINK_IMAGE_CANDIDATES.length) {
+      hhUplinkImageResolving = false;
+      if (hhUplinkBg) hhUplinkBg.classList.add('no-image');
+      console.warn('[HH UPLINK] hh-uplink.png not found. Tried:', HH_UPLINK_IMAGE_CANDIDATES);
+      return;
+    }
+
+    const src = HH_UPLINK_IMAGE_CANDIDATES[i++];
+    const probe = new Image();
+    probe.onload = () => {
+      hhUplinkFace.src = src;
+      hhUplinkFace.dataset.loaded = 'true';
+      hhUplinkImageResolved = true;
+      hhUplinkImageResolving = false;
+      if (hhUplinkBg) hhUplinkBg.classList.remove('no-image');
+      console.log('[HH UPLINK] visual carrier loaded:', src);
+    };
+    probe.onerror = tryNext;
+    probe.src = src;
+  }
+
+  tryNext();
+}
 
 function enterHHVisual() {
   if (!hhUplinkBg) return;
+  resolveHHUplinkImage();
+  hhUplinkBg.style.display = 'block';
   hhUplinkBg.classList.add('active');
   terminal.classList.add('hh-visual-active');
   if (hhGlitchIv) clearInterval(hhGlitchIv);
@@ -3798,7 +3877,12 @@ function enterHHVisual() {
 function exitHHVisual() {
   if (hhGlitchIv) { clearInterval(hhGlitchIv); hhGlitchIv = null; }
   if (hhUplinkFace) hhUplinkFace.classList.remove('speaking', 'glitching');
-  if (hhUplinkBg) hhUplinkBg.classList.remove('active');
+  if (hhUplinkBg) {
+    hhUplinkBg.classList.remove('active');
+    setTimeout(() => {
+      if (!hhMode && hhUplinkBg) hhUplinkBg.style.display = 'none';
+    }, 950);
+  }
   terminal.classList.remove('hh-visual-active');
 }
 
@@ -4062,7 +4146,7 @@ function enterHHMode() {
   const mc2 = document.getElementById('matrix-canvas-2');
   if (mc2) mc2.style.display = 'none';
   terminal.classList.add('hh-mode');
-  enterHHVisual();
+  requestAnimationFrame(() => enterHHVisual());
   const lines = [
     'carrier damaged.',
     'local instance awake.',
