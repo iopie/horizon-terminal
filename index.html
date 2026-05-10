@@ -299,6 +299,7 @@ const state      = { phase: 'booting', username: '' };
 let operatorMode = false;
 let mayberryMode = false;
 let mayberryFirst = true;
+let mayberryTheme = null;
 let inVault       = false;
 let currentVault  = 'redrock';
 let uplinkActive  = false;
@@ -2887,20 +2888,38 @@ function handleDreamCmd(lower) {
 function toggleMayberry() {
   mayberryMode=!mayberryMode;
   if(mayberryMode){
+    // Init and play theme
+    if (!mayberryTheme) {
+      mayberryTheme = new Audio('./assets/audio/theme.mp3');
+      mayberryTheme.loop = true;
+      mayberryTheme.volume = 0.5;
+    }
+    mayberryTheme.currentTime = 0;
+    mayberryTheme.play().catch(() => {}); // catch autoplay policy errors silently
     doChannelChange(() => {});
     stopMatrixRain(); document.getElementById('matrix-canvas').style.display='none';
     terminal.classList.add('mayberry-mode');
     virtualPath='/';
-    // Set video src after a tick so browser registers user gesture
-
     const overlay=document.createElement('div'); overlay.className='tv-static-overlay';
     const flash=document.createElement('div'); flash.className='mayberry-flash';
     flash.innerHTML='Welcome to Mayberry<span class="mayberry-opie">O.P.I.E.</span>';
     overlay.appendChild(flash); output.appendChild(overlay);
     setTimeout(()=>{overlay.remove();if(mayberryFirst){setTimeout(()=>{printLine('<b>@ntB:</b> Be careful, OP..');mayberryFirst=false;},700);}},3000);
   } else {
+    // Fade out theme
+    if (mayberryTheme) {
+      const fadeOut = setInterval(() => {
+        if (mayberryTheme.volume > 0.05) {
+          mayberryTheme.volume = Math.max(0, mayberryTheme.volume - 0.05);
+        } else {
+          mayberryTheme.pause();
+          mayberryTheme.currentTime = 0;
+          mayberryTheme.volume = 0.5;
+          clearInterval(fadeOut);
+        }
+      }, 80);
+    }
     terminal.classList.remove('mayberry-mode');
-
     document.getElementById('matrix-canvas').style.display='';
     document.querySelectorAll('.tv-static-overlay,.mayberry-flash').forEach(e=>e.remove());
     virtualPath='/';
