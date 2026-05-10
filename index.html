@@ -2427,6 +2427,7 @@ const BANNER = [
 //  LIVE DATA FEEDS
 // ═══════════════════════════════════════════════════════════════
 let liveWeather = null;
+let liveWabashWeather = null;
 let liveGeo     = null;
 let liveCrypto  = {};
 let liveNews    = [];
@@ -2446,6 +2447,15 @@ async function fetchLasVegasWeather() {
     const c = d.current;
     liveWeather = { temp: Math.round(c.temperature_2m), condition: wxCode(c.weather_code), wind: Math.round(c.wind_speed_10m), humidity: Math.round(c.relative_humidity_2m) };
   } catch(e) { liveWeather = null; }
+}
+async function fetchWabashWeather() {
+  try {
+    // Wabash, Indiana // old municipal node weather feed
+    const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=40.7978&longitude=-85.8205&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m&temperature_unit=fahrenheit&wind_speed_unit=mph');
+    const d = await r.json();
+    const c = d.current;
+    liveWabashWeather = { temp: Math.round(c.temperature_2m), condition: wxCode(c.weather_code), wind: Math.round(c.wind_speed_10m), humidity: Math.round(c.relative_humidity_2m) };
+  } catch(e) { liveWabashWeather = null; }
 }
 function wxCode(n) {
   if (n===0) return 'CLEAR'; if (n<=3) return 'PARTLY CLOUDY'; if (n<=9) return 'OVERCAST';
@@ -2552,7 +2562,7 @@ function getMoonPhase() {
 }
 
 async function initLiveData() {
-  await Promise.allSettled([fetchLasVegasWeather(), fetchGeoData(), fetchCryptoPrices(), fetchNews()]);
+  await Promise.allSettled([fetchLasVegasWeather(), fetchWabashWeather(), fetchGeoData(), fetchCryptoPrices(), fetchNews()]);
 }
 
 // ── Wikipedia lookup ──────────────────────────────────────────
@@ -2642,6 +2652,10 @@ function showBBSMenu() {
     ? liveWeather.temp + '\u00b0F  ' + liveWeather.condition + '  WIND ' + liveWeather.wind + 'mph  HUM ' + liveWeather.humidity + '%'
     : '[NO SIGNAL — ROCK UNRESPONSIVE]';
 
+  const wabashWxStr = liveWabashWeather
+    ? liveWabashWeather.temp + '\u00b0F  ' + liveWabashWeather.condition + '  WIND ' + liveWabashWeather.wind + 'mph  HUM ' + liveWabashWeather.humidity + '%'
+    : '[NO SIGNAL — COURTHOUSE ANTENNA QUIET]';
+
   const outsiderStr = liveGeo
     ? (liveGeo.isVpn
         ? 'ELEVATED  [MASKED: ' + liveGeo.org.slice(0,24) + ']'
@@ -2659,7 +2673,14 @@ function showBBSMenu() {
   const lines = [
     '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550',
     '  HRZN CIVIC INFORMATION SYSTEM',
-    '  County Operations Console v2.7.4',
+    '  WABASH DATA LINK SYSTEMS',
+    '  CIVIC TELEMETRY RELAY NODE',
+    '',
+    '  EST. 1882 // COURTHOUSE ELECTRIC LIGHT CIRCUIT',
+    '  REBUILT FROM FIRE RECORDS // 1870 INDEX DAMAGE',
+    '  MUNICIPAL SIGNAL STACK ACTIVE',
+    '',
+    '  County Operations Console v2.7.4 // WDLS-CIVIC-NODE',
     '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550',
     '',
     '  ' + greeting + ', ' + uname + '.',
@@ -2674,6 +2695,7 @@ function showBBSMenu() {
     '',
     '  SYSTEM STATUS',
     '  \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500',
+    '  Wabash Weather:    ' + wabashWxStr,
     '  Las Vegas Weather: ' + wxStr,
     '  Hughes Signal:     DEGRADED',
     '  Ford Network:      DORMANT',
@@ -2751,7 +2773,7 @@ function handleBBSCommand(cmd) {
   if (lower === 'h' || lower === 'help') {
     const helpLines = [
       '',
-      '  HRZN CIVIC INFORMATION SYSTEM — HELP',
+      '  WABASH DATA LINK SYSTEMS — HRZN CIVIC HELP',
       '  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
       '  [1] Archive       File system. ls / cd / cat.',
       '  [2] Wire Room     Live intelligence feed.',
@@ -2880,6 +2902,7 @@ function doAccessGranted() {
       setInterval(fetchCryptoPrices, 60000);
       setInterval(fetchNews, 300000);
       setInterval(fetchLasVegasWeather, 600000);
+      setInterval(fetchWabashWeather, 600000);
       showBBSMenu(); return; } printLine(esc(keys[ki++]),'',true); setTimeout(pk,310); }
     pk();
   },2500);
