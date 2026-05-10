@@ -5096,14 +5096,1181 @@ let deskWatchSymbol = null;
 
 
 // ── WDLS / Wabash County Desk JSON core ───────────────────────
-// Put wabash_county_desk_core.json in /data or data/ on GitHub.
-const WABASH_DESK_JSON_PATHS = [
-  'data/wabash_county_desk_core.json',
-  './data/wabash_county_desk_core.json',
-  '../data/wabash_county_desk_core.json',
-  '/data/wabash_county_desk_core.json',
-  'wabash_county_desk_core.json'
-];
+// Put wabash_county_desk_core.json in a /data folder beside this HTML.
+// If the HTML is served from WordPress but the JSON lives on GitHub, set
+// window.WDLS_DESK_JSON_URL to the raw GitHub/jsDelivr URL before this script.
+const WABASH_DESK_JSON_FILENAME = 'wabash_county_desk_core.json';
+const WABASH_DESK_JSON_PATHS = (() => {
+  const f = WABASH_DESK_JSON_FILENAME;
+  const paths = [];
+  const add = (p) => { if (p && !paths.includes(p)) paths.push(p); };
+  try { add((window.WDLS_DESK_JSON_URL || '').trim()); } catch(e) {}
+  add('data/' + f);
+  add('./data/' + f);
+  add('../data/' + f);
+  if (location && location.origin && location.origin !== 'null') {
+    add(location.origin + '/terminal/data/' + f);
+    add(location.origin + '/data/' + f);
+  }
+  add(f);
+  return paths;
+})();
+const WABASH_DESK_EMBEDDED_FALLBACK = {
+  "schema": "hrzn.wdls.county_desk_core",
+  "version": "0.1.0",
+  "generated_at": "2026-05-10",
+  "title": "WDLS County Intelligence Desk Core",
+  "short_name": "wabash_county_desk_core",
+  "coverage": {
+    "county": "Wabash County",
+    "state": "Indiana",
+    "scope": "county-wide civic/business/budget/signal dashboard",
+    "included_places": [
+      "Wabash",
+      "North Manchester",
+      "Roann",
+      "Lagro",
+      "LaFontaine",
+      "Chester Township",
+      "Liberty Township",
+      "Noble Township",
+      "Paw Paw",
+      "Pleasant Township",
+      "Waltz Township"
+    ],
+    "not_limited_to": "City of Wabash"
+  },
+  "integration": {
+    "recommended_file_name": "wabash_county_desk_core.json",
+    "load_pattern": "Fetch this JSON separately from the HH brain. HRZN Desk should read this file when entering desk/county/ledger mode.",
+    "suggested_asset_path": "assets/wabash_county_desk_core.json",
+    "separation_rule": "HH brain handles personality/lore/uplink. This file handles WDLS Desk civic data, menus, source registry, county modules, and dashboard copy."
+  },
+  "ui": {
+    "boot_header": [
+      "WABASH DATA LINK SYSTEMS",
+      "COUNTY CIVIC INTELLIGENCE DESK",
+      "",
+      "PUBLIC LEDGER ONLINE",
+      "PARCEL STACK INDEXED // BEACON FIELD LINK",
+      "BUDGET RELAY ACTIVE // DLGF / GATEWAY WATCH",
+      "TOWN NODE MAP LOADED",
+      "RADIO CARRIER 101.9 AVAILABLE",
+      "COUNTY SIGNAL INDEX NOMINAL"
+    ],
+    "main_menu": [
+      "WDLS COUNTY INTELLIGENCE INDEX",
+      "WABASH COUNTY, INDIANA",
+      "",
+      "[1] COUNTY LEDGER",
+      "[2] TAXPAYER STACK",
+      "[3] BUSINESS / EMPLOYER INDEX",
+      "[4] BUDGET RELAY",
+      "[5] TOWN SIGNALS",
+      "[6] PUBLIC NOTICE WIRE",
+      "[7] COUNTY SIGNAL / RUMOR INDEX",
+      "[8] WEATHER / ROAD / RIVER CONDITIONS",
+      "[9] RADIO RELAY 101.9",
+      "[10] ARCHIVE MODE"
+    ],
+    "center_blocks": [
+      "boot_header",
+      "main_menu",
+      "display_blocks.taxpayer_stack_notice",
+      "display_blocks.rumor_index_notice"
+    ],
+    "colors": {
+      "primary": "#ffcc44",
+      "secondary": "#00ff00",
+      "warning": "#ff6633",
+      "cool": "#00ffff"
+    },
+    "ticker_templates": [
+      {
+        "id": "budget_order",
+        "template": "DLGF BUDGET ORDER // {year} // CERTIFIED RATE STACK AVAILABLE"
+      },
+      {
+        "id": "tax_rank_pending",
+        "template": "TAXPAYER STACK // PARCEL EXTRACTION REQUIRED // DISPLAYING SEED EMPLOYER INDEX"
+      },
+      {
+        "id": "news_wire",
+        "template": "COUNTY SIGNAL WIRE // {headline}"
+      },
+      {
+        "id": "radio_carrier",
+        "template": "RADIO RELAY // 101.9 ROCKS // LOCAL CARRIER PRESENT"
+      },
+      {
+        "id": "rumor_pressure",
+        "template": "RUMOR PRESSURE // {level} // VERIFY BEFORE INDEXING AS FACT"
+      },
+      {
+        "id": "road_weather",
+        "template": "WEATHER / ROAD CONDITIONS // EXTERNAL FEED SLOT READY"
+      }
+    ]
+  },
+  "commands": {
+    "county": "Open the county intelligence menu.",
+    "ledger": "Show official county budget / tax-order source panel.",
+    "budget": "Show budget relay and county/town budget signals.",
+    "budget county": "Show Wabash County unit budget notice details.",
+    "budget districts": "List levy/tax authority districts.",
+    "taxrank": "Show taxpayer stack methodology and current placeholder ranks.",
+    "taxrank employers": "Show major-employer seed index.",
+    "employers": "Show Grow Wabash employer seed list.",
+    "towns": "Show all county town/township nodes.",
+    "town wabash": "Open Wabash Corp node.",
+    "town northmanchester": "Open North Manchester node.",
+    "town lagro": "Open Lagro node.",
+    "town roann": "Open Roann node.",
+    "town lafontaine": "Open LaFontaine node.",
+    "signals": "Open county signal index.",
+    "notices": "Show public notice wire.",
+    "rumor": "Show rumor-pressure panel with verification rules.",
+    "radio": "Open WDLS radio relay.",
+    "sources": "Show public-source registry.",
+    "desk help": "Show command help."
+  },
+  "sources": [
+    {
+      "id": "wabash_county_gis_beacon",
+      "name": "Wabash County GIS/Beacon",
+      "type": "official_county_property_tax_gis",
+      "url": "https://www.in.gov/counties/wabash/departments/gisbeacon/",
+      "use_for": [
+        "parcel lookup",
+        "property data",
+        "aerial imagery",
+        "tax data",
+        "assessor layers"
+      ],
+      "refresh_cadence": "quarterly/manual",
+      "confidence": "official but verify parcel-level values with auditor/assessor",
+      "notes": "Public access to property information, digital aerial photography, and tax data. County warns data changes and is not warranted for accuracy."
+    },
+    {
+      "id": "wabash_county_budget_page",
+      "name": "Wabash County Council Budgets",
+      "type": "official_county_budget_archive",
+      "url": "https://www.in.gov/counties/wabash/departments/council/budgets/",
+      "use_for": [
+        "appropriations ordinances",
+        "tax rate ordinances",
+        "annual county budget archive"
+      ],
+      "refresh_cadence": "annual/manual",
+      "confidence": "official",
+      "notes": "Contains 2026 ordinance and older annual budget/tax-rate ordinances."
+    },
+    {
+      "id": "dlg_wabash_budget_order",
+      "name": "Indiana DLGF Wabash County Budget Orders",
+      "type": "state_budget_tax_order",
+      "url": "https://www.in.gov/dlgf/county-specific-information/wabash/",
+      "use_for": [
+        "certified budgets",
+        "certified net assessed value",
+        "tax rates",
+        "levies",
+        "taxing district totals"
+      ],
+      "refresh_cadence": "annual/manual",
+      "confidence": "state official",
+      "notes": "DLGF says budget orders contain the certified budget, certified net assessed value, tax rate, and levy for each fund and tax rates for taxing districts."
+    },
+    {
+      "id": "budget_notices_wabash_county",
+      "name": "Indiana Budget Notices: Wabash County",
+      "type": "state_public_notice_budget",
+      "url": "https://www.budgetnotices.in.gov/Unit_View.aspx?unit_id=1586",
+      "use_for": [
+        "hearing dates",
+        "adoption dates",
+        "additional appropriations notices",
+        "tax levy authority districts"
+      ],
+      "refresh_cadence": "monthly during budget season/manual",
+      "confidence": "state official public notice",
+      "notes": "Lists 2026 Wabash County public hearing, adoption meeting, additional appropriation notices, and levy authority districts."
+    },
+    {
+      "id": "grow_wabash_major_employers",
+      "name": "Grow Wabash County Major Employers",
+      "type": "economic_development_business_index",
+      "url": "https://www.growwabashcounty.com/work-and-learn/major-employers",
+      "use_for": [
+        "seed business list",
+        "employer index",
+        "business categories"
+      ],
+      "refresh_cadence": "quarterly/manual",
+      "confidence": "economic development source; treat as sample major-employer list",
+      "notes": "Source frames the listed companies as a sample of employers throughout Wabash County communities."
+    },
+    {
+      "id": "grow_wabash_latest_news",
+      "name": "Grow Wabash County Latest News",
+      "type": "economic_development_news_wire",
+      "url": "https://www.growwabashcounty.com/news-and-resources/latest-news",
+      "use_for": [
+        "county updates",
+        "business news",
+        "events",
+        "civic signal index"
+      ],
+      "refresh_cadence": "weekly/manual",
+      "confidence": "official/economic development news; not a complete county news record",
+      "notes": "Useful as one public-news wire for HRZN county signal index."
+    },
+    {
+      "id": "radio_1019_rocks",
+      "name": "101.9 Rocks",
+      "type": "local_radio",
+      "url": "https://1019.rocks/",
+      "use_for": [
+        "radio relay",
+        "local music/news signal",
+        "station/player open link"
+      ],
+      "refresh_cadence": "static/manual",
+      "confidence": "station website",
+      "notes": "Station page identifies 101.9 Rocks as a locally owned and operated FM station with standalone player and local news links."
+    },
+    {
+      "id": "radio_1059_the_bash",
+      "name": "105.9 The Bash",
+      "type": "local_radio",
+      "url": "https://www.1059thebash.com/",
+      "use_for": [
+        "radio relay",
+        "local news",
+        "sports",
+        "music"
+      ],
+      "refresh_cadence": "static/manual",
+      "confidence": "station website",
+      "notes": "Station page identifies 105.9 The Bash as a locally owned and operated FM station in Wabash."
+    }
+  ],
+  "modules": {
+    "county_ledger": {
+      "title": "COUNTY LEDGER",
+      "source_ids": [
+        "wabash_county_budget_page",
+        "dlg_wabash_budget_order",
+        "budget_notices_wabash_county"
+      ],
+      "known_2026_notice": {
+        "public_hearing": "2025-08-19 13:00",
+        "adoption_meeting": "2025-09-15 18:00",
+        "additional_appropriation_public_hearings": [
+          "2026-02-16",
+          "2026-03-16",
+          "2026-04-20"
+        ]
+      },
+      "fields_to_extract_later": [
+        "certified_budget_by_unit",
+        "certified_net_assessed_value",
+        "tax_rate_by_fund",
+        "levy_by_fund",
+        "total_tax_rate_by_taxing_district",
+        "appropriation_ordinance_total",
+        "additional_appropriations"
+      ],
+      "display_lines": [
+        "WABASH COUNTY LEDGER",
+        "DLGF ORDER: CERTIFIED BUDGET / NAV / TAX RATE / LEVY",
+        "COUNTY BUDGET PAGE: ORDINANCE ARCHIVE",
+        "BUDGET NOTICES: HEARINGS / ADOPTION / ADDITIONAL APPROPRIATIONS"
+      ]
+    },
+    "taxpayer_stack": {
+      "title": "TAXPAYER STACK",
+      "status": "methodology_ready_parcel_rankings_pending",
+      "source_ids": [
+        "wabash_county_gis_beacon",
+        "dlg_wabash_budget_order",
+        "budget_notices_wabash_county"
+      ],
+      "methodology": {
+        "rank_basis": [
+          "parcel assessed value",
+          "tax bill / tax liability where public",
+          "tax district",
+          "owner name",
+          "use class",
+          "improvement value",
+          "land value"
+        ],
+        "exclusions": [
+          "private income tax",
+          "sales tax remittance",
+          "payroll taxes",
+          "private financial data"
+        ],
+        "cautions": [
+          "Assessed-value footprint is not the same as total tax contribution.",
+          "Operating companies may lease property owned by a separate LLC.",
+          "Agricultural, exempt, nonprofit, school, and government parcels require separate category treatment.",
+          "Final ranking should be verified against county auditor/treasurer/assessor records."
+        ],
+        "future_fields": [
+          "rank",
+          "owner_of_record",
+          "operating_business_guess",
+          "parcel_ids",
+          "tax_district",
+          "gross_assessed_value",
+          "tax_bill",
+          "source_date",
+          "verification_status"
+        ]
+      },
+      "display_lines": [
+        "BUSINESS TAX FOOTPRINT RANKING",
+        "BASED ON PUBLIC PARCEL / ASSESSED VALUE / TAX BILL DATA",
+        "NOT A COMPLETE MEASURE OF CORPORATE TAX CONTRIBUTION",
+        "",
+        "STATUS: PARCEL EXTRACTION REQUIRED",
+        "CURRENT MODE: EMPLOYER SEED INDEX"
+      ]
+    },
+    "business_employer_index": {
+      "title": "BUSINESS / EMPLOYER INDEX",
+      "source_ids": [
+        "grow_wabash_major_employers"
+      ],
+      "employers_seed": [
+        {
+          "name": "Autumn Ridge Rehabilitation Centre",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Beacon Credit Union",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Bowen Center",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Bulldog Battery Corp.",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "City of Wabash",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Crossroads Bank",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Ford Meter Box Co Inc.",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Gebhart Holdings",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "HF Group",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Intertech Products, Inc.",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Josiah White's",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Living Essentials",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "MPS Egg Farms",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "MSD of Wabash County",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Manchester Community Schools",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Manchester Tool & Die, Inc.",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Manchester University",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Martin Yale Industries",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Metal X",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Midwest Eye Consultants, PC",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "PaperWork Industries",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Parkview Wabash Hospital",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Peabody Retirement Community",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Precision Medical Technologies",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "QC Communications",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "REAL ALLOY Recycling, Inc.",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Republic Services",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Rolling Meadows Health Care Center",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Strauss Dairy Ingredients",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Timbercrest Senior Living Community",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Vernon Health & Rehabilitation",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Wabash Casting",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Wabash City Schools",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Wabash MPI / Carver, Inc.",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Waters of Wabash",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        },
+        {
+          "name": "Wellbrooke of Wabash",
+          "rank_status": "unranked_seed_from_grow_wabash",
+          "tax_footprint_status": "needs_parcel_match"
+        }
+      ],
+      "display_lines": [
+        "GROW WABASH MAJOR EMPLOYER SEED INDEX",
+        "RANK STATUS: UNRANKED UNTIL PARCEL/TAX MATCH",
+        "MATCHING METHOD: OWNER NAME / ADDRESS / PARCEL / LLC CROSSWALK"
+      ]
+    },
+    "tax_districts": {
+      "title": "TAX DISTRICT SIGNAL MAP",
+      "source_ids": [
+        "budget_notices_wabash_county"
+      ],
+      "districts": [
+        {
+          "code": "001",
+          "name": "CHESTER TWP",
+          "kind": "township"
+        },
+        {
+          "code": "002",
+          "name": "N MANCHESTER",
+          "kind": "town/corp"
+        },
+        {
+          "code": "003",
+          "name": "LAGRO TWP",
+          "kind": "township"
+        },
+        {
+          "code": "004",
+          "name": "LAGRO CORP",
+          "kind": "town/corp"
+        },
+        {
+          "code": "005",
+          "name": "LIBERTY TWP",
+          "kind": "township"
+        },
+        {
+          "code": "006",
+          "name": "LAFONTAINE CORP",
+          "kind": "town/corp"
+        },
+        {
+          "code": "007",
+          "name": "NOBLE TOWNSHIP",
+          "kind": "township"
+        },
+        {
+          "code": "008",
+          "name": "WABASH-NOBLE",
+          "kind": "district overlay"
+        },
+        {
+          "code": "009",
+          "name": "WABASH CORP",
+          "kind": "city/corp"
+        },
+        {
+          "code": "010",
+          "name": "PAW-PAW",
+          "kind": "township"
+        },
+        {
+          "code": "011",
+          "name": "ROANN CORP",
+          "kind": "town/corp"
+        },
+        {
+          "code": "012",
+          "name": "PLEASANT TWP",
+          "kind": "township"
+        },
+        {
+          "code": "013",
+          "name": "WALTZ TWP",
+          "kind": "township"
+        }
+      ],
+      "display_lines": [
+        "WABASH COUNTY LEVY AUTHORITY DISTRICTS",
+        "13 DISTRICT ENTRIES INDEXED",
+        "USE: budget districts / districts / ledger"
+      ]
+    },
+    "town_signals": {
+      "title": "TOWN SIGNALS",
+      "nodes": [
+        {
+          "id": "wabash_corp",
+          "display": "WABASH CORP",
+          "type": "city/county-seat",
+          "signal_role": "courthouse core, county administration, hospital/museum/civic services, legacy industrial controls",
+          "visual_label": "COURTHOUSE ELECTRIC CIRCUIT // 1882",
+          "default_metrics": {
+            "civic_load": 78,
+            "budget_pressure": 52,
+            "industrial_signal": 84,
+            "public_notice_noise": 61,
+            "rumor_pressure": 23
+          },
+          "commands": [
+            "town wabash",
+            "node wabash",
+            "corp wabash"
+          ]
+        },
+        {
+          "id": "north_manchester",
+          "display": "NORTH MANCHESTER",
+          "type": "town/corp",
+          "signal_role": "university/schools/manufacturing/IN-114 county field-cam flank",
+          "visual_label": "IN-114 FIELD CAMERA // UNIVERSITY NODE",
+          "default_metrics": {
+            "civic_load": 66,
+            "budget_pressure": 45,
+            "industrial_signal": 62,
+            "public_notice_noise": 47,
+            "rumor_pressure": 18
+          },
+          "commands": [
+            "town northmanchester",
+            "town north",
+            "node nm"
+          ]
+        },
+        {
+          "id": "lagro",
+          "display": "LAGRO",
+          "type": "town/corp + township",
+          "signal_role": "old canal flank, Seven Pillars mythology, river-road budget node",
+          "visual_label": "CANAL MEMORY STACK // SEVEN PILLARS EDGE",
+          "default_metrics": {
+            "civic_load": 38,
+            "budget_pressure": 31,
+            "industrial_signal": 22,
+            "public_notice_noise": 26,
+            "rumor_pressure": 36
+          },
+          "commands": [
+            "town lagro",
+            "node lagro"
+          ]
+        },
+        {
+          "id": "roann",
+          "display": "ROANN",
+          "type": "town/corp",
+          "signal_role": "river-road node, library/civic small-town ledger",
+          "visual_label": "ROANN RIVER RELAY // SMALL LEDGER ACTIVE",
+          "default_metrics": {
+            "civic_load": 34,
+            "budget_pressure": 29,
+            "industrial_signal": 18,
+            "public_notice_noise": 24,
+            "rumor_pressure": 31
+          },
+          "commands": [
+            "town roann",
+            "node roann"
+          ]
+        },
+        {
+          "id": "lafontaine",
+          "display": "LAFONTAINE",
+          "type": "town/corp",
+          "signal_role": "ag-residential road node, county southern approach",
+          "visual_label": "LAFONTAINE AGRI-LINE // ROAD SIGNAL",
+          "default_metrics": {
+            "civic_load": 33,
+            "budget_pressure": 27,
+            "industrial_signal": 21,
+            "public_notice_noise": 23,
+            "rumor_pressure": 22
+          },
+          "commands": [
+            "town lafontaine",
+            "node lafontaine",
+            "town la fontaine"
+          ]
+        },
+        {
+          "id": "chester_twp",
+          "display": "CHESTER TWP",
+          "type": "township",
+          "signal_role": "township levy field, agricultural/residential assessment layer",
+          "visual_label": "CHESTER TWP // ASSESSMENT FIELD",
+          "default_metrics": {
+            "civic_load": 22,
+            "budget_pressure": 21,
+            "industrial_signal": 16,
+            "public_notice_noise": 14,
+            "rumor_pressure": 12
+          },
+          "commands": [
+            "twp chester",
+            "township chester"
+          ]
+        },
+        {
+          "id": "liberty_twp",
+          "display": "LIBERTY TWP",
+          "type": "township",
+          "signal_role": "Liberty Mills/Stockdale memory field, rural levy district",
+          "visual_label": "LIBERTY TWP // MILL ROAD MEMORY",
+          "default_metrics": {
+            "civic_load": 24,
+            "budget_pressure": 22,
+            "industrial_signal": 19,
+            "public_notice_noise": 16,
+            "rumor_pressure": 32
+          },
+          "commands": [
+            "twp liberty",
+            "township liberty"
+          ]
+        },
+        {
+          "id": "noble_twp",
+          "display": "NOBLE TWP",
+          "type": "township",
+          "signal_role": "Noble/Wabash overlay, north-central tax-grid layer",
+          "visual_label": "NOBLE TWP // GRID OVERLAY",
+          "default_metrics": {
+            "civic_load": 26,
+            "budget_pressure": 23,
+            "industrial_signal": 28,
+            "public_notice_noise": 17,
+            "rumor_pressure": 15
+          },
+          "commands": [
+            "twp noble",
+            "township noble"
+          ]
+        },
+        {
+          "id": "paw_paw",
+          "display": "PAW-PAW",
+          "type": "township",
+          "signal_role": "rural/ag field ledger, low-frequency public notice node",
+          "visual_label": "PAW-PAW // RURAL SIGNAL BAND",
+          "default_metrics": {
+            "civic_load": 21,
+            "budget_pressure": 19,
+            "industrial_signal": 15,
+            "public_notice_noise": 12,
+            "rumor_pressure": 14
+          },
+          "commands": [
+            "twp pawpaw",
+            "paw-paw",
+            "township paw paw"
+          ]
+        },
+        {
+          "id": "pleasant_twp",
+          "display": "PLEASANT TWP",
+          "type": "township",
+          "signal_role": "county residential/ag layer, low-noise civic channel",
+          "visual_label": "PLEASANT TWP // QUIET BAND",
+          "default_metrics": {
+            "civic_load": 20,
+            "budget_pressure": 18,
+            "industrial_signal": 14,
+            "public_notice_noise": 11,
+            "rumor_pressure": 10
+          },
+          "commands": [
+            "twp pleasant",
+            "township pleasant"
+          ]
+        },
+        {
+          "id": "waltz_twp",
+          "display": "WALTZ TWP",
+          "type": "township",
+          "signal_role": "perimeter township levy field",
+          "visual_label": "WALTZ TWP // EDGE SIGNAL",
+          "default_metrics": {
+            "civic_load": 19,
+            "budget_pressure": 18,
+            "industrial_signal": 13,
+            "public_notice_noise": 10,
+            "rumor_pressure": 9
+          },
+          "commands": [
+            "twp waltz",
+            "township waltz"
+          ]
+        }
+      ],
+      "display_lines": [
+        "TOWN NODE MAP LOADED",
+        "WABASH / NORTH MANCHESTER / LAGRO / ROANN / LAFONTAINE / TOWNSHIPS",
+        "EACH NODE CAN DISPLAY BUDGET PRESSURE, NOTICE LOAD, INDUSTRIAL SIGNAL, RUMOR PRESSURE"
+      ]
+    },
+    "public_notice_wire": {
+      "title": "PUBLIC NOTICE WIRE",
+      "source_ids": [
+        "budget_notices_wabash_county",
+        "wabash_county_budget_page",
+        "grow_wabash_latest_news"
+      ],
+      "seed_items": [
+        {
+          "date": "2026-04-30",
+          "source_id": "grow_wabash_latest_news",
+          "headline": "City to celebrate official opening of pickleball courts",
+          "signal_tags": [
+            "civic_event",
+            "parks",
+            "city_of_wabash"
+          ]
+        },
+        {
+          "date": "2026-04-20",
+          "source_id": "grow_wabash_latest_news",
+          "headline": "Grow Wabash County and business community celebrate graduating seniors",
+          "signal_tags": [
+            "workforce",
+            "education",
+            "business_community"
+          ]
+        },
+        {
+          "date": "2026-04-15",
+          "source_id": "grow_wabash_latest_news",
+          "headline": "Little Adventurers kids summer day camp tour returns",
+          "signal_tags": [
+            "visit_wabash",
+            "tourism",
+            "youth"
+          ]
+        },
+        {
+          "date": "2026-04-15",
+          "source_id": "grow_wabash_latest_news",
+          "headline": "WACCY Golf Outing returns to the greens June 3",
+          "signal_tags": [
+            "business_networking",
+            "event",
+            "honeywell_public_golf_course"
+          ]
+        },
+        {
+          "date": "2026-04-02",
+          "source_id": "grow_wabash_latest_news",
+          "headline": "LDWC Alumni invited to May 21 Graduation Mixer",
+          "signal_tags": [
+            "leadership",
+            "workforce",
+            "civic_network"
+          ]
+        },
+        {
+          "date": "2026-03-06",
+          "source_id": "grow_wabash_latest_news",
+          "headline": "2026 GWC Ag Dinner celebrates Brubaker Family and local farming community",
+          "signal_tags": [
+            "agriculture",
+            "community",
+            "county_identity"
+          ]
+        },
+        {
+          "date": "2026-02-17",
+          "source_id": "grow_wabash_latest_news",
+          "headline": "Parkview Wabash Hospital selected among Indiana Chamber Best Places to Work",
+          "signal_tags": [
+            "healthcare",
+            "employer_signal",
+            "recognition"
+          ]
+        },
+        {
+          "date": "2026-01-27",
+          "source_id": "grow_wabash_latest_news",
+          "headline": "Wabash County celebrates America's 250th Anniversary",
+          "signal_tags": [
+            "tourism",
+            "history",
+            "county_event"
+          ]
+        },
+        {
+          "date": "2025-07-23",
+          "source_id": "grow_wabash_latest_news",
+          "headline": "Norfolk Southern grants $5,000 to Wabash County Museum",
+          "signal_tags": [
+            "railroad",
+            "museum",
+            "grant"
+          ]
+        }
+      ],
+      "display_lines": [
+        "PUBLIC NOTICE WIRE READY",
+        "COUNTY BUDGET HEARINGS / ADDITIONAL APPROPRIATIONS / GROW WABASH NEWS",
+        "ADD TOWN AGENDAS AND MINUTES IN NEXT PASS"
+      ]
+    },
+    "county_signal_index": {
+      "title": "COUNTY SIGNAL / RUMOR INDEX",
+      "rules": [
+        "Never present a rumor as fact.",
+        "Rumor Index tracks public chatter, unresolved leads, visible activity, and civic noise only.",
+        "Each rumor item must have status: unverified, developing, corroborated_publicly, or archived_false.",
+        "No private personal details, doxxing, or private CCTV/security feeds.",
+        "Prefer institutions and public events over named private individuals.",
+        "Every rumor item should include a next verification step."
+      ],
+      "sample_items": [
+        {
+          "id": "RUMOR-0001",
+          "title": "Industrial parcel movement",
+          "status": "placeholder_unverified",
+          "pressure": 0,
+          "summary": "Reserved slot for tracking publicly visible property transfers, building permits, abatement notices, or development chatter.",
+          "verification_steps": [
+            "Check Beacon/GIS parcel history",
+            "Check county meeting minutes/agendas",
+            "Check Grow Wabash news",
+            "Check legal notices"
+          ],
+          "display": "NO ACTIVE RUMOR // SLOT READY"
+        },
+        {
+          "id": "RUMOR-0002",
+          "title": "Town infrastructure noise",
+          "status": "placeholder_unverified",
+          "pressure": 0,
+          "summary": "Reserved slot for road closures, utility work, public works signals, and meeting agenda clusters.",
+          "verification_steps": [
+            "Check town/county public notices",
+            "Check road condition feeds",
+            "Check public meeting agendas"
+          ],
+          "display": "NO ACTIVE RUMOR // SLOT READY"
+        }
+      ],
+      "signal_metrics": {
+        "economic_signal": {
+          "value": 72,
+          "basis": "employer/news/development signal placeholders"
+        },
+        "public_notice_load": {
+          "value": 51,
+          "basis": "budget notices + source feed count placeholders"
+        },
+        "road_utility_noise": {
+          "value": 33,
+          "basis": "future weather/road/public works feed"
+        },
+        "civic_event_density": {
+          "value": 84,
+          "basis": "Grow Wabash event/news density seed"
+        },
+        "rumor_pressure": {
+          "value": 21,
+          "basis": "placeholder only; no active rumor loaded"
+        },
+        "budget_volatility": {
+          "value": 46,
+          "basis": "additional appropriation notices present"
+        }
+      },
+      "display_lines": [
+        "COUNTY SIGNAL INDEX",
+        "UNVERIFIED / DEVELOPING / PUBLICLY VISIBLE ACTIVITY",
+        "",
+        "RUMOR PRESSURE IS NOT EVIDENCE.",
+        "EACH SIGNAL REQUIRES A PUBLIC SOURCE OR NEXT VERIFICATION STEP."
+      ]
+    },
+    "radio_relay": {
+      "title": "WDLS RADIO RELAY",
+      "source_ids": [
+        "radio_1019_rocks",
+        "radio_1059_the_bash"
+      ],
+      "presets": [
+        {
+          "id": "1019_rocks",
+          "label": "101.9 ROCKS",
+          "frequency": "101.9 FM",
+          "station_url": "https://1019.rocks/",
+          "player_url": "https://1019.rocks/",
+          "stream_url_status": "browser_widget_should_use_open_link_until_direct_stream_is_reverified",
+          "commands": [
+            "radio",
+            "101.9",
+            "1019",
+            "waru",
+            "rocks"
+          ]
+        },
+        {
+          "id": "1059_the_bash",
+          "label": "105.9 THE BASH",
+          "frequency": "105.9 FM",
+          "station_url": "https://www.1059thebash.com/",
+          "player_url": "https://www.1059thebash.com/",
+          "stream_url_status": "browser_widget_should_use_open_link_until_direct_stream_is_reverified",
+          "commands": [
+            "105.9",
+            "1059",
+            "bash"
+          ]
+        }
+      ],
+      "display_lines": [
+        "WDLS RADIO RELAY",
+        "[1] 101.9 ROCKS // CLASSIC ROCK CARRIER",
+        "[2] 105.9 THE BASH // GOOD TIME ROCK & ROLL",
+        "COMMANDS: play / stop / open / exit"
+      ]
+    },
+    "weather_road_river": {
+      "title": "WEATHER / ROAD / RIVER CONDITIONS",
+      "status": "feed_slots_ready",
+      "source_ids": [],
+      "future_sources": [
+        "National Weather Service",
+        "INDOT TrafficWise",
+        "USGS river gauges if applicable",
+        "local emergency notices"
+      ],
+      "display_lines": [
+        "WEATHER / ROAD / RIVER MODULE READY",
+        "NO LIVE SOURCE MAPPED IN THIS JSON YET",
+        "NEXT PASS: NWS + INDOT + RIVER GAUGE FEEDS"
+      ]
+    }
+  },
+  "display_blocks": {
+    "taxpayer_stack_notice": [
+      "BUSINESS TAX FOOTPRINT RANKING",
+      "BASED ON PUBLIC PARCEL / ASSESSED VALUE / TAX BILL DATA",
+      "NOT A COMPLETE MEASURE OF CORPORATE TAX CONTRIBUTION",
+      "",
+      "STATUS: PARCEL EXTRACTION REQUIRED",
+      "CURRENT MODE: EMPLOYER SEED INDEX"
+    ],
+    "rumor_index_notice": [
+      "COUNTY SIGNAL INDEX",
+      "UNVERIFIED / DEVELOPING / PUBLICLY VISIBLE ACTIVITY",
+      "",
+      "RUMOR PRESSURE IS NOT EVIDENCE.",
+      "EACH SIGNAL REQUIRES A PUBLIC SOURCE OR NEXT VERIFICATION STEP."
+    ],
+    "source_warning": [
+      "PUBLIC-SOURCE WARNING",
+      "BEACON / GIS DATA CHANGES OVER TIME.",
+      "DLGF / GATEWAY DATA CONTROLS FINAL BUDGET/TAX ORDER STATUS.",
+      "LOCAL NEWS WIRES ARE PARTIAL, NOT COMPLETE.",
+      "VERIFY BEFORE USING ANY ITEM AS FINAL RECORD."
+    ]
+  },
+  "response_lines": [
+    "WDLS // COUNTY INDEX ONLINE.",
+    "PUBLIC RECORDS DO NOT WHISPER. THEY ACCUMULATE.",
+    "BEACON FIELD LINK READY. PARCEL STACK AWAITS EXTRACTION.",
+    "BUDGET RELAY ACTIVE. TAXING DISTRICTS RESOLVED.",
+    "GROW WABASH EMPLOYER INDEX LOADED.",
+    "PUBLIC NOTICE WIRE LISTENING.",
+    "RUMOR PRESSURE IS NOT EVIDENCE. VERIFY THE SIGNAL.",
+    "WABASH CORP NODE: COURTHOUSE CIRCUIT ACTIVE.",
+    "NORTH MANCHESTER NODE: UNIVERSITY FIELD CARRIER ACTIVE.",
+    "LAGRO NODE: CANAL MEMORY STACK ACTIVE.",
+    "ROANN NODE: SMALL LEDGER ACTIVE.",
+    "LAFONTAINE NODE: AGRI-LINE STANDING BY.",
+    "RADIO RELAY: 101.9 ROCKS CARRIER AVAILABLE.",
+    "COUNTY WEATHER SLOT READY.",
+    "NO PRIVATE FEEDS. PUBLIC SIGNALS ONLY.",
+    "THE COUNTY IS THE OPERATING SYSTEM.",
+    "TAXPAYERS ARE NOT A LIST. THEY ARE A FOOTPRINT.",
+    "ASSESSMENT VALUE IS NOT TOTAL CONTRIBUTION.",
+    "LLC OWNERSHIP MAY MASK THE TRUE OPERATING BUSINESS.",
+    "VERIFY WITH AUDITOR, ASSESSOR, TREASURER, AND DLGF.",
+    "PUBLIC LEDGER DOES NOT EQUAL PRIVATE BOOK.",
+    "TOWN NODE MAP LOADED.",
+    "LEVY AUTHORITY DISTRICTS INDEXED.",
+    "COUNTY SIGNAL INDEX NOMINAL.",
+    "WATCH THE SMALL LINES. THAT IS WHERE MONEY MOVES."
+  ],
+  "fragments": {
+    "status_prefixes": [
+      "WDLS",
+      "COUNTY LEDGER",
+      "BEACON FIELD",
+      "BUDGET RELAY",
+      "TAXPAYER STACK",
+      "PUBLIC NOTICE WIRE",
+      "SIGNAL INDEX"
+    ],
+    "verbs": [
+      "INDEXED",
+      "RESOLVED",
+      "PENDING EXTRACTION",
+      "VERIFIED",
+      "FLAGGED",
+      "ARCHIVED",
+      "MAPPED",
+      "LOADED"
+    ],
+    "objects": [
+      "LEVY DISTRICT",
+      "PARCEL STACK",
+      "EMPLOYER SEED",
+      "TOWN NODE",
+      "BUDGET ORDER",
+      "RADIO CARRIER",
+      "PUBLIC NOTICE"
+    ],
+    "warnings": [
+      "VERIFY BEFORE FINAL RECORD.",
+      "ASSESSMENT IS NOT TOTAL CONTRIBUTION.",
+      "PUBLIC RECORD CHANGES OVER TIME.",
+      "RUMOR PRESSURE IS NOT EVIDENCE.",
+      "NO PRIVATE FEEDS."
+    ]
+  },
+  "future_build_plan": [
+    {
+      "phase": "parcel_crosswalk",
+      "goal": "Use Beacon/GIS, assessor, and tax-bill data to match major employers to owner-of-record parcel/tax footprints.",
+      "output": "wabash_business_tax_rankings.json"
+    },
+    {
+      "phase": "budget_extraction",
+      "goal": "Extract 2026 budget order data into unit/fund/tax-rate/levy records.",
+      "output": "wabash_budget_ledger_2026.json"
+    },
+    {
+      "phase": "town_feeds",
+      "goal": "Add town agendas, minutes, ordinances, meeting notices, and school/library feeds.",
+      "output": "wabash_public_notice_wire.json"
+    },
+    {
+      "phase": "signal_engine",
+      "goal": "Score public signals using source count, recency, civic category, and verification level.",
+      "output": "wabash_signal_index.json"
+    }
+  ]
+};
 let wabashDeskCore = null;
 let wabashDeskLoadStatus = 'idle';
 let wabashDeskLoadPath = '';
@@ -5121,21 +6288,29 @@ async function loadWabashDeskCore(force) {
   for (const path of WABASH_DESK_JSON_PATHS) {
     try {
       const res = await fetch(path, { cache: 'no-store' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const fullUrl = res && res.url ? res.url : (new URL(path, location.href).href);
+      if (!res.ok) throw new Error('HTTP ' + res.status + ' @ ' + fullUrl);
       const json = await res.json();
-      if (!json || !json.modules) throw new Error('missing modules');
+      if (!json || !json.modules) throw new Error('missing modules @ ' + fullUrl);
       wabashDeskCore = json;
       wabashDeskLoadStatus = 'loaded';
-      wabashDeskLoadPath = path;
+      wabashDeskLoadPath = fullUrl;
       if (deskContainer && deskMode) deskContainer.innerHTML = buildDeskHTML();
       return json;
     } catch (err) {
-      wabashDeskLoadError = path + ' :: ' + (err && err.message ? err.message : String(err));
+      let fullUrl = path;
+      try { fullUrl = new URL(path, location.href).href; } catch(e) {}
+      wabashDeskLoadError = fullUrl + ' :: ' + (err && err.message ? err.message : String(err));
     }
   }
-  wabashDeskLoadStatus = 'error';
+
+  // Emergency fallback: keep HRZN Desk usable even when the external JSON 404s.
+  // Once the data/ path is correct, external JSON overrides this embedded copy.
+  wabashDeskCore = JSON.parse(JSON.stringify(WABASH_DESK_EMBEDDED_FALLBACK));
+  wabashDeskLoadStatus = 'embedded';
+  wabashDeskLoadPath = 'embedded fallback // external JSON offline';
   if (deskContainer && deskMode) deskContainer.innerHTML = buildDeskHTML();
-  return null;
+  return wabashDeskCore;
 }
 
 function wdlsDeskUpdate() {
@@ -5171,9 +6346,11 @@ function wdlsPanel(title, body, extraStyle) {
 function wdlsTinySourceLine() {
   const label = wabashDeskLoadStatus === 'loaded'
     ? 'JSON CORE: ' + (wabashDeskLoadPath || 'loaded')
-    : wabashDeskLoadStatus === 'loading'
-      ? 'JSON CORE: loading data/wabash_county_desk_core.json'
-      : 'JSON CORE: offline / fallback ready';
+    : wabashDeskLoadStatus === 'embedded'
+      ? 'JSON CORE: embedded fallback // external offline'
+      : wabashDeskLoadStatus === 'loading'
+        ? 'JSON CORE: loading data/wabash_county_desk_core.json'
+        : 'JSON CORE: offline / fallback ready';
   return '<span style="color:#5d4612;font-size:10px">' + esc(label) + '</span>';
 }
 function wdlsFindTown(q) {
