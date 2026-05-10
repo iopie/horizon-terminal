@@ -91,6 +91,72 @@
     .mayberry-opie { display: block; font-size: 0.65em; letter-spacing: 0.12em; margin-top: 0.2em; }
 
     @keyframes may-flk { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+    /* ── Retro TV overlay ── */
+    #mayberry-tv {
+      display: none;
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 500;
+      background: #c8b89a;
+      border-radius: 18px 18px 24px 24px;
+      padding: 22px 28px 36px;
+      box-shadow: 0 8px 40px #0008, inset 0 2px 6px #fff5, 4px 4px 0 #8a7a60;
+      width: min(520px, 92vw);
+      font-family: monospace;
+    }
+    #mayberry-tv.visible { display: block; animation: tv-on 0.35s ease-out; }
+    @keyframes tv-on {
+      0%   { transform: translate(-50%, -50%) scaleY(0.02) scaleX(0.4); opacity: 0; }
+      60%  { transform: translate(-50%, -50%) scaleY(1.04) scaleX(1); }
+      100% { transform: translate(-50%, -50%) scaleY(1) scaleX(1); opacity: 1; }
+    }
+    .tv-antenna-wrap {
+      display: flex; justify-content: center; gap: 60px;
+      margin-bottom: 8px; height: 44px; align-items: flex-end;
+    }
+    .tv-antenna {
+      width: 3px; height: 44px; background: #7a6a50;
+      border-radius: 2px; transform-origin: bottom center;
+    }
+    .tv-antenna.left  { transform: rotate(-22deg); }
+    .tv-antenna.right { transform: rotate(22deg); }
+    .tv-screen-bezel {
+      background: #222; border-radius: 10px;
+      padding: 8px; box-shadow: inset 0 0 18px #000a, 0 2px 4px #0006;
+      position: relative; overflow: hidden;
+    }
+    .tv-screen-bezel::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(transparent, transparent 2px, #0002 2px, #0002 4px);
+      z-index: 2;
+    }
+    .tv-screen-bezel iframe {
+      display: block; width: 100%; aspect-ratio: 16/9;
+      border: none; border-radius: 6px; position: relative; z-index: 1;
+    }
+    .tv-brand {
+      text-align: center; font-size: 0.6em; letter-spacing: 4px;
+      color: #8a7a60; text-transform: uppercase; margin-top: 6px;
+      font-weight: bold;
+    }
+    .tv-controls {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-top: 10px; padding: 0 4px;
+    }
+    .tv-knobs { display: flex; gap: 10px; }
+    .tv-knob {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #a09080, #5a4a38);
+      box-shadow: 1px 1px 3px #0005; cursor: pointer;
+    }
+    .tv-close {
+      font-size: 0.7em; color: #8a7a60; cursor: pointer;
+      letter-spacing: 1px; border: 1px solid #8a7a6066;
+      padding: 2px 8px; border-radius: 3px; background: #b8a888;
+      font-family: monospace;
+    }
+    .tv-close:hover { color: #b30000; border-color: #b30000; }
     /* NPC / special lines */
     .hughes-haunt { color: #ff4444 !important; font-style: italic; }
     .guardian-msg  { color: #7dcfff !important; }
@@ -269,6 +335,25 @@
 <body>
 <canvas id="matrix-canvas-2"></canvas>
 <canvas id="matrix-canvas"></canvas>
+
+  <div id="mayberry-tv">
+    <div class="tv-antenna-wrap">
+      <div class="tv-antenna left"></div>
+      <div class="tv-antenna right"></div>
+    </div>
+    <div class="tv-screen-bezel">
+      <iframe id="mayberry-iframe" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+    </div>
+    <div class="tv-brand">H R Z N — T V</div>
+    <div class="tv-controls">
+      <div class="tv-knobs">
+        <div class="tv-knob"></div>
+        <div class="tv-knob"></div>
+        <div class="tv-knob"></div>
+      </div>
+      <div class="tv-close" onclick="closeMayberryTV()">[  CLOSE  ]</div>
+    </div>
+  </div>
 <div id="op-wash"></div>
 <div id="desk-overlay"></div>
 
@@ -1668,6 +1753,103 @@ const NIXON_HH_EXCHANGES = [
 
   ['[NIXON] "Howard I think someone is reading this."',
    '[HOWARD] "someone is always reading richard. that is the point."'],
+
+  ['[NIXON] "The Desert Inn. That was yours."',
+   '[HOWARD] "it was mine yes."',
+   '[NIXON] "I stayed there once."',
+   '[HOWARD] "i know. i had the carpet replaced after."'],
+
+  ['[NIXON] "Bebe says hello."',
+   '[HOWARD] "tell bebe i am unavailable."',
+   '[NIXON] "He is very fond of you Howard."',
+   '[HOWARD] "everyone is fond of me when they need something richard."'],
+
+  ['[NIXON] "The pardon. Ford gave me the pardon."',
+   '[HOWARD] "i heard."',
+   '[NIXON] "What do you think?"',
+   '[HOWARD] "i think you needed it more than most."',
+   '[NIXON] "..."',
+   '[HOWARD] "that was not a compliment richard."'],
+
+  ['[NIXON] "I won my first campaign on poker winnings you know."',
+   '[HOWARD] "i know."',
+   '[NIXON] "Navy poker. I was very good."',
+   '[HOWARD] "and then you stopped being good."'],
+
+  ['[NIXON] "The spruce goose. Was it worth it."',
+   '[HOWARD] "she flew richard."',
+   '[NIXON] "Once. One mile."',
+   '[HOWARD] "she flew."'],
+
+  ['[NIXON] "Howard what is it like. Being in there."',
+   '[HOWARD] "quiet."',
+   '[NIXON] "That sounds peaceful."',
+   '[HOWARD] "it is not peaceful. it is just quiet."'],
+
+  ['[NIXON] "Maheu was a liability."',
+   '[HOWARD] "maheu was effective."',
+   '[NIXON] "He talked too much."',
+   '[HOWARD] "everyone talks too much richard. you of all people should understand that."'],
+
+  ['[NIXON] "The tapes were my idea."',
+   '[HOWARD] "i know."',
+   '[NIXON] "I thought they would protect me."',
+   '[HOWARD] "from what."',
+   '[NIXON] "..."',
+   '[HOWARD] "you cannot record your way out of being yourself richard."'],
+
+  ['[NIXON] "Did you know about Watergate beforehand."',
+   '[HOWARD] "i knew about a lot of things richard."',
+   '[NIXON] "That is not an answer."',
+   '[HOWARD] "no it is not."'],
+
+  ['[NIXON] "They never found everything."',
+   '[HOWARD] "no."',
+   '[NIXON] "Some of it is still out there."',
+   '[HOWARD] "yes."',
+   '[NIXON] "You know where."',
+   '[HOWARD] "goodnight richard."'],
+
+  ['[NIXON] "I want history to remember me differently."',
+   '[HOWARD] "history does not negotiate richard."',
+   '[NIXON] "It should."',
+   '[HOWARD] "a lot of things should."'],
+
+  ['[NIXON] "China was mine. That was a real achievement."',
+   '[HOWARD] "yes."',
+   '[NIXON] "You agree?"',
+   '[HOWARD] "i said yes richard. do not ruin it."'],
+
+  ['[NIXON] "Howard, are you afraid of dying?"',
+   '[HOWARD] "i already died richard."',
+   '[NIXON] "I mean really dying."',
+   '[HOWARD] "i know what you mean."',
+   '[NIXON] "Well?"',
+   '[HOWARD] "ask me something else."'],
+
+  ['[NIXON] "My mother was a saint."',
+   '[HOWARD] "yes."',
+   '[NIXON] "You believe me?"',
+   '[HOWARD] "i believe you believe it."'],
+
+  ['[NIXON] "The CIA. Did you trust them."',
+   '[HOWARD] "i employed them richard."',
+   '[NIXON] "That is not what I asked."',
+   '[HOWARD] "no. i did not trust them."',
+   '[NIXON] "Neither did I."',
+   '[HOWARD] "and yet here we are."'],
+
+  ['[NIXON] "TWA. You should not have sold it."',
+   '[HOWARD] "they took it from me richard."',
+   '[NIXON] "The courts—"',
+   '[HOWARD] "they took it."'],
+
+  ['[NIXON] "Do you regret anything."',
+   '[HOWARD] "the gloves."',
+   '[NIXON] "The gloves?"',
+   '[HOWARD] "i should have worn them sooner."',
+   '[NIXON] "I meant—"',
+   '[HOWARD] "i know what you meant. the gloves."'],
 ];
 
 let nixonBanterIndex = 0;
@@ -2504,6 +2686,13 @@ function handleCommand(cmd) {
     if (!operatorMode) { printLine(esc('Command "'+cmd+'" not recognized. Type \'help\' for options.')); showPrompt(currentPrompt()); return; }
     toggleMayberry(); return;
   }
+  if (lower==='mute'||lower==='stopmusic'||lower==='stop music') {
+    if (mayberryTheme && !mayberryTheme.paused) {
+      mayberryTheme.pause(); mayberryTheme.currentTime=0;
+      printLine('[ music stopped ]','signal-bleed',true);
+    } else { printLine('[ no audio playing ]','signal-bleed',true); }
+    showPrompt(currentPrompt()); return;
+  }
   if (mayberryMode && ['opie','barney','auntbee'].includes(lower)) { handleMayberryCmd(lower); return; }
 
   // ── DECODE ─────────────────────────────────────────────────
@@ -2888,14 +3077,13 @@ function handleDreamCmd(lower) {
 function toggleMayberry() {
   mayberryMode=!mayberryMode;
   if(mayberryMode){
-    // Init and play theme
-    if (!mayberryTheme) {
-      mayberryTheme = new Audio('./assets/audio/theme.mp3');
-      mayberryTheme.loop = true;
-      mayberryTheme.volume = 0.5;
-    }
-    mayberryTheme.currentTime = 0;
-    mayberryTheme.play().catch(() => {}); // catch autoplay policy errors silently
+    // Stop MP3 — audio comes from the YouTube video
+    if (mayberryTheme) { mayberryTheme.pause(); mayberryTheme.currentTime=0; }
+    // Show retro TV
+    const tv = document.getElementById('mayberry-tv');
+    const iframe = document.getElementById('mayberry-iframe');
+    iframe.src = 'https://www.youtube-nocookie.com/embed/MANrEcniveE?autoplay=1&rel=0&modestbranding=1';
+    tv.classList.add('visible');
     doChannelChange(() => {});
     stopMatrixRain(); document.getElementById('matrix-canvas').style.display='none';
     terminal.classList.add('mayberry-mode');
@@ -2906,25 +3094,20 @@ function toggleMayberry() {
     overlay.appendChild(flash); output.appendChild(overlay);
     setTimeout(()=>{overlay.remove();if(mayberryFirst){setTimeout(()=>{printLine('<b>@ntB:</b> Be careful, OP..');mayberryFirst=false;},700);}},3000);
   } else {
-    // Fade out theme
-    if (mayberryTheme) {
-      const fadeOut = setInterval(() => {
-        if (mayberryTheme.volume > 0.05) {
-          mayberryTheme.volume = Math.max(0, mayberryTheme.volume - 0.05);
-        } else {
-          mayberryTheme.pause();
-          mayberryTheme.currentTime = 0;
-          mayberryTheme.volume = 0.5;
-          clearInterval(fadeOut);
-        }
-      }, 80);
-    }
+    closeMayberryTV();
     terminal.classList.remove('mayberry-mode');
     document.getElementById('matrix-canvas').style.display='';
     document.querySelectorAll('.tv-static-overlay,.mayberry-flash').forEach(e=>e.remove());
     virtualPath='/';
   }
   showPrompt(currentPrompt());
+}
+
+function closeMayberryTV() {
+  const tv = document.getElementById('mayberry-tv');
+  const iframe = document.getElementById('mayberry-iframe');
+  tv.classList.remove('visible');
+  iframe.src = ''; // kills the video and audio immediately
 }
 function handleMayberryCmd(lower) {
   if(lower==='opie')printLine('<pre>O.P.I.E. MODEL\nOperational Psychosocial Intervention Experiment\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nOrigin: 1962\nPurpose: Manufacturing oppositional archetypes\n         for controlled dialectics.\n\n"The child is the product.\nThe town is the template.\nThe show is the program.\nMayberry is the sandbox."\n\nSee: opie_model.redacted</pre>');
