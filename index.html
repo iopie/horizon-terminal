@@ -5094,6 +5094,290 @@ let deskIv = null;
 let deskTapeIv = null;
 let deskWatchSymbol = null;
 
+
+// ── WDLS / Wabash County Desk JSON core ───────────────────────
+// Put wabash_county_desk_core.json in /data or data/ on GitHub.
+const WABASH_DESK_JSON_PATHS = [
+  'data/wabash_county_desk_core.json',
+  './data/wabash_county_desk_core.json',
+  '../data/wabash_county_desk_core.json',
+  '/data/wabash_county_desk_core.json',
+  'wabash_county_desk_core.json'
+];
+let wabashDeskCore = null;
+let wabashDeskLoadStatus = 'idle';
+let wabashDeskLoadPath = '';
+let wabashDeskLoadError = '';
+let wabashDeskView = 'home';
+let wabashDeskFocus = '';
+let deskUseLegacyFallback = false;
+
+async function loadWabashDeskCore(force) {
+  if (!force && wabashDeskCore) return wabashDeskCore;
+  if (!force && wabashDeskLoadStatus === 'loading') return null;
+  wabashDeskLoadStatus = 'loading';
+  wabashDeskLoadError = '';
+  wabashDeskLoadPath = '';
+  for (const path of WABASH_DESK_JSON_PATHS) {
+    try {
+      const res = await fetch(path, { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const json = await res.json();
+      if (!json || !json.modules) throw new Error('missing modules');
+      wabashDeskCore = json;
+      wabashDeskLoadStatus = 'loaded';
+      wabashDeskLoadPath = path;
+      if (deskContainer && deskMode) deskContainer.innerHTML = buildDeskHTML();
+      return json;
+    } catch (err) {
+      wabashDeskLoadError = path + ' :: ' + (err && err.message ? err.message : String(err));
+    }
+  }
+  wabashDeskLoadStatus = 'error';
+  if (deskContainer && deskMode) deskContainer.innerHTML = buildDeskHTML();
+  return null;
+}
+
+function wdlsDeskUpdate() {
+  if (deskContainer && deskMode) deskContainer.innerHTML = buildDeskHTML();
+}
+function wdlsList(arr, max) {
+  if (!Array.isArray(arr)) return [];
+  return typeof max === 'number' ? arr.slice(0, max) : arr;
+}
+function wdlsBar(value, width) {
+  const w = width || 18;
+  let n = Number(value);
+  if (!isFinite(n)) n = 0;
+  n = Math.max(0, Math.min(100, n));
+  const filled = Math.round((n / 100) * w);
+  return '█'.repeat(filled) + '░'.repeat(Math.max(0, w - filled));
+}
+function wdlsMetricLine(label, value, color) {
+  const v = Math.max(0, Math.min(100, Number(value) || 0));
+  const c = color || (v >= 75 ? '#ff8800' : v >= 50 ? '#ffaa00' : '#669955');
+  return '<div style="display:flex;gap:8px;align-items:center;line-height:1.75">'
+    + '<span style="color:#5d4612;width:190px;flex-shrink:0">' + esc(label) + '</span>'
+    + '<span style="color:' + c + ';letter-spacing:0">' + wdlsBar(v, 20) + '</span>'
+    + '<span style="color:' + c + ';width:42px;text-align:right">' + Math.round(v) + '%</span>'
+    + '</div>';
+}
+function wdlsPanel(title, body, extraStyle) {
+  return '<div style="border:1px solid #332200;background:rgba(18,12,0,.55);padding:8px;margin-bottom:10px;' + (extraStyle || '') + '">'
+    + '<div style="color:#ffaa00;border-bottom:1px solid #332200;margin-bottom:6px;font-weight:bold;letter-spacing:1px">' + esc(title) + '</div>'
+    + body
+    + '</div>';
+}
+function wdlsTinySourceLine() {
+  const label = wabashDeskLoadStatus === 'loaded'
+    ? 'JSON CORE: ' + (wabashDeskLoadPath || 'loaded')
+    : wabashDeskLoadStatus === 'loading'
+      ? 'JSON CORE: loading data/wabash_county_desk_core.json'
+      : 'JSON CORE: offline / fallback ready';
+  return '<span style="color:#5d4612;font-size:10px">' + esc(label) + '</span>';
+}
+function wdlsFindTown(q) {
+  const nodes = (((wabashDeskCore || {}).modules || {}).town_signals || {}).nodes || [];
+  const key = String(q || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return nodes.find(n => {
+    const hay = [n.id, n.display, n.type, (n.commands || []).join(' ')].join(' ').toLowerCase().replace(/[^a-z0-9]/g, '');
+    return hay.includes(key) || key.includes(hay);
+  });
+}
+function wdlsNoise(n, amp) {
+  return Math.max(0, Math.min(100, Number(n || 0) + Math.floor((Math.random() - 0.48) * (amp || 6))));
+}
+
+function buildWabashCountyDeskHTML() {
+  const now = new Date();
+  const ts = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const sessionMins = Math.round((Date.now() - sessionStart) / 60000);
+
+  if (wabashDeskLoadStatus === 'loading' && !wabashDeskCore) {
+    return '<div style="font-family:Consolas,Monaco,monospace;line-height:1.5;color:#ffcc44">'
+      + wdlsPanel('WDLS COUNTY DESK // LOADING',
+          '<div style="font-size:12px;color:#aa7a18">Calling data/wabash_county_desk_core.json...</div>'
+        + '<div style="color:#5d4612;margin-top:6px">If this stalls on a local file, upload both HTML and JSON to GitHub/WordPress so fetch can read it over HTTP.</div>')
+      + '</div>';
+  }
+
+  if (wabashDeskLoadStatus === 'error' && !wabashDeskCore) {
+    return '<div style="font-family:Consolas,Monaco,monospace;line-height:1.5;color:#ffcc44">'
+      + wdlsPanel('WDLS COUNTY DESK // JSON OFFLINE',
+          '<div style="color:#ff6644">Could not load wabash_county_desk_core.json.</div>'
+        + '<div style="color:#5d4612;margin-top:6px">Last attempt: ' + esc(wabashDeskLoadError || 'unknown') + '</div>'
+        + '<div style="color:#aa7a18;margin-top:8px">Expected GitHub path: <b>data/wabash_county_desk_core.json</b></div>'
+        + '<div style="color:#5d4612;margin-top:8px">Commands: reload | legacy | quit</div>')
+      + '</div>';
+  }
+
+  const core = wabashDeskCore || {};
+  const modules = core.modules || {};
+  const coverage = core.coverage || {};
+  const title = core.title || 'WDLS COUNTY INTELLIGENCE INDEX';
+  const places = Array.isArray(coverage.included_places) ? coverage.included_places.join(' / ') : 'WABASH COUNTY';
+  const signal = modules.county_signal_index || {};
+  const metrics = signal.signal_metrics || {};
+  const notices = (modules.public_notice_wire || {}).seed_items || [];
+  const employers = (modules.business_employer_index || {}).employers_seed || [];
+  const districts = (modules.tax_districts || {}).districts || [];
+  const towns = (modules.town_signals || {}).nodes || [];
+  const radio = modules.radio_relay || {};
+
+  const header = '<div style="color:#554400;border-bottom:1px solid #332200;padding-bottom:4px;margin-bottom:8px;display:flex;gap:14px;flex-wrap:wrap;align-items:center">'
+    + '<span style="color:#ffaa00;font-weight:bold;letter-spacing:2px">HRZN DESK // WDLS COUNTY INDEX</span>'
+    + '<span>' + esc(ts) + '</span>'
+    + '<span class="live-indicator" style="color:#ff4400">[LIVE]</span>'
+    + '<span style="color:#443300">session: ' + sessionMins + 'min</span>'
+    + '<span style="color:#443300">scope: ' + esc(coverage.county || 'Wabash County') + '</span>'
+    + wdlsTinySourceLine()
+    + '</div>';
+
+  const boot = wdlsPanel(title,
+      '<div style="color:#aa7a18;font-size:12px">' + esc(places) + '</div>'
+    + '<div style="color:#5d4612;font-size:11px;margin-top:4px">PUBLIC LEDGER ONLINE // PARCEL STACK READY // BUDGET RELAY ACTIVE // TOWN NODE MAP LOADED</div>'
+    + '<div style="color:#443300;font-size:10px;margin-top:4px">View: ' + esc(wabashDeskView.toUpperCase()) + '</div>');
+
+  let body = '';
+  if (wabashDeskView === 'ledger' || wabashDeskView === 'budget') {
+    const ledger = modules.county_ledger || {};
+    const notice = ledger.known_2026_notice || {};
+    body += wdlsPanel('COUNTY LEDGER / BUDGET RELAY',
+      '<div style="white-space:pre-wrap;color:#aa7a18">' + esc((ledger.display_lines || []).join('\n')) + '</div>'
+      + '<div style="margin-top:8px;color:#5d4612">Public hearing: ' + esc(notice.public_hearing || 'pending extraction') + '</div>'
+      + '<div style="color:#5d4612">Adoption meeting: ' + esc(notice.adoption_meeting || 'pending extraction') + '</div>'
+      + '<div style="color:#443300;margin-top:6px">Fields queued: ' + esc((ledger.fields_to_extract_later || []).join(' / ')) + '</div>');
+    body += buildWabashDistrictPanel(districts);
+  } else if (wabashDeskView === 'taxrank') {
+    const tax = modules.taxpayer_stack || {};
+    const meth = tax.methodology || {};
+    body += wdlsPanel('TAXPAYER STACK',
+      '<div style="white-space:pre-wrap;color:#aa7a18">' + esc((tax.display_lines || []).join('\n')) + '</div>'
+      + '<div style="color:#ff8844;margin-top:8px">STATUS: ' + esc(tax.status || 'pending') + '</div>'
+      + '<div style="color:#5d4612;margin-top:6px">Rank basis: ' + esc(meth.rank_basis || 'parcel/tax footprint pending') + '</div>'
+      + '<div style="color:#443300;margin-top:6px">Cautions: ' + esc((meth.cautions || []).join(' / ')) + '</div>');
+    body += buildWabashEmployersPanel(employers, 16);
+  } else if (wabashDeskView === 'employers') {
+    body += buildWabashEmployersPanel(employers, 40);
+  } else if (wabashDeskView === 'towns') {
+    body += buildWabashTownsPanel(towns, wabashDeskFocus);
+  } else if (wabashDeskView === 'signals' || wabashDeskView === 'rumor') {
+    body += buildWabashSignalPanel(signal, metrics);
+  } else if (wabashDeskView === 'notices') {
+    body += buildWabashNoticePanel(notices, 12);
+  } else if (wabashDeskView === 'sources') {
+    body += buildWabashSourcesPanel(core.sources || []);
+  } else if (wabashDeskView === 'radio') {
+    body += wdlsPanel('WDLS RADIO RELAY',
+      '<div style="white-space:pre-wrap;color:#aa7a18">' + esc((radio.display_lines || []).join('\n')) + '</div>'
+      + '<div style="color:#5d4612;margin-top:8px">Use terminal command: radio / 101.9 / waru</div>');
+  } else {
+    body += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">'
+      + '<div>' + buildWabashSignalPanel(signal, metrics) + buildWabashNoticePanel(notices, 5) + '</div>'
+      + '<div>' + buildWabashTownsPanel(towns, '') + buildWabashDistrictPanel(districts) + '</div>'
+      + '</div>';
+    body += buildWabashEmployersPanel(employers, 10);
+  }
+
+  const footer = '<div style="color:#332200;font-size:10px;margin-top:8px;border-top:1px solid #221100;padding-top:4px">'
+    + 'county | ledger | budget | taxrank | employers | towns | town [name] | signals | notices | rumor | sources | radio | reload | legacy | quit'
+    + '</div>';
+
+  return '<div style="font-family:Consolas,Monaco,monospace;line-height:1.5;color:#ffcc44">'
+    + header + boot + body + footer + '</div>';
+}
+
+function buildWabashSignalPanel(signal, metrics) {
+  const lines = signal.display_lines || [];
+  let html = '<div style="white-space:pre-wrap;color:#aa7a18;margin-bottom:6px">' + esc(lines.join('\n')) + '</div>';
+  Object.entries(metrics || {}).forEach(([k,v]) => {
+    const label = k.replace(/_/g, ' ').toUpperCase();
+    html += wdlsMetricLine(label, wdlsNoise(v, 5));
+  });
+  const samples = signal.sample_items || [];
+  if (samples.length) {
+    html += '<div style="color:#554400;border-top:1px solid #332200;margin-top:6px;padding-top:5px">RUMOR / UNVERIFIED SLOTS</div>';
+    samples.forEach(item => {
+      html += '<div style="color:#5d4612">' + esc(item.display || item.title || 'slot ready') + '</div>';
+    });
+  }
+  return wdlsPanel('COUNTY SIGNAL / RUMOR INDEX', html);
+}
+
+function buildWabashNoticePanel(notices, max) {
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:10px">';
+  html += '<tr style="color:#554400;border-bottom:1px solid #332200"><td style="width:84px">DATE</td><td>PUBLIC WIRE ITEM</td><td style="width:110px">TAGS</td></tr>';
+  wdlsList(notices, max || 8).forEach(n => {
+    html += '<tr><td style="color:#5d4612">' + esc(n.date || '') + '</td>'
+      + '<td style="color:#aa7a18">' + esc(n.headline || '') + '</td>'
+      + '<td style="color:#443300">' + esc((n.signal_tags || []).slice(0,2).join(' / ')) + '</td></tr>';
+  });
+  html += '</table>';
+  return wdlsPanel('PUBLIC NOTICE WIRE', html);
+}
+
+function buildWabashEmployersPanel(employers, max) {
+  let html = '<div style="color:#5d4612;margin-bottom:6px">Major employer seed index. Tax ranking waits on parcel/tax-bill crosswalk.</div>';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:10px">';
+  html += '<tr style="color:#554400;border-bottom:1px solid #332200"><td>ENTITY</td><td style="width:180px">RANK STATUS</td><td style="width:180px">TAX FOOTPRINT</td></tr>';
+  wdlsList(employers, max || 12).forEach(e => {
+    html += '<tr><td style="color:#ffcc44">' + esc(e.name || '') + '</td>'
+      + '<td style="color:#5d4612">' + esc(e.rank_status || 'seed') + '</td>'
+      + '<td style="color:#443300">' + esc(e.tax_footprint_status || 'needs parcel match') + '</td></tr>';
+  });
+  html += '</table>';
+  return wdlsPanel('BUSINESS / EMPLOYER INDEX', html);
+}
+
+function buildWabashDistrictPanel(districts) {
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:4px;font-size:10px">';
+  wdlsList(districts, 18).forEach(d => {
+    html += '<div style="border-bottom:1px dotted #332200;color:#aa7a18">'
+      + '<span style="color:#443300">' + esc(d.code || '') + '</span> ' + esc(d.name || '')
+      + ' <span style="color:#443300">' + esc(d.kind || '') + '</span></div>';
+  });
+  html += '</div>';
+  return wdlsPanel('TAX DISTRICT SIGNAL MAP', html);
+}
+
+function buildWabashTownsPanel(towns, focus) {
+  let selected = focus ? wdlsFindTown(focus) : null;
+  if (selected) {
+    const m = selected.default_metrics || {};
+    let html = '<div style="color:#ffaa00;font-weight:bold">' + esc(selected.display || selected.id) + '</div>'
+      + '<div style="color:#5d4612">' + esc(selected.type || '') + '</div>'
+      + '<div style="color:#aa7a18;margin:6px 0">' + esc(selected.signal_role || '') + '</div>'
+      + '<div style="color:#443300;margin-bottom:6px">' + esc(selected.visual_label || '') + '</div>';
+    Object.entries(m).forEach(([k,v]) => html += wdlsMetricLine(k.replace(/_/g, ' ').toUpperCase(), wdlsNoise(v, 7)));
+    return wdlsPanel('TOWN NODE FOCUS', html);
+  }
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:6px;font-size:10px">';
+  wdlsList(towns, 12).forEach(t => {
+    const m = t.default_metrics || {};
+    const sig = wdlsNoise(m.civic_load || m.industrial_signal || 50, 8);
+    html += '<div style="border:1px solid #221100;padding:6px;background:rgba(0,0,0,.35)">'
+      + '<div style="color:#ffcc44;font-weight:bold">' + esc(t.display || t.id) + '</div>'
+      + '<div style="color:#443300">' + esc(t.visual_label || t.type || '') + '</div>'
+      + '<div style="color:#886600;letter-spacing:0">' + wdlsBar(sig, 12) + ' ' + Math.round(sig) + '%</div>'
+      + '</div>';
+  });
+  html += '</div>';
+  return wdlsPanel('TOWN SIGNALS', html);
+}
+
+function buildWabashSourcesPanel(sources) {
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:10px">';
+  html += '<tr style="color:#554400;border-bottom:1px solid #332200"><td>SOURCE</td><td>TYPE</td><td>REFRESH</td><td>CONFIDENCE</td></tr>';
+  wdlsList(sources, 20).forEach(src => {
+    html += '<tr><td style="color:#ffcc44">' + esc(src.name || src.id || '') + '</td>'
+      + '<td style="color:#5d4612">' + esc(src.type || '') + '</td>'
+      + '<td style="color:#443300">' + esc(src.refresh_cadence || '') + '</td>'
+      + '<td style="color:#443300">' + esc(src.confidence || '') + '</td></tr>';
+  });
+  html += '</table>';
+  return wdlsPanel('SOURCE REGISTRY', html);
+}
+
 const DESK_INSTRUMENTS = {
   REDR: { name: 'Red Rock Continuity Index',        node: 'BUNKER LOAD',       base: 88.4,  vol: 0.8,  signal: 'continuity load rising' },
   GLMR: { name: 'Glomar Deep Recovery Contract',    node: 'PACIFIC DEPTH',     base: 14.2,  vol: 2.1,  signal: 'echo returns bad checksum' },
@@ -5170,6 +5454,9 @@ let tapeBuffer = [];
 let deskTapePtr = 0;
 
 function buildDeskHTML() {
+  if (!deskUseLegacyFallback && (wabashDeskCore || wabashDeskLoadStatus === 'loading' || wabashDeskLoadStatus === 'error')) {
+    return buildWabashCountyDeskHTML();
+  }
   deskTick();
   const now = new Date();
   const ts = now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
@@ -5341,12 +5628,17 @@ function enterDeskMode() {
   if (mc2) mc2.style.display = 'none';
   initDeskValues();
   tapeBuffer = [];
+  wabashDeskView = 'home';
+  wabashDeskFocus = '';
+  deskUseLegacyFallback = false;
   clearPrompt();
 
   // Use fixed overlay instead of scrollable output
   deskContainer = document.getElementById('desk-overlay');
   deskContainer.classList.add('active');
+  const coreLoad = loadWabashDeskCore(false);
   deskContainer.innerHTML = buildDeskHTML();
+  coreLoad.then(() => { if (deskMode && deskContainer) deskContainer.innerHTML = buildDeskHTML(); });
   showPrompt('[desk] >');
 
   // Live update every 2.5s
@@ -5393,6 +5685,44 @@ function handleDeskCommand(cmd) {
   printLine(esc('> ' + cmd), '', true);
 
   if (lower === 'quit' || lower === 'exit' || lower === 'exit desk') { exitDeskMode(); return; }
+
+  // WDLS county JSON views. These update the overlay itself because terminal output is hidden in desk mode.
+  if (['help','desk help','county','home','menu'].includes(lower)) {
+    deskUseLegacyFallback = false; wabashDeskView = 'home'; wabashDeskFocus = ''; wdlsDeskUpdate(); showPrompt('[desk] >'); return;
+  }
+  if (['reload','refresh','json reload','reload json'].includes(lower)) {
+    wabashDeskCore = null; deskUseLegacyFallback = false; wabashDeskView = 'home'; wabashDeskFocus = ''; loadWabashDeskCore(true); wdlsDeskUpdate(); showPrompt('[desk] >'); return;
+  }
+  if (lower === 'legacy' || lower === 'legacy desk') {
+    deskUseLegacyFallback = true; wdlsDeskUpdate(); showPrompt('[desk] >'); return;
+  }
+  if (['ledger','budget','budget county','county ledger'].includes(lower)) {
+    deskUseLegacyFallback = false; wabashDeskView = 'ledger'; wabashDeskFocus = ''; wdlsDeskUpdate(); showPrompt('[desk] >'); return;
+  }
+  if (['taxrank','tax rank','taxpayer','taxpayer stack'].includes(lower)) {
+    deskUseLegacyFallback = false; wabashDeskView = 'taxrank'; wabashDeskFocus = ''; wdlsDeskUpdate(); showPrompt('[desk] >'); return;
+  }
+  if (['employers','business','businesses','major employers'].includes(lower)) {
+    deskUseLegacyFallback = false; wabashDeskView = 'employers'; wabashDeskFocus = ''; wdlsDeskUpdate(); showPrompt('[desk] >'); return;
+  }
+  if (lower === 'towns' || lower === 'town nodes') {
+    deskUseLegacyFallback = false; wabashDeskView = 'towns'; wabashDeskFocus = ''; wdlsDeskUpdate(); showPrompt('[desk] >'); return;
+  }
+  if (lower.startsWith('town ') || lower.startsWith('node ')) {
+    deskUseLegacyFallback = false; wabashDeskView = 'towns'; wabashDeskFocus = lower.replace(/^town\s+|^node\s+/, '').trim(); wdlsDeskUpdate(); showPrompt('[desk] >'); return;
+  }
+  if (['signals','signal','rumor','rumors','county signal'].includes(lower)) {
+    deskUseLegacyFallback = false; wabashDeskView = 'signals'; wabashDeskFocus = ''; wdlsDeskUpdate(); showPrompt('[desk] >'); return;
+  }
+  if (['notices','notice','news','wire county','public wire'].includes(lower)) {
+    deskUseLegacyFallback = false; wabashDeskView = 'notices'; wabashDeskFocus = ''; wdlsDeskUpdate(); showPrompt('[desk] >'); return;
+  }
+  if (['sources','source','source registry'].includes(lower)) {
+    deskUseLegacyFallback = false; wabashDeskView = 'sources'; wabashDeskFocus = ''; wdlsDeskUpdate(); showPrompt('[desk] >'); return;
+  }
+  if (lower === 'radio' || lower === 'radio relay') {
+    deskUseLegacyFallback = false; wabashDeskView = 'radio'; wabashDeskFocus = ''; wdlsDeskUpdate(); showPrompt('[desk] >'); return;
+  }
 
   if (lower.startsWith('watch ')) {
     const sym = lower.slice(6).trim().toUpperCase();
@@ -6022,7 +6352,7 @@ const HELP_PAGES = {
   '': 'HORIZON TERMINAL — HELP\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nhelp hh       — Hughes uplink system\nhelp desk     — HRZN Desk mode\nhelp wire     — Wire service\nhelp instruments — Microfilm, tape, scrape, switchboard\nhelp archive  — File navigation\nhelp operator — Operator / ghost mode\nhelp all      — Full command dump\n\nType commands to discover. The system does not overexplain.',
   'hh':       'HH UPLINK\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nhh uplink     — connect to local HH instance\nhh status     — fragment coherence\nhh tape       — access 18.5 min gap\nhh repo       — repo index\nhh nixon      — ask about nixon\nhh vegas      — ask about vegas\nhh fracture   — pull fragment\nhh packet     — generate handoff packet\nhh external   — open external GPT relay\nhh disconnect — close uplink\nhoward / hh   — direct contact\nmemory        — integrity readout\nfragment      — degraded memory pull\nglomar        — ask about Azorian',
   'radio':    'WDLS RADIO RELAY\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nradio / 101.9 / waru — enter radio mode\nplay / on            — start 101.9 stream\nstop / off           — stop audio\nopen                 — station player page\nexit / menu          — return to WDLS main menu',
-  'desk':     'HRZN DESK\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nhrzn desk / desk / market — enter desk mode\nwatch [sym]  — focus instrument\ntrade [sym]  — attempt order\nhalt [sym]   — suspend trading\ntape         — live event feed\nheat         — heat panel\nalerts       — active alerts\nmargin call  — liquidation event\nportfolio    — position summary\nquit         — exit desk\n\nSymbols: REDR GLMR DSRT TWA WBSH LATTA FORD NIX CUBE OPAL MOON MALT VATI PASD',
+  'desk':     'HRZN DESK / WDLS COUNTY INDEX\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nhrzn desk / desk / market — enter desk mode\ncounty       — county dashboard home\nledger       — county budget relay\ntaxrank      — taxpayer stack / parcel-rank placeholder\nemployers    — Grow Wabash employer seed index\ntowns        — county town-node map\ntown [name]  — focus Wabash, Roann, Lagro, LaFontaine, North Manchester, etc.\nsignals      — signal / rumor index\nnotices      — public notice wire\nsources      — source registry\nradio        — WDLS radio relay view\nreload       — reload data/wabash_county_desk_core.json\nlegacy       — old fictional instrument screen\nquit         — exit desk',
   'wire':     'WIRE SERVICE\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nwire          — start default feed\nwire vegas    — vegas feed\nwire nixon    — nixon feed\nwire wabash   — wabash feed\nwire redrock  — red rock feed\nwire breaking — alerts feed\nwire archive  — archive feed\nexit          — close wire',
   'instruments':     'INSTRUMENTS / FIELD TOOLS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nmicrofilm     — archive reel viewer\nscrape        — redaction scraper\nscrape deeper — reveal next layer\nnixon tape    — tape repair mode\nps            — process monitor\nkill [name]   — attempt process kill\nswitchboard   — rotary operator interface\ncaseboard     — session discovery map',
   'archive':  'ARCHIVE NAVIGATION\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nls            — list directory\ncd [dir]      — change directory\ncat [file]    — read file\npwd           — current path\n\nDirectories: ford  latta  wabash  lincoln  hughes\n             vault  blacksite  files  systems\n\ncd [dir] → ls → cat [file]',
@@ -6042,7 +6372,7 @@ const ALL_COMMANDS = [
   'view source','stop source','cicada','howard','hh','glomar','fragment','memory',
   'hh uplink','hh status','hh tape','hh repo','hh nixon','hh vegas','hh fracture',
   'hh packet','hh external','hh disconnect',
-  'hrzn desk','desk','market','ticker','bloom','radio','radio on','radio off','101.9','1019','waru',
+  'hrzn desk','desk','market','ticker','bloom','county','ledger','budget','taxrank','employers','towns','town wabash','town roann','town lagro','town lafontaine','town north manchester','signals','notices','rumor','sources','reload','legacy','radio','radio on','radio off','101.9','1019','waru',
   'wire','wire vegas','wire nixon','wire wabash','wire redrock','wire breaking','wire archive',
   'switchboard','phone','caseboard','microfilm','scrape','scrape deeper','nixon tape',
   'ps','effects on','effects off','alpha','azorian',
