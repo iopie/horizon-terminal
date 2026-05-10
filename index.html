@@ -367,7 +367,7 @@
       width: min(78vh, 72vw, 880px);
       max-width: 96vw;
       transform: translate(-50%, -50%) scale(1);
-      opacity: 0.16;
+      opacity: 0.30;
       filter:
         drop-shadow(0 0 10px rgba(0,255,0,0.45))
         drop-shadow(0 0 26px rgba(0,255,0,0.24))
@@ -451,11 +451,11 @@
       100% { transform: translate(-50%, -50%) scale(1.026) translate3d( -7px, -5px, 0); }
     }
     @keyframes hh-face-pulse {
-      0%   { opacity: 0.11; }
-      38%  { opacity: 0.18; }
-      52%  { opacity: 0.22; }
-      71%  { opacity: 0.15; }
-      100% { opacity: 0.13; }
+      0%   { opacity: 0.22; }
+      38%  { opacity: 0.30; }
+      52%  { opacity: 0.38; }
+      71%  { opacity: 0.27; }
+      100% { opacity: 0.24; }
     }
     @keyframes hh-face-flicker {
       0%   { filter: drop-shadow(0 0 10px rgba(0,255,0,0.45)) drop-shadow(0 0 26px rgba(0,255,0,0.24)) drop-shadow(0 0 54px rgba(0,255,0,0.12)) blur(0.15px); }
@@ -477,7 +477,7 @@
     @media (max-width: 600px) {
       #hh-uplink-face {
         width: min(88vh, 110vw, 760px);
-        opacity: 0.14;
+        opacity: 0.26;
       }
     }
   </style>
@@ -496,7 +496,7 @@
 
 <div id="terminal">
   <div id="hh-uplink-bg" aria-hidden="true">
-    <img id="hh-uplink-face" src="assets/hh-uplink.png" alt="">
+    <img id="hh-uplink-face" src="assets/hh-uplink.png" alt="" onerror="this.onerror=null; this.src='/assets/hh-uplink.png';">
     <div class="hh-uplink-scanlines"></div>
     <div class="hh-uplink-noise"></div>
     <div class="hh-uplink-vignette"></div>
@@ -4054,7 +4054,13 @@ function hhGetResponse(input) {
 
 function enterHHMode() {
   hhMode = true;
+  bbsMode = false;
   hhTurnCount = 0; hhLastKeyword = null; hhMood = 'guarded';
+  clearPrompt();
+  output.innerHTML = '';
+  stopMatrixRain();
+  const mc2 = document.getElementById('matrix-canvas-2');
+  if (mc2) mc2.style.display = 'none';
   terminal.classList.add('hh-mode');
   enterHHVisual();
   const lines = [
@@ -4084,6 +4090,11 @@ function handleHHCommand(cmd) {
     exitHHVisual();
     doSignalLoss(() => {
       terminal.classList.remove('hh-mode');
+      if (effectsOn) {
+        startMatrixRain();
+        const mc2 = document.getElementById('matrix-canvas-2');
+        if (mc2) mc2.style.display = '';
+      }
       printLine('line closed.', 'hughes-haunt');
       setTimeout(() => printLine('not clean.', 'hughes-haunt'), 300);
       setTimeout(() => printLine('just closed.', 'hughes-haunt'), 600);
