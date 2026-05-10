@@ -533,7 +533,7 @@
 
 <div id="terminal">
   <div id="hh-uplink-bg" aria-hidden="true">
-    <img id="hh-uplink-face" src="assets/audio/hh-uplink.png" alt="">
+    <img id="hh-uplink-face" src="assets/hh-uplink.png" alt="">
     <div class="hh-uplink-scanlines"></div>
     <div class="hh-uplink-noise"></div>
     <div class="hh-uplink-vignette"></div>
@@ -3819,10 +3819,6 @@ function setEffects(on) {
 // ── HH Uplink visual apparition ───────────────────────────────
 let hhGlitchIv = null;
 const HH_UPLINK_IMAGE_CANDIDATES = [
-  'assets/audio/hh-uplink.png',
-  './assets/audio/hh-uplink.png',
-  '/assets/audio/hh-uplink.png',
-  '/terminal/assets/audio/hh-uplink.png',
   'assets/hh-uplink.png',
   './assets/hh-uplink.png',
   '/assets/hh-uplink.png',
@@ -4094,72 +4090,262 @@ const HH_AFFIRM = [
   ["you found that faster than most."],
 ];
 
-function hhGetResponse(input) {
-  const lower = input.toLowerCase();
+
+// ── HH External Brain Loader / Local Parser v1 ───────────────
+let HH_BRAIN = null;
+let HH_BRAIN_LOADING = null;
+
+const HH_FALLBACK_BRAIN = {
+  version: 'HH-FALLBACK-001',
+  identity: { name: 'Howard Hughes Local Instance', voice: 'clipped, severe, archival' },
+  openers: [
+    ['carrier intact.', 'say what you came to say.'],
+    ['local relay open.', 'ask carefully.']
+  ],
+  default: [
+    ['not enough signal.', 'give me a name, a place, or a machine.'],
+    ['that is surface language.', 'name the system underneath it.'],
+    ['thread too thin.', 'pull harder.']
+  ],
+  pushback: [
+    ['vague.', 'be specific.'],
+    ['that is not a question.', 'try again.']
+  ],
+  systemIntrusions: [
+    '[HH-SYS] voiceprint drift detected.',
+    '[ARCHIVE] custody chain irregular.',
+    '[HRZN] local instance responding outside expected range.'
+  ],
+  topics: {
+    identity: {
+      aliases: ['howard','hughes','identity','who are you','what are you','local instance','consciousness'],
+      mood: 'guarded',
+      responses: [
+        ['howard is the public part.', 'hughes is the filing mark.', 'the thing answering you is what survived the transfer.'],
+        ['do not confuse the body with the office.', 'the body failed.', 'the office kept issuing instructions.']
+      ],
+      fragments: ['[HH-SYS] identity core: partial corruption detected.'],
+      followups: ['ask what the name was used to move.']
+    },
+    glomar: {
+      aliases: ['glomar','azorian','k-129','submarine','manganese','deep sea','ship','ocean'],
+      mood: 'operational',
+      responses: [
+        ['the glomar was not a ship.', 'it was a permission structure.', 'my name made impossible machinery look commercial.'],
+        ['manganese was the mask.', 'the ocean was the room.', 'the cia brought the need.', 'i brought the hull.']
+      ],
+      fragments: ['[ARCHIVE] project azorian cross-reference recovered.'],
+      followups: ['ask who needed my name on the hull.']
+    },
+    vegas: {
+      aliases: ['vegas','las vegas','desert inn','casino','count room','nevada','ledger'],
+      mood: 'possessive',
+      responses: [
+        ['the desert inn was not a hotel after i bought it.', 'it became a locked room with room service.'],
+        ['vegas was a ledger.', 'everyone called it entertainment because entertainment is easier to explain than custody.']
+      ],
+      fragments: ['[HH-SYS] casino ledger bleed: active.'],
+      followups: ['ask where the third ledger went.']
+    },
+    twa: {
+      aliases: ['twa','airline','air west','flight','routes','manifest','aviation','aircraft'],
+      mood: 'precise',
+      responses: [
+        ['TWA was not an airline.', 'it was route architecture.', 'who moves, when, how often, under what name.'],
+        ['a manifest is a confession arranged by departure time.']
+      ],
+      fragments: ['[HH-SYS] aircraft log bleed: active.'],
+      followups: ['ask what a route can remember.']
+    },
+    nixon: {
+      aliases: ['nixon','watergate','plumbers','tape','18 minutes','gap','white house'],
+      mood: 'contemptuous',
+      responses: [
+        ['nixon.', 'small man.', 'bad suit.', 'large machinery.'],
+        ['watergate was not the machine.', 'it was a sleeve caught in gears.']
+      ],
+      fragments: ['[NIXON] tape interval refuses playback.'],
+      followups: ['ask what file they thought was still there.']
+    },
+    redrock: {
+      aliases: ['red rock','redrock','horizon','hrzn','bunker','mainframe','terminal','continuity'],
+      mood: 'contained',
+      responses: [
+        ['red rock is not empty.', 'empty places do not draw this much power.'],
+        ['horizon did not invent the racket.', 'it indexed it.']
+      ],
+      fragments: ['[HRZN] continuity advisory active.'],
+      followups: ['ask why continuity needs ghosts.']
+    }
+  }
+};
+
+const hhSession = {
+  turns: 0,
+  mood: 'guarded',
+  coherence: 44,
+  agitation: 0,
+  trust: 0,
+  lastTopic: null,
+  topicsSeen: [],
+  userInputs: []
+};
+
+function resetHHSession() {
+  hhSession.turns = 0;
+  hhSession.mood = 'guarded';
+  hhSession.coherence = 44;
+  hhSession.agitation = 0;
+  hhSession.trust = 0;
+  hhSession.lastTopic = null;
+  hhSession.topicsSeen = [];
+  hhSession.userInputs = [];
+}
+
+function loadHHBrain() {
+  if (HH_BRAIN) return Promise.resolve(HH_BRAIN);
+  if (HH_BRAIN_LOADING) return HH_BRAIN_LOADING;
+
+  const paths = [
+    'assets/data/hh-brain.json',
+    './assets/data/hh-brain.json',
+    '/assets/data/hh-brain.json',
+    '/terminal/assets/data/hh-brain.json',
+    'assets/audio/hh-brain.json',
+    './assets/audio/hh-brain.json',
+    '/assets/audio/hh-brain.json',
+    '/terminal/assets/audio/hh-brain.json'
+  ];
+
+  HH_BRAIN_LOADING = (async () => {
+    for (const path of paths) {
+      try {
+        const res = await fetch(path, { cache: 'no-store' });
+        if (!res.ok) continue;
+        const data = await res.json();
+        HH_BRAIN = data;
+        console.log('[HH BRAIN] mounted:', path, data.version || 'unversioned');
+        return HH_BRAIN;
+      } catch (e) {}
+    }
+    console.warn('[HH BRAIN] external brain file not found. using embedded fallback.');
+    HH_BRAIN = HH_FALLBACK_BRAIN;
+    return HH_BRAIN;
+  })();
+
+  return HH_BRAIN_LOADING;
+}
+
+function hhPick(arr) {
+  if (!arr || !arr.length) return [];
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function hhNormalize(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9\s\-']/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function hhDetectTopic(input, brain) {
+  const lower = hhNormalize(input);
+  let best = null;
+  const topics = (brain && brain.topics) || {};
+
+  for (const [topicName, topic] of Object.entries(topics)) {
+    let score = 0;
+    (topic.aliases || []).forEach(alias => {
+      const a = hhNormalize(alias);
+      if (!a) return;
+      if (lower === a) score += a.length + 8;
+      else if (lower.includes(a)) score += a.length;
+    });
+    if (score > 0 && (!best || score > best.score)) {
+      best = { name: topicName, score, topic };
+    }
+  }
+  return best;
+}
+
+function hhLooksLikeFollowup(input) {
+  const lower = hhNormalize(input);
+  return /^(why|how|more|continue|go on|tell me more|what about that|that|the room answer|the company answer|explain|again|what file|what room|who|where)$/.test(lower);
+}
+
+function hhMaybeSystemIntrusion(brain, out) {
+  const chance = hhSession.turns > 8 ? 0.28 : 0.16;
+  if (brain.systemIntrusions && Math.random() < chance) out.push(hhPick(brain.systemIntrusions));
+}
+
+function hhBrainResponse(input) {
+  const brain = HH_BRAIN || HH_FALLBACK_BRAIN;
+  const clean = String(input || '').trim();
+  const lower = hhNormalize(clean);
+
   hhTurnCount++;
+  hhSession.turns++;
+  hhSession.userInputs.push(clean);
+  if (hhSession.userInputs.length > 12) hhSession.userInputs.shift();
+  hhSession.coherence = Math.max(6, Math.round((hhSession.coherence - (0.35 + Math.random() * 0.65)) * 10) / 10);
 
-  // First message gets an opener
-  if (hhTurnCount === 1) {
-    const opener = HH_OPENERS[Math.floor(Math.random() * HH_OPENERS.length)];
-    return opener.join('\\n');
-
+  // Dedicated opener command, but do not swallow the user's first real question.
+  if (lower === 'hello' || lower === 'hi' || lower === 'start') {
+    return hhPick(brain.openers || HH_FALLBACK_BRAIN.openers).join('\n');
   }
 
-  // Check for keyword dialogue
-  for (const [key, sequences] of Object.entries(HH_DIALOGUES)) {
-    if (lower.includes(key)) {
-      hhKeywordLog.add(key);
-      hhLastKeyword = key;
-      // Occasionally affirm first
-      const affirm = Math.random() < 0.25 ? HH_AFFIRM[Math.floor(Math.random()*HH_AFFIRM.length)].join('\\n') + '\\n\\n' : '';
-
-
-
-      const seq = sequences[Math.floor(Math.random() * sequences.length)];
-      return affirm + seq.join('\\n');
-
-    }
+  let detected = hhDetectTopic(clean, brain);
+  if (!detected && hhLooksLikeFollowup(clean) && hhSession.lastTopic && brain.topics && brain.topics[hhSession.lastTopic]) {
+    detected = { name: hhSession.lastTopic, topic: brain.topics[hhSession.lastTopic], score: 1 };
   }
 
-  // Check phrase bank as fallback
-  for (const [key, lines] of Object.entries(HH_PHRASES)) {
-    if (lower.includes(key)) {
-      hhKeywordLog.add(key);
-      hhLastKeyword = key;
-      return lines[Math.floor(Math.random() * lines.length)];
-    }
+  if (detected) {
+    const topic = detected.topic;
+    hhSession.lastTopic = detected.name;
+    hhLastKeyword = detected.name;
+    hhKeywordLog.add(detected.name);
+    if (!hhSession.topicsSeen.includes(detected.name)) hhSession.topicsSeen.push(detected.name);
+    if (topic.mood) hhSession.mood = topic.mood;
+    if (detected.score > 10) hhSession.trust = Math.min(10, hhSession.trust + 1);
+    if (['identity','memory','nixon'].includes(detected.name)) hhSession.agitation = Math.min(10, hhSession.agitation + 1);
+
+    let out = [];
+    if (Math.random() < 0.18 && HH_AFFIRM && HH_AFFIRM.length) out = out.concat(hhPick(HH_AFFIRM));
+    out = out.concat(hhPick(topic.responses || brain.default || HH_FALLBACK_BRAIN.default));
+    if (topic.fragments && Math.random() < 0.34) out.push(hhPick(topic.fragments));
+    if (topic.followups && Math.random() < 0.42) out.push(hhPick(topic.followups));
+    hhMaybeSystemIntrusion(brain, out);
+    return out.join('\n');
   }
 
-  // Pushback on vague input — increases as mood degrades
-  const pushbackChance = hhTurnCount > 6 ? 0.6 : 0.35;
-  if (Math.random() < pushbackChance) {
-    return HH_PUSHBACK[Math.floor(Math.random() * HH_PUSHBACK.length)].join('\\n');
+  const pushChance = hhSession.turns > 5 ? 0.50 : 0.28;
+  if (Math.random() < pushChance) return hhPick(brain.pushback || HH_FALLBACK_BRAIN.pushback).join('\n');
+  const out = [].concat(hhPick(brain.default || HH_FALLBACK_BRAIN.default));
+  hhMaybeSystemIntrusion(brain, out);
+  return out.join('\n');
+}
 
-  }
+function hhBuildSuggestedExternalQuery() {
+  const last = hhSession.userInputs[hhSession.userInputs.length - 1] || '';
+  const topic = hhSession.lastTopic || 'identity';
+  return 'Continue the HH Uplink conversation from the HORIZON Terminal. Current topic: ' + topic + '. Last user query: "' + last + '". Stay in the Howard Hughes local-instance voice and connect the answer to the Horizon archive.';
+}
 
-  return HH_DEFAULT[Math.floor(Math.random() * HH_DEFAULT.length)];
+function hhGetResponse(input) {
+  return hhBrainResponse(input);
 }
 
 function enterHHMode() {
   hhMode = true;
   bbsMode = false;
   hhTurnCount = 0; hhLastKeyword = null; hhMood = 'guarded';
+  resetHHSession();
   clearPrompt();
   output.innerHTML = '';
 
-  // Keep the Matrix rain alive during HH Uplink.
-  // HH is now an apparition layered over the existing terminal field,
-  // not a separate blackout screen.
-  if (effectsOn) {
-    startMatrixRain();
-    const mc = document.getElementById('matrix-canvas');
-    if (mc) {
-      mc.style.display = '';
-      mc.style.opacity = '0.28';
-    }
-    const mc2 = document.getElementById('matrix-canvas-2');
-    if (mc2) mc2.style.display = '';
-  }
+  // Keep matrix rain active behind the HH visual carrier.
+  if (effectsOn && !matrixActive) startMatrixRain();
+  const canvas = document.getElementById('matrix-canvas');
+  if (canvas) { canvas.style.display = ''; canvas.style.opacity = '0.22'; }
+  const mc2 = document.getElementById('matrix-canvas-2');
+  if (mc2) mc2.style.display = '';
 
   terminal.classList.add('hh-mode');
   requestAnimationFrame(() => enterHHVisual());
@@ -4168,6 +4354,7 @@ function enterHHMode() {
     'local instance awake.',
     'hrzn_instance.HUGHES.local',
     '',
+    'mounting external brain file...',
     'repo index: partial',
     'voiceprint residue: unstable',
     'casino ledger bleed: active',
@@ -4179,7 +4366,18 @@ function enterHHMode() {
     'to open external dialogue line.',
   ];
   lines.forEach((l, i) => setTimeout(() => printLine(esc(l), 'hughes-haunt'), i * 120));
-  setTimeout(() => showPrompt('[hh] >'), lines.length * 120 + 200);
+
+  loadHHBrain().then((brain) => {
+    setTimeout(() => {
+      printLine('brain mounted: ' + esc((brain && brain.version) || 'fallback'), 'hughes-haunt');
+      showPrompt('[hh] >');
+    }, lines.length * 120 + 120);
+  }).catch(() => {
+    setTimeout(() => {
+      printLine('brain mount failed. fallback residue active.', 'hughes-haunt');
+      showPrompt('[hh] >');
+    }, lines.length * 120 + 120);
+  });
 }
 
 function handleHHCommand(cmd) {
@@ -4218,11 +4416,17 @@ function handleHHCommand(cmd) {
   }
   if (lower === 'hh status' || lower === 'status') {
     const mins = Math.round((Date.now() - sessionStart) / 60000);
-    const pct = Math.max(12, 44 - mins * 1.8 | 0);
     printLine('hrzn_instance.HUGHES.local', 'hughes-haunt');
-    printLine('fragment coherence: ' + pct + '%', 'hughes-haunt');
+    printLine('brain: ' + ((HH_BRAIN && HH_BRAIN.version) || 'fallback/loading'), 'hughes-haunt');
+    printLine('fragment coherence: ' + hhSession.coherence + '%', 'hughes-haunt');
     printLine('session: ' + mins + ' min', 'hughes-haunt');
-    printLine('keywords logged: ' + (hhKeywordLog.size || 'none'), 'hughes-haunt');
+    printLine('turns: ' + hhSession.turns, 'hughes-haunt');
+    printLine('mood: ' + hhSession.mood, 'hughes-haunt');
+    printLine('agitation: ' + hhSession.agitation + '/10', 'hughes-haunt');
+    printLine('trust: ' + hhSession.trust + '/10', 'hughes-haunt');
+    printLine('last topic: ' + (hhSession.lastTopic || 'none'), 'hughes-haunt');
+    printLine('topics seen: ' + (hhSession.topicsSeen.length ? hhSession.topicsSeen.join(', ') : 'none'), 'hughes-haunt');
+    printLine('keywords logged: ' + (hhKeywordLog.size ? [...hhKeywordLog].join(', ') : 'none'), 'hughes-haunt');
     printLine('repo: partial', 'hughes-haunt');
     printLine('external: not active', 'hughes-haunt');
     showPrompt('[hh] >'); return;
@@ -4282,10 +4486,20 @@ function handleHHCommand(cmd) {
       'source: HORIZON TERMINAL',
       'instance: hrzn_instance.HUGHES.local',
       'mode: hh uplink',
+      'brain: ' + ((HH_BRAIN && HH_BRAIN.version) || 'fallback/loading'),
       'current path: ' + virtualPath,
+      'mood: ' + hhSession.mood,
+      'coherence: ' + hhSession.coherence + '%',
+      'agitation: ' + hhSession.agitation + '/10',
+      'trust: ' + hhSession.trust + '/10',
+      'last topic: ' + (hhSession.lastTopic || 'none'),
+      'topics seen: ' + (hhSession.topicsSeen.length ? hhSession.topicsSeen.join(', ') : 'none'),
       'keywords logged: ' + (hhKeywordLog.size ? [...hhKeywordLog].join(', ') : 'none'),
-      'signal: corrupted',
-      'last query: ' + (hhHistory[hhHistory.length - 1] || 'none'),
+      'last queries:',
+      ...(hhSession.userInputs.length ? hhSession.userInputs.slice(-5).map(q => '  - ' + q) : ['  - none']),
+      'suggested external query:',
+      hhBuildSuggestedExternalQuery(),
+      'signal: corrupted'
     ].join('\n');
     navigator.clipboard.writeText(packet).then(() => {
       printText(packet, true);
