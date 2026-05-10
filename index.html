@@ -195,6 +195,46 @@
     #terminal.mayberry-mode .guardian-msg { color: #b30000 !important; }
 
 
+
+
+    /* ── WDLS Radio Relay overlay ── */
+    #radio-overlay {
+      display: none;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 52;
+      width: min(760px, calc(100vw - 32px));
+      max-height: calc(100vh - 92px);
+      overflow: auto;
+      padding: 18px 22px;
+      background: rgba(0, 0, 0, 0.96);
+      border: 1px solid #00ff0066;
+      box-shadow: 0 0 24px #00ff0033, inset 0 0 22px #00ff0018;
+      color: #00ff00;
+      font-family: 'Consolas','Monaco','Courier New',monospace;
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      text-align: left;
+    }
+    #radio-overlay.active { display: block; }
+    #terminal.radio-mode,
+    #terminal.radio-mode #output,
+    #terminal.radio-mode #input-line { color: #66ff66 !important; }
+    #terminal.radio-mode #output { visibility: hidden; }
+    #terminal.radio-mode #input-line {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #000; border-top: 1px solid #00ff0033;
+      padding: 8px 22px; z-index: 53;
+    }
+    #terminal.radio-mode #fake-cursor { background-color: #66ff66 !important; }
+    .radio-title { color: #b8ffb8; font-weight: bold; letter-spacing: 0.12em; }
+    .radio-hot { color: #ffffff; text-shadow: 0 0 10px #00ff00aa; }
+    .radio-dim { color: #00aa66; }
+    .radio-warn { color: #ffcc44; }
+    .radio-link { color: #7dcfff; text-decoration: none; }
+
     /* Mobile polish */
     @media (max-width: 600px) {
       html, body { font-size: 13px; }
@@ -553,6 +593,7 @@
     <button id="mayberry-player-close" onclick="closeMayberryPlayer()">[ CLOSE ]</button>
   </div>
 <div id="desk-overlay"></div>
+<div id="radio-overlay"></div>
 
 <div id="terminal">
   <div id="hh-uplink-bg" aria-hidden="true">
@@ -599,6 +640,7 @@ let cicadaWaiting = false;
 let virtualPath   = '/';
 let inDreamMode   = false;
 let bbsMode       = false;
+let radioMode     = false;
 let ghostActive   = false;
 let ghostIndex    = 0;
 let ghostScore    = 0;
@@ -701,6 +743,7 @@ function loadBar(label, onDone, steps, delay) {
   }, delay);
 }
 function currentPrompt() {
+  if (radioMode)    return '[radio] >';
   if (bbsMode)      return 'COMMAND >';
   if (inDreamMode)  return '[OP] _';
   if (inVault)      return '[vault/' + currentVault + '] >';
@@ -2729,6 +2772,7 @@ function showBBSMenu() {
     '  Tape Integrity:    ' + tapePct + '%  ' + makeBar(tapePct),
     '  Wire Room:         ' + wireStr,
     '  HRZN Desk:         ' + btcStr,
+    '  Radio Relay:       READY  [101.9 ROCKS / WARU-FM]',
     '  Vault Seal:        INTACT',
     '  Signal 3301:       QUIET',
     '',
@@ -2743,9 +2787,9 @@ function showBBSMenu() {
     '  [2] Wire Room        [7] Uplink',
     '  [3] Switchboard      [8] Tape Repair',
     '  [4] HRZN Desk        [9] HRZN Hidden Layer',
-    '  [5] Microfilm',
+    '  [5] Microfilm        [R] Radio Relay',
     '',
-    '  [H] Help   [M] Main Menu   [L] Logout',
+    '  [H] Help   [R] Radio   [M] Main Menu   [L] Logout',
     '',
     '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550',
     '',
@@ -2780,6 +2824,7 @@ function handleBBSCommand(cmd) {
   if (lower === '3') { bbsMode = false; enterSwitchMode(); return; }
   if (lower === '4') { bbsMode = false; enterDeskMode(); return; }
   if (lower === '5') { bbsMode = false; enterMicroMode(); return; }
+  if (lower === 'r' || lower === 'radio' || lower === '101.9' || lower === '1019' || lower === 'waru') { enterRadioMode('1019'); return; }
   if (lower === '6') {
     bbsMode = false;
     printText(renderCaseboard());
@@ -2807,6 +2852,7 @@ function handleBBSCommand(cmd) {
       '  [3] Switchboard   Rotary operator interface.',
       '  [4] HRZN Desk     Market instruments and tape.',
       '  [5] Microfilm     Archive reel viewer.',
+      '  [R] Radio Relay   Live 101.9 Rocks / local Wabash radio.',
       '  [6] Caseboard     Session discovery map.',
       '  [7] Uplink        HH consciousness connection.',
       '  [8] Tape Repair   Nixon 18.5 min gap repair.',
@@ -2850,7 +2896,7 @@ function handleBBSCommand(cmd) {
     return;
   }
 
-  printLine(esc('Command not recognized. Select [1]-[9], [H] Help, or [L] Logout.'), 'signal-bleed', true);
+  printLine(esc('Command not recognized. Select [1]-[9], [R] Radio, [H] Help, or [L] Logout.'), 'signal-bleed', true);
   showPrompt('COMMAND >');
 }
 
@@ -3136,8 +3182,17 @@ function handleCommand(cmd) {
     showPrompt(currentPrompt()); return;
   }
   if (lower==='help_OLD_DISABLED') {
-    printLine('<pre>HORIZON TERMINAL — COMMAND REFERENCE\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nNAVIGATION    ls, cd [dir], cat [file], pwd\nSYSTEM        clear, whoami, date, version, logout\nMODES         operator, exitop, ghost (operator only)\n              mayberry (operator only)\nHUGHES        howard / hh  — direct contact\n              fragment     — pull degraded memory\n              memory       — integrity readout (degrades over time)\n              glomar       — ask about Azorian\nNETWORK       uplink, abort, view source, stop source\nVAULT         vault, vault connect [name], vault disconnect\n              vaults: redrock arizona utah vatican malta ohio\nARCHIVE       archive, lookup [name]\nFORD NET      fordnet, latta, lincolnlog, stanton\n              cd ford → ls → cat [file]\n              cd latta, cd lincoln (same pattern)\nFEATURES      tune  — intercept Horizon frequency\n              decode [base64]  — decrypt encoded strings\n              cicada → answer [word]\nARG           blackbook, specter, temple, opal, deepthought\n              code 66, ping moonbase, ghostnet, trace, zeta\n              rex, dominion, moonchild, curtain, threenames\n              monument, combine, corridor, bonelatta\nOPERATOR      maskon → redroom\n              cd hughes → ls → cat [file]\n              hello world\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nMany commands are hidden. The system is listening.</pre>');
+    printLine('<pre>HORIZON TERMINAL — COMMAND REFERENCE\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nNAVIGATION    ls, cd [dir], cat [file], pwd\nSYSTEM        clear, whoami, date, version, logout\nMODES         operator, exitop, ghost (operator only)\n              mayberry (operator only)\nHUGHES        howard / hh  — direct contact\n              fragment     — pull degraded memory\n              memory       — integrity readout (degrades over time)\n              glomar       — ask about Azorian\nNETWORK       uplink, abort, view source, stop source\nVAULT         vault, vault connect [name], vault disconnect\n              vaults: redrock arizona utah vatican malta ohio\nARCHIVE       archive, lookup [name]\nFORD NET      fordnet, latta, lincolnlog, stanton\n              cd ford → ls → cat [file]\n              cd latta, cd lincoln (same pattern)\nFEATURES      radio — WDLS radio relay / 101.9 Rocks
+              tune  — intercept Horizon frequency\n              decode [base64]  — decrypt encoded strings\n              cicada → answer [word]\nARG           blackbook, specter, temple, opal, deepthought\n              code 66, ping moonbase, ghostnet, trace, zeta\n              rex, dominion, moonchild, curtain, threenames\n              monument, combine, corridor, bonelatta\nOPERATOR      maskon → redroom\n              cd hughes → ls → cat [file]\n              hello world\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nMany commands are hidden. The system is listening.</pre>');
     showPrompt(currentPrompt()); return;
+  }
+
+  // ── WDLS RADIO RELAY ────────────────────────────────────────────
+  if (lower === 'radio' || lower.startsWith('radio ') || lower === '101.9' || lower === '1019' || lower === 'waru' || lower === '105.9' || lower === '1059') {
+    const preset = (lower.includes('105') || lower.includes('bash')) ? '1059' : '1019';
+    enterRadioMode(preset);
+    if (lower.includes('play') || lower.includes('on') || lower === '101.9' || lower === '1019' || lower === 'waru') startRadio();
+    return;
   }
 
   // ── HH UPLINK ─────────────────────────────────────────────────
@@ -3147,6 +3202,169 @@ function handleCommand(cmd) {
   if (['hrzn desk','desk','market','ticker','bloom'].includes(lower)) {
     enterDeskMode(); return;
   }
+
+  
+// ═══════════════════════════════════════════════════════════════
+//  WDLS RADIO RELAY — 101.9 ROCKS / WABASH LOCAL STREAM
+// ═══════════════════════════════════════════════════════════════
+const RADIO_PRESETS = {
+  '1019': {
+    label: '101.9 ROCKS // WARU-FM',
+    freq: '101.9 FM',
+    band: 'WABASH / ROANN CLASSIC ROCK RELAY',
+    stream: 'https://1059thebash.com:8003/1019fm',
+    page: 'https://1019.rocks/listen/'
+  },
+  '1059': {
+    label: '105.9 THE BASH // WJOT',
+    freq: '105.9 FM',
+    band: 'WABASH OLDIES / LOCAL RELAY',
+    stream: 'https://1059thebash.com:8003/1059fm',
+    page: 'https://www.1059thebash.com/'
+  }
+};
+let radioAudio = null;
+let radioCurrent = '1019';
+let radioStatus = 'STANDBY';
+let radioIv = null;
+let radioCarrier = 0;
+let radioContainer = null;
+
+function normalizeRadioPreset(key) {
+  const k = String(key || '').toLowerCase().replace(/\s+/g, '');
+  if (k.includes('105') || k.includes('bash')) return '1059';
+  if (k.includes('101') || k.includes('rock') || k.includes('waru')) return '1019';
+  return RADIO_PRESETS[k] ? k : '1019';
+}
+function radioSignalBar() {
+  const base = radioStatus === 'PLAYING' ? 82 : 48;
+  const wobble = Math.round(Math.sin(Date.now() / 700) * 9) + Math.floor(Math.random() * 5);
+  const pct = Math.max(12, Math.min(99, base + wobble));
+  return makeBar(pct, 18) + ' ' + pct + '%';
+}
+function radioNeedle() {
+  const width = 42;
+  const pos = Math.max(0, Math.min(width - 1, Math.floor((Math.sin(Date.now() / 900) + 1) * (width - 1) / 2)));
+  return '[' + ' '.repeat(pos) + '▲' + ' '.repeat(width - pos - 1) + ']';
+}
+function buildRadioHTML(message) {
+  const p = RADIO_PRESETS[radioCurrent] || RADIO_PRESETS['1019'];
+  radioCarrier = (radioCarrier + 1) % 4;
+  const staticBits = ['..', '.:', ':.', '::'][radioCarrier];
+  const stateLabel = radioStatus === 'PLAYING' ? '<span class="radio-hot">LIVE CARRIER LOCKED</span>' : '<span class="radio-warn">' + esc(radioStatus) + '</span>';
+  const msg = message ? '\n' + message + '\n' : '';
+  return [
+    '<div class="radio-title">WABASH DATA LINK SYSTEMS // RADIO RELAY</div>',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'STATION : ' + esc(p.label),
+    'FREQ    : ' + esc(p.freq),
+    'BAND    : ' + esc(p.band),
+    'SRC     : ' + esc(p.stream),
+    'STATUS  : ' + stateLabel,
+    'SIGNAL  : ' + radioSignalBar(),
+    'TUNER   : ' + radioNeedle(),
+    'CARRIER : WDLS-1882 / COURTHOUSE ELECTRIC CIRCUIT ' + staticBits,
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    msg,
+    'COMMANDS:',
+    '  play / on          start current station',
+    '  stop / off         stop audio stream',
+    '  101.9              tune 101.9 Rocks',
+    '  105.9              tune 105.9 The Bash',
+    '  open               open station player page',
+    '  exit / menu        close radio relay',
+    '',
+    '<span class="radio-dim">NOTE: browser may require a typed command/click before audio starts.</span>',
+    '<span class="radio-dim">WDLS archive overlay remains synthetic; audio relay is live web radio.</span>'
+  ].join('\n');
+}
+function renderRadio(message) {
+  radioContainer = radioContainer || document.getElementById('radio-overlay');
+  if (!radioContainer) return;
+  radioContainer.innerHTML = buildRadioHTML(message || '');
+}
+function ensureRadioAudio() {
+  if (!radioAudio) {
+    radioAudio = new Audio();
+    radioAudio.preload = 'none';
+    radioAudio.volume = 0.72;
+  }
+  return radioAudio;
+}
+function enterRadioMode(preset) {
+  radioMode = true;
+  bbsMode = false;
+  radioCurrent = normalizeRadioPreset(preset || radioCurrent);
+  terminal.classList.add('radio-mode');
+  output.innerHTML = '';
+  radioContainer = document.getElementById('radio-overlay');
+  if (radioContainer) radioContainer.classList.add('active');
+  radioStatus = radioAudio && !radioAudio.paused ? 'PLAYING' : 'STANDBY';
+  renderRadio('RADIO RELAY READY. TYPE play TO LOCK CARRIER.');
+  showPrompt('[radio] >');
+  if (radioIv) clearInterval(radioIv);
+  radioIv = setInterval(() => { if (radioMode) renderRadio(); }, 1200);
+}
+function tuneRadio(preset, autoplay) {
+  radioCurrent = normalizeRadioPreset(preset);
+  const p = RADIO_PRESETS[radioCurrent];
+  radioStatus = 'TUNED';
+  renderRadio('TUNED TO ' + p.label + '.');
+  if (autoplay) startRadio();
+}
+function startRadio() {
+  const p = RADIO_PRESETS[radioCurrent] || RADIO_PRESETS['1019'];
+  const a = ensureRadioAudio();
+  if (a.src !== p.stream) a.src = p.stream;
+  radioStatus = 'CONNECTING';
+  renderRadio('CONNECTING TO LIVE STREAM...');
+  const playResult = a.play();
+  if (playResult && typeof playResult.then === 'function') {
+    playResult.then(() => {
+      radioStatus = 'PLAYING';
+      renderRadio('LIVE CARRIER LOCKED: ' + p.label + '.');
+    }).catch(() => {
+      radioStatus = 'BROWSER BLOCKED PLAYBACK';
+      renderRadio('AUDIO DID NOT START. TYPE open FOR THE STATION PLAYER PAGE.');
+    });
+  } else {
+    radioStatus = 'PLAYING';
+    renderRadio('LIVE CARRIER LOCKED: ' + p.label + '.');
+  }
+}
+function stopRadio() {
+  if (radioAudio) {
+    radioAudio.pause();
+    radioAudio.removeAttribute('src');
+    radioAudio.load();
+  }
+  radioStatus = 'STOPPED';
+  renderRadio('CARRIER DROPPED.');
+}
+function exitRadioMode() {
+  stopRadio();
+  radioMode = false;
+  terminal.classList.remove('radio-mode');
+  if (radioIv) { clearInterval(radioIv); radioIv = null; }
+  radioContainer = document.getElementById('radio-overlay');
+  if (radioContainer) {
+    radioContainer.classList.remove('active');
+    radioContainer.innerHTML = '';
+  }
+  showBBSMenu();
+}
+function handleRadioCommand(cmd) {
+  const lower = cmd.trim().toLowerCase();
+  if (!lower || lower === 'help' || lower === 'radio') { renderRadio('RADIO COMMAND INDEX OPEN.'); showPrompt('[radio] >'); return; }
+  if (lower === 'play' || lower === 'on' || lower === 'start') { startRadio(); showPrompt('[radio] >'); return; }
+  if (lower === 'stop' || lower === 'off' || lower === 'pause') { stopRadio(); showPrompt('[radio] >'); return; }
+  if (lower === '101.9' || lower === '1019' || lower.includes('101.9') || lower.includes('1019') || lower.includes('waru') || lower.includes('rock')) { tuneRadio('1019', lower.includes('play') || lower.includes('on')); showPrompt('[radio] >'); return; }
+  if (lower === '105.9' || lower === '1059' || lower.includes('105.9') || lower.includes('1059') || lower.includes('bash')) { tuneRadio('1059', lower.includes('play') || lower.includes('on')); showPrompt('[radio] >'); return; }
+  if (lower === 'open' || lower === 'site' || lower === 'player' || lower === 'listen') { window.open((RADIO_PRESETS[radioCurrent] || RADIO_PRESETS['1019']).page, '_blank', 'noopener'); renderRadio('OPENED CIVILIAN PLAYER PAGE.'); showPrompt('[radio] >'); return; }
+  if (lower === 'exit' || lower === 'quit' || lower === 'm' || lower === 'menu' || lower === 'main menu') { exitRadioMode(); return; }
+  renderRadio('UNKNOWN RADIO COMMAND: ' + cmd + '.');
+  showPrompt('[radio] >');
+}
 
   // ── WIRE SERVICE ───────────────────────────────────────────────
   if (lower === 'wire' || lower.startsWith('wire ')) {
@@ -5883,9 +6101,10 @@ function handleTapeCommand(cmd) {
 //  LAYERED HELP
 // ═══════════════════════════════════════════════════════════════
 const HELP_PAGES = {
-  '': 'HORIZON TERMINAL — HELP\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nhelp hh       — Hughes uplink system\nhelp desk     — HRZN Desk mode\nhelp wire     — Wire service\nhelp instruments — Microfilm, tape, scrape, switchboard\nhelp archive  — File navigation\nhelp operator — Operator / ghost mode\nhelp all      — Full command dump\n\nType commands to discover. The system does not overexplain.',
+  '': 'HORIZON TERMINAL — HELP\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nhelp hh       — Hughes uplink system\nhelp desk     — HRZN Desk mode\nhelp radio    — WDLS radio relay\nhelp wire     — Wire service\nhelp instruments — Microfilm, tape, scrape, switchboard\nhelp archive  — File navigation\nhelp operator — Operator / ghost mode\nhelp all      — Full command dump\n\nType commands to discover. The system does not overexplain.',
   'hh':       'HH UPLINK\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nhh uplink     — connect to local HH instance\nhh status     — fragment coherence\nhh tape       — access 18.5 min gap\nhh repo       — repo index\nhh nixon      — ask about nixon\nhh vegas      — ask about vegas\nhh fracture   — pull fragment\nhh packet     — generate handoff packet\nhh external   — open external GPT relay\nhh disconnect — close uplink\nhoward / hh   — direct contact\nmemory        — integrity readout\nfragment      — degraded memory pull\nglomar        — ask about Azorian',
   'desk':     'HRZN DESK\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nhrzn desk / desk / market — enter desk mode\nwatch [sym]  — focus instrument\ntrade [sym]  — attempt order\nhalt [sym]   — suspend trading\ntape         — live event feed\nheat         — heat panel\nalerts       — active alerts\nmargin call  — liquidation event\nportfolio    — position summary\nquit         — exit desk\n\nSymbols: REDR GLMR DSRT TWA WBSH LATTA FORD NIX CUBE OPAL MOON MALT VATI PASD',
+  'radio':   'WDLS RADIO RELAY\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nradio         — open radio relay widget\nradio on      — open and play 101.9 Rocks\n101.9 / 1019  — tune/play 101.9 Rocks\n105.9 / 1059  — tune 105.9 The Bash\nplay / stop   — control current relay\nopen          — open station player page\nexit          — close radio relay',
   'wire':     'WIRE SERVICE\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nwire          — start default feed\nwire vegas    — vegas feed\nwire nixon    — nixon feed\nwire wabash   — wabash feed\nwire redrock  — red rock feed\nwire breaking — alerts feed\nwire archive  — archive feed\nexit          — close wire',
   'instruments':     'INSTRUMENTS / FIELD TOOLS\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nmicrofilm     — archive reel viewer\nscrape        — redaction scraper\nscrape deeper — reveal next layer\nnixon tape    — tape repair mode\nps            — process monitor\nkill [name]   — attempt process kill\nswitchboard   — rotary operator interface\ncaseboard     — session discovery map',
   'archive':  'ARCHIVE NAVIGATION\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nls            — list directory\ncd [dir]      — change directory\ncat [file]    — read file\npwd           — current path\n\nDirectories: ford  latta  wabash  lincoln  hughes\n             vault  blacksite  files  systems\n\ncd [dir] → ls → cat [file]',
@@ -5906,6 +6125,7 @@ const ALL_COMMANDS = [
   'hh uplink','hh status','hh tape','hh repo','hh nixon','hh vegas','hh fracture',
   'hh packet','hh external','hh disconnect',
   'hrzn desk','desk','market','ticker','bloom',
+  'radio','radio on','radio off','101.9','1019','waru','105.9','1059',
   'wire','wire vegas','wire nixon','wire wabash','wire redrock','wire breaking','wire archive',
   'switchboard','phone','caseboard','microfilm','scrape','scrape deeper','nixon tape',
   'ps','effects on','effects off','alpha','azorian',
@@ -5923,6 +6143,7 @@ inputEl.addEventListener('keydown', e => {
     // Route
     if (state.phase==='login_user'||state.phase==='login_pass') handleLogin(cmd);
     else if (hhMode) handleHHCommand(cmd);
+    else if (radioMode) handleRadioCommand(cmd);
     else if (deskMode) handleDeskCommand(cmd);
     else if (wireMode) handleWireCommand(cmd);
     else if (switchMode) handleSwitchCommand(cmd);
