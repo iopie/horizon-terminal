@@ -517,6 +517,19 @@
       white-space: nowrap;
     }
 
+    /* ── HH matrix layering patch: rain stays behind the face ── */
+    #terminal.hh-mode ~ #matrix-canvas { z-index: 1; }
+    body:has(#terminal.hh-mode) #matrix-canvas {
+      display: block !important;
+      opacity: 0.22 !important;
+      z-index: 1 !important;
+    }
+    body:has(#terminal.hh-mode) #matrix-canvas-2 {
+      display: block !important;
+      opacity: 0.10 !important;
+      z-index: 0 !important;
+    }
+
   </style>
 </head>
 <body>
@@ -4094,6 +4107,8 @@ const HH_AFFIRM = [
 // ── HH External Brain Loader / Local Parser v1 ───────────────
 let HH_BRAIN = null;
 let HH_BRAIN_LOADING = null;
+let HH_BRAIN_SOURCE = 'not loaded';
+let HH_BRAIN_EXTERNAL = false;
 
 const HH_FALLBACK_BRAIN = {
   version: 'HH-FALLBACK-001',
@@ -4202,7 +4217,13 @@ function resetHHSession() {
   hhSession.userInputs = [];
 }
 
-function loadHHBrain() {
+function loadHHBrain(forceReload) {
+  if (forceReload) {
+    HH_BRAIN = null;
+    HH_BRAIN_LOADING = null;
+    HH_BRAIN_SOURCE = 'reloading';
+    HH_BRAIN_EXTERNAL = false;
+  }
   if (HH_BRAIN) return Promise.resolve(HH_BRAIN);
   if (HH_BRAIN_LOADING) return HH_BRAIN_LOADING;
 
@@ -4211,25 +4232,35 @@ function loadHHBrain() {
     './assets/data/hh-brain.json',
     '/assets/data/hh-brain.json',
     '/terminal/assets/data/hh-brain.json',
-    'assets/audio/hh-brain.json',
-    './assets/audio/hh-brain.json',
-    '/assets/audio/hh-brain.json',
-    '/terminal/assets/audio/hh-brain.json'
+    '/horizon-terminal/assets/data/hh-brain.json',
+    'https://raw.githubusercontent.com/iopie/horizon-terminal/main/assets/data/hh-brain.json'
   ];
 
   HH_BRAIN_LOADING = (async () => {
+    const stamp = Date.now();
     for (const path of paths) {
       try {
-        const res = await fetch(path, { cache: 'no-store' });
+        const url = path + (path.includes('?') ? '&' : '?') + 'v=' + stamp;
+        const res = await fetch(url, { cache: 'no-store' });
         if (!res.ok) continue;
         const data = await res.json();
+        if (!data || typeof data !== 'object' || !data.topics || typeof data.topics !== 'object') {
+          console.warn('[HH BRAIN] rejected invalid brain file:', path);
+          continue;
+        }
         HH_BRAIN = data;
-        console.log('[HH BRAIN] mounted:', path, data.version || 'unversioned');
+        HH_BRAIN_SOURCE = path;
+        HH_BRAIN_EXTERNAL = true;
+        console.log('[HH BRAIN] external brain mounted:', path, data.version || 'unversioned');
         return HH_BRAIN;
-      } catch (e) {}
+      } catch (e) {
+        console.warn('[HH BRAIN] failed path:', path, e && e.message ? e.message : e);
+      }
     }
     console.warn('[HH BRAIN] external brain file not found. using embedded fallback.');
     HH_BRAIN = HH_FALLBACK_BRAIN;
+    HH_BRAIN_SOURCE = 'embedded fallback';
+    HH_BRAIN_EXTERNAL = false;
     return HH_BRAIN;
   })();
 
@@ -4370,6 +4401,8 @@ function enterHHMode() {
   loadHHBrain().then((brain) => {
     setTimeout(() => {
       printLine('brain mounted: ' + esc((brain && brain.version) || 'fallback'), 'hughes-haunt');
+      printLine('brain source: ' + esc(HH_BRAIN_SOURCE), 'hughes-haunt');
+      printLine('external json: ' + (HH_BRAIN_EXTERNAL ? 'yes' : 'no'), 'hughes-haunt');
       showPrompt('[hh] >');
     }, lines.length * 120 + 120);
   }).catch(() => {
@@ -4414,10 +4447,35 @@ function handleHHCommand(cmd) {
     }, 400);
     return;
   }
+  if (lower === 'hh brain' || lower === 'brain' || lower === 'brain status' || lower === 'json status') {
+    const topicCount = HH_BRAIN && HH_BRAIN.topics ? Object.keys(HH_BRAIN.topics).length : 0;
+    printLine('HH BRAIN CHECK', 'hughes-haunt');
+    printLine('version: ' + ((HH_BRAIN && HH_BRAIN.version) || 'not mounted'), 'hughes-haunt');
+    printLine('source: ' + HH_BRAIN_SOURCE, 'hughes-haunt');
+    printLine('external json: ' + (HH_BRAIN_EXTERNAL ? 'yes' : 'no'), 'hughes-haunt');
+    printLine('topics: ' + topicCount, 'hughes-haunt');
+    printLine('try: glomar / vegas / nixon / tell me more', 'hughes-haunt');
+    showPrompt('[hh] >'); return;
+  }
+  if (lower === 'hh reload brain' || lower === 'reload brain' || lower === 'brain reload') {
+    printLine('remounting external brain file...', 'hughes-haunt');
+    loadHHBrain(true).then((brain) => {
+      printLine('brain remounted: ' + esc((brain && brain.version) || 'fallback'), 'hughes-haunt');
+      printLine('source: ' + esc(HH_BRAIN_SOURCE), 'hughes-haunt');
+      printLine('external json: ' + (HH_BRAIN_EXTERNAL ? 'yes' : 'no'), 'hughes-haunt');
+      showPrompt('[hh] >');
+    }).catch(() => {
+      printLine('brain remount failed.', 'hughes-haunt');
+      showPrompt('[hh] >');
+    });
+    return;
+  }
   if (lower === 'hh status' || lower === 'status') {
     const mins = Math.round((Date.now() - sessionStart) / 60000);
     printLine('hrzn_instance.HUGHES.local', 'hughes-haunt');
     printLine('brain: ' + ((HH_BRAIN && HH_BRAIN.version) || 'fallback/loading'), 'hughes-haunt');
+    printLine('brain source: ' + HH_BRAIN_SOURCE, 'hughes-haunt');
+    printLine('external json: ' + (HH_BRAIN_EXTERNAL ? 'yes' : 'no'), 'hughes-haunt');
     printLine('fragment coherence: ' + hhSession.coherence + '%', 'hughes-haunt');
     printLine('session: ' + mins + ' min', 'hughes-haunt');
     printLine('turns: ' + hhSession.turns, 'hughes-haunt');
@@ -4456,18 +4514,8 @@ function handleHHCommand(cmd) {
     printLine('cross-reference: /latta /hughes', 'hughes-haunt');
     showPrompt('[hh] >'); return;
   }
-  if (lower === 'hh nixon' || lower === 'nixon') {
-    const r = HH_PHRASES.nixon[Math.floor(Math.random() * HH_PHRASES.nixon.length)];
-    r.split('\n').forEach((l, i) => setTimeout(() => printLine(esc(l), 'hughes-haunt'), i * 80));
-    setTimeout(() => showPrompt('[hh] >'), r.split('\n').length * 80 + 200);
-    return;
-  }
-  if (lower === 'hh vegas' || lower === 'vegas') {
-    const r = HH_PHRASES.vegas[Math.floor(Math.random() * HH_PHRASES.vegas.length)];
-    r.split('\n').forEach((l, i) => setTimeout(() => printLine(esc(l), 'hughes-haunt'), i * 80));
-    setTimeout(() => showPrompt('[hh] >'), r.split('\n').length * 80 + 200);
-    return;
-  }
+  // Topic commands like "nixon" and "vegas" now fall through to the external brain parser.
+  // Do not route them to the old HH_PHRASES arrays, or it will look like the JSON brain is not working.
   if (lower === 'hh fracture' || lower === 'fracture') {
     const msgs = [
       'sector 7: bad.',
@@ -4487,6 +4535,8 @@ function handleHHCommand(cmd) {
       'instance: hrzn_instance.HUGHES.local',
       'mode: hh uplink',
       'brain: ' + ((HH_BRAIN && HH_BRAIN.version) || 'fallback/loading'),
+      'brain source: ' + HH_BRAIN_SOURCE,
+      'external json: ' + (HH_BRAIN_EXTERNAL ? 'yes' : 'no'),
       'current path: ' + virtualPath,
       'mood: ' + hhSession.mood,
       'coherence: ' + hhSession.coherence + '%',
@@ -4514,7 +4564,7 @@ function handleHHCommand(cmd) {
 
   // Free-text — run through phrase engine
   hhHistory.push(lower);
-  const response = hhGetResponse(lower);
+  const response = hhGetResponse(cmd);
   const lines = response.split('\n');
   lines.forEach((l, i) => setTimeout(() => printLine(esc(l), 'hughes-haunt'), i * 90 + 200));
   setTimeout(() => showPrompt('[hh] >'), lines.length * 90 + 400);
