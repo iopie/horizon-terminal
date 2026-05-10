@@ -2570,6 +2570,9 @@ function handleLogin(cmd) {
   else { printLine('ACCESS DENIED. UNAUTHORIZED ATTEMPT LOGGED.', '', true); state.phase='login_user'; state.username=''; showPrompt('ENTER USERNAME:'); }
 }
 function doAccessGranted() {
+  clearPrompt();
+  output.innerHTML = '';
+  terminal.classList.remove('login-mode');
   printLine('ACCESS GRANTED. WELCOME, OP.', '', true);
   printLine('Initializing secure link...', '', true);
   const dec = document.createElement('div'); dec.className='terminal-line'; dec.textContent='DECRYPTING'; output.appendChild(dec);
