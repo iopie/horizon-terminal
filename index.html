@@ -744,7 +744,7 @@ const VFS = {
   '/latta':     ['bone_latta.log','monroe_network.txt','fraternal_layer.txt','counterfeiting_system.txt','limestone_cartel.txt','bonaparte_naming.txt','wabash_expansion.txt'],
   '/wabash':    ['combine_overview.log','service_motor_truck.txt','honeywell_origin.txt','brooks_construction.txt','combine_surnames.txt','liberty_truck.txt','one_wabash.txt'],
   '/lincoln':   ['tomb_plot_1876.log','wabash_model.txt','booth_as_hand.txt','body_as_witness.txt','maryland_corridor.txt','cotton_seam.txt','stanton_control.txt'],
-  '/mayberry':  ['mayberry_history.txt','opie_model.redacted','classified_babysitter.log','sandbox_spec.ops','opie_model_diagram.svg'],
+  '/mayberry':  ['mayberry_history.txt','opie_model.redacted','classified_babysitter.log','sandbox_spec.ops','opie_model_diagram.svg','howard_opie_comments.log','town_square_sensorium.txt','porch_protocol.txt'],
 };
 
 const FORD_LORE = {
@@ -2933,7 +2933,7 @@ function handleCommand(cmd) {
     } else { printLine('[ no audio playing ]','signal-bleed',true); }
     showPrompt(currentPrompt()); return;
   }
-  if (mayberryMode && ['opie','barney','auntbee','andy'].includes(lower)) { handleMayberryCmd(lower); return; }
+  if (mayberryMode && isMayberryQuery(lower)) { handleMayberryCmd(lower); return; }
 
   // ── DECODE ─────────────────────────────────────────────────
   if (lower.startsWith('decode ') || lower==='decode') {
@@ -3437,6 +3437,258 @@ function closeMayberryPlayer() {
   const iframe = document.getElementById('mayberry-iframe');
   iframe.src = '';
 }
+
+// ── Mayberry / O.P.I.E. Howard response pack ──────────────────
+const MAYBERRY_QUERY_TERMS = [
+  'opie','o.p.i.e','opie model','opie taylor','boy','child','auntbee','aunt bee','bee','beatrice',
+  'andy','sheriff','barney','deputy','fife','mayberry','town','town square','porch','front porch',
+  'fishing','fishing hole','jail','cell','church','school','schoolhouse','teacher','pie','kitchen',
+  'classified babysitter','babysitter','caregiver','handler','sandbox','laugh track','whistle','theme',
+  'whistling','good boy','permission','mother','father','authority','otis','floyd','goober','gomer'
+];
+
+const MAYBERRY_HOWARD_COMMENTS = {
+  opie: [
+    ['opie did not need a leash.', 'he had a town.'],
+    ['the child thought he was free because the roads were familiar.', 'that is the cleanest enclosure.'],
+    ['opie was not trained to obey.', 'he was trained to feel the boundary before he reached it.'],
+    ['the boy kept asking questions.', 'the town kept answering only the safe ones.'],
+    ['the opie model begins when the child mistakes repetition for love.'],
+    ['do not look for cruelty first.', 'the elegant program starts with comfort.'],
+    ['opie learned consequence in a place without consequence.', 'that should bother you.'],
+    ['the missing mother is not backstory.', 'it is architecture.'],
+    ['a child without one attachment point will accept a town as replacement hardware.'],
+    ['opie is the useful subject because he believes the town is protecting him.'],
+    ['the boy was not watched by one handler.', 'he was watched by a civic nervous system.'],
+    ['every adult knew his name.', 'that is not community in this file.', 'that is distributed custody.'],
+    ['opie learned to confess before he learned to hide.', 'that made him legible.'],
+    ['a child who runs to the sheriff has already accepted the map.'],
+    ['the model worked because nobody in the town looked like a warden.'],
+    ['the subject called the cage home.', 'program success.'],
+    ['opie had adventures at the edge of the sandbox.', 'never outside it.'],
+    ['the question is not what opie learned.', 'the question is what the town learned from opie.'],
+    ['a child can be conditioned by fear.', 'but he will remember the fear.', 'comfort leaves fewer fingerprints.'],
+    ['opie was the little republic.', 'andy was the law.', 'aunt bee was continuity.', 'barney was the comic fault.'],
+    ['the boy became the measuring device.', 'mayberry measured itself by how quickly he returned to center.'],
+    ['the opie model is not obedience.', 'it is nostalgic self-policing installed before adolescence.'],
+    ['if the child misses the cage after leaving it, the cage has entered the child.'],
+    ['opie did not escape mayberry.', 'he carried mayberry as a moral reflex.'],
+    ['a boy raised inside permanent reassurance becomes suspicious of reality.'],
+    ['mayberry gave opie a world so clean that every real street would later look diseased.'],
+    ['the subject was taught to love the boundary.', 'that is why no fence was needed.'],
+    ['when opie disobeyed, the town did not punish him.', 'it corrected his memory of himself.'],
+    ['they did not break the child.', 'they gave him a script with his name already printed on it.'],
+    ['the opie model turns innocence into a tracking device.']
+  ],
+  auntbee: [
+    ['aunt bee was not surveillance.', 'surveillance wears a badge.', 'she was continuity.'],
+    ['the pie was a soft credential.', 'the boy accepted it and the room closed behind him.'],
+    ['domestic care is the best cover because no one audits affection.'],
+    ['she did not need to interrogate him.', 'children volunteer reports to the person who feeds them.'],
+    ['a kitchen can be a checkpoint if every return is rewarded.'],
+    ['aunt bee made the program smell like sugar and starch.'],
+    ['the classified babysitter never looks classified.', 'that is why she is selected.'],
+    ['caregiving is access with an apron on it.'],
+    ['the pie is not the point.', 'the waiting window is the point.'],
+    ['handler note: subject confuses administered warmth with spontaneous love.'],
+    ['aunt bee kept the emotional clock wound.'],
+    ['no child questions a perimeter made of supper.'],
+    ['she did not guard the door.', 'she made leaving feel rude.'],
+    ['the babysitter layer is older than television.', 'mayberry only made it syndicate.'],
+    ['a house can replace a mother if the program keeps the table set.']
+  ],
+  andy: [
+    ['andy never had to raise his voice.', 'the town had already agreed where the walls were.'],
+    ['the sheriff is gentler when the law has nowhere else to go.'],
+    ['andy carried a gun he almost never used.', 'that absence did more work than the weapon.'],
+    ['authority becomes permanent when it learns to smile first.'],
+    ['the badge was not metal.', 'the badge was trust distributed across the square.'],
+    ['andy made law feel like common sense.', 'common sense is where programs like to hide.'],
+    ['a sheriff without violence is still a sheriff.'],
+    ['the soft voice is not proof of softness.', 'it is proof the command layer is mature.'],
+    ['andy could correct opie with a look because the town had already taught the boy what the look meant.'],
+    ['the father and the sheriff occupied the same body.', 'that is efficient design.'],
+    ['authority inside the home is more durable than authority at the courthouse.'],
+    ['andy was the model citizen because the model belonged to him.']
+  ],
+  barney: [
+    ['barney was the visible mistake.', 'visible mistakes protect invisible order.'],
+    ['the deputy was allowed to be ridiculous so the sheriff could remain natural.'],
+    ['barney shook so mayberry would look stable.'],
+    ['every system needs a comic leak valve.'],
+    ['barney was not failure.', 'he was calibrated incompetence.'],
+    ['the spare bullet is a theology of controlled force.'],
+    ['if all authority looked competent, the program would feel military.', 'barney made it domestic.'],
+    ['he made the law adorable.', 'that is not harmless.'],
+    ['the deputy panicked in public so the structure could relax in private.'],
+    ['barney is the proof that even error can be assigned a civic function.']
+  ],
+  town: [
+    ['mayberry is a sandbox that smiles back.'],
+    ['small towns do not need cameras when memory is distributed correctly.'],
+    ['every neighbor was a sensor.', 'every pie was a packet.'],
+    ['the town square was the dashboard.'],
+    ['nothing in mayberry persisted except the structure.'],
+    ['the absence of crime was not innocence.', 'it was scenario control.'],
+    ['a perfect town is not a place.', 'it is a behavioral diagram with porches.'],
+    ['mayberry made authority gentle enough to swallow.'],
+    ['the streets were clean because the dirt had been moved into the viewer.'],
+    ['the town taught the audience to confuse legibility with goodness.'],
+    ['mayberry did not remove danger.', 'it removed unscripted danger.'],
+    ['a town where everyone knows your name is either home or a database.'],
+    ['the square looked public.', 'the rules were private.'],
+    ['every episode reset because memory would have ruined the experiment.'],
+    ['mayberry is what a control room looks like after it learns manners.'],
+    ['the town was not trapped in the past.', 'it was a past manufactured for future use.'],
+    ['nostalgia is a perimeter with music.'],
+    ['the sandbox succeeds when the subject defends it as innocence.'],
+    ['the softer the town looked, the harder the boundary became.'],
+    ['mayberry was not the cure for modern life.', 'it was the comparison weapon.']
+  ],
+  porch: [
+    ['the porch is where the program pretends to rest.'],
+    ['do not trust a system that rocks itself to sleep.'],
+    ['a rocking chair is a metronome for compliance.'],
+    ['the porch made surveillance look like neighborliness.'],
+    ['front porches are public rooms pretending to be private ones.'],
+    ['the porch taught the viewer that being observed could feel like belonging.'],
+    ['the chair moved but went nowhere.', 'that was the lesson.'],
+    ['a porch conversation is an interview with lemonade nearby.'],
+    ['the screen door is a soft checkpoint.'],
+    ['mayberry put the control surface outside so everyone would call it hospitality.']
+  ],
+  jail: [
+    ['the jail cell had no prisoner most days.', 'that was the lesson.'],
+    ['a cage with the door open is still teaching cage logic.'],
+    ['otis locked himself up because the town had entered him.'],
+    ['the drunk knew where to sleep.', 'program complete.'],
+    ['the cell was not for criminals.', 'it was for the viewer to see punishment domesticated.'],
+    ['mayberry kept a cage in the room and called the room safe.'],
+    ['the jail worked best when no one feared it.'],
+    ['a voluntary cell is the highest form of law enforcement.'],
+    ['the bars were comic until you needed them.'],
+    ['the courthouse was a home with a cage attached.']
+  ],
+  fishing: [
+    ['the fishing hole was not escape.', 'it was the approved edge of the map.'],
+    ['father and son walked to water and called it freedom.'],
+    ['the woods were permitted wilderness.'],
+    ['the line went into the pond.', 'the signal came back through the boy.'],
+    ['a fishing pole is a leash if the destination is pre-approved.'],
+    ['the song begins before the town appears.', 'orientation before entry.'],
+    ['the water looked natural because the boundary was emotional.'],
+    ['every sandbox needs an outdoor room.'],
+    ['the fishing hole let the subject rehearse escape without leaving custody.'],
+    ['the path to the pond was still on the map.']
+  ],
+  laughtrack: [
+    ['the laugh track told the viewer when the cage was charming.'],
+    ['comedy is a permission signal.'],
+    ['the joke resets suspicion.'],
+    ['if the audience laughs, the boundary can move an inch.'],
+    ['the program did not hide behind laughter.', 'it synchronized with it.'],
+    ['laughter is how the viewer signs without reading.'],
+    ['a joke can carry a command if the command is small enough.'],
+    ['the warm laugh made the correction feel voluntary.'],
+    ['the audience practiced forgiveness every week.'],
+    ['the laugh track was not the lock.', 'it was the oil.']
+  ],
+  church: [
+    ['the church bell made the schedule sacred.'],
+    ['mayberry did not need doctrine.', 'it needed rhythm.'],
+    ['sunday made the town feel ordained.'],
+    ['ritual is cheaper than enforcement once the subject believes it.'],
+    ['the hymn kept the sandbox from looking engineered.'],
+    ['a bell is a broadcast device with a steeple.'],
+    ['the sacred calendar and the broadcast schedule did the same work.'],
+    ['mayberry made civic obedience sound like a hymn.'],
+    ['faith was not the program.', 'regularity was.'],
+    ['a town that rings at the same hour teaches the body before the mind notices.']
+  ],
+  school: [
+    ['the schoolhouse made the town reproducible.'],
+    ['children are where civic fiction becomes memory.'],
+    ['the teacher did not need classified clearance.', 'the lesson plan was enough.'],
+    ['a classroom is a factory for acceptable questions.'],
+    ['opie learned where curiosity was allowed to end.'],
+    ['the chalkboard was the town square reduced to doctrine.'],
+    ['school made mayberry portable.'],
+    ['the lesson was never only arithmetic.', 'it was role assignment.'],
+    ['childhood is the cleanest place to install a map.'],
+    ['the program does not begin when the child understands it.', 'it begins before understanding is required.']
+  ],
+  generic: [
+    ['mayberry file open.', 'do not let the whistling make you stupid.'],
+    ['the signal is red because the innocence layer is failing.'],
+    ['you are looking at a comedy.', 'the comedy is looking back.'],
+    ['the room is white now.', 'that does not mean it is clean.'],
+    ['every wholesome system has a service entrance.'],
+    ['if it feels too safe, ask what was removed.'],
+    ['innocence is sometimes a deleted variable.'],
+    ['the small town was not hiding from history.', 'it was editing history into furniture.'],
+    ['comfort is the most efficient anesthetic.'],
+    ['mayberry does not frighten me.', 'people missing mayberry frighten me.'],
+    ['the show ended.', 'the template did not.'],
+    ['ask why the town needed a boy to prove it was good.'],
+    ['the viewer thought he was watching opie grow up.', 'the viewer was also being raised.'],
+    ['the safest town on television still required a sheriff.'],
+    ['a place without exits does not need villains.']
+  ]
+};
+
+function isMayberryQuery(lower) {
+  if (!mayberryMode) return false;
+  if (['opie','barney','auntbee','aunt bee','andy','mayberry help','mayberry status','opie more','opie model','classified babysitter','sandbox','porch','town square','fishing hole','laugh track','jail','church','school','schoolhouse','pie','bee','sheriff','deputy','whistle','theme'].includes(lower)) return true;
+  return MAYBERRY_QUERY_TERMS.some(term => lower.includes(term));
+}
+
+function mayberryCategoryFromInput(lower) {
+  if (lower.includes('aunt') || lower.includes('bee') || lower.includes('pie') || lower.includes('babysitter') || lower.includes('caregiver') || lower.includes('kitchen')) return 'auntbee';
+  if (lower.includes('andy') || lower.includes('sheriff') || lower.includes('father') || lower.includes('badge') || lower.includes('law')) return 'andy';
+  if (lower.includes('barney') || lower.includes('fife') || lower.includes('deputy')) return 'barney';
+  if (lower.includes('porch') || lower.includes('screen door') || lower.includes('rocking')) return 'porch';
+  if (lower.includes('jail') || lower.includes('cell') || lower.includes('otis') || lower.includes('courthouse')) return 'jail';
+  if (lower.includes('fish') || lower.includes('pond') || lower.includes('hole') || lower.includes('whistle') || lower.includes('theme')) return 'fishing';
+  if (lower.includes('laugh') || lower.includes('joke') || lower.includes('comedy')) return 'laughtrack';
+  if (lower.includes('church') || lower.includes('bell') || lower.includes('hymn') || lower.includes('sunday')) return 'church';
+  if (lower.includes('school') || lower.includes('teacher') || lower.includes('class')) return 'school';
+  if (lower.includes('town') || lower.includes('mayberry') || lower.includes('sandbox') || lower.includes('square')) return 'town';
+  if (lower.includes('opie') || lower.includes('child') || lower.includes('boy') || lower.includes('mother') || lower.includes('o.p.i.e')) return 'opie';
+  return 'generic';
+}
+
+function printMayberryHoward(category, count) {
+  category = category || 'generic';
+  count = count || 1;
+  for (let i = 0; i < count; i++) {
+    const bank = MAYBERRY_HOWARD_COMMENTS[category] || MAYBERRY_HOWARD_COMMENTS.generic;
+    const cluster = bank[Math.floor(Math.random() * bank.length)];
+    const lines = Array.isArray(cluster) ? cluster : [cluster];
+    lines.forEach((l, idx) => {
+      setTimeout(() => printLine(esc(l), 'hughes-haunt', true), (i * 650) + (idx * 220));
+    });
+    if (Math.random() < 0.34) {
+      setTimeout(() => printLine(esc('[MAYBERRY-SYS] domestic control layer returns positive echo.'), 'signal-bleed', true), (i * 650) + (lines.length * 220) + 120);
+    }
+  }
+}
+
+function mayberryMiniReport() {
+  const lines = [
+    'MAYBERRY MODE // ACTIVE',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    'available probes:',
+    '  opie / opie more / opie model',
+    '  andy / barney / auntbee',
+    '  town square / porch / jail / fishing hole',
+    '  laugh track / church / school / classified babysitter',
+    '',
+    'hh note:',
+    '  mayberry is not treated as nostalgia here.',
+    '  mayberry is treated as a behavioral enclosure.',
+  ];
+  printLine('<pre>' + esc(lines.join('\n')) + '</pre>', '', true);
+}
 // ── Andy compliance script ────────────────────────────────────
 let andyTurn = 0;
 let andyMode = 'warm'; // warm → curious → probing → compliance
@@ -3531,6 +3783,9 @@ const SUBLIMINAL_WORDS = [
   'COMPLY','OBSERVE','REMAIN','DO NOT LOOK AWAY','WATCH','LISTEN',
   'YOU ARE SAFE','STAY','FORGET','TRUST THE SIGNAL','DO NOT RESIST',
   'CONTINUE','ACCEPT','BREATHE','YOU BELONG HERE','DO NOT LEAVE',
+  'THE TOWN IS THE LOCK','OPIE RETURNS TO CENTER','THE PIE IS WORKING',
+  'EVERY NEIGHBOR IS A SENSOR','THE PORCH IS A CHECKPOINT',
+  'THE FISHING HOLE IS APPROVED','AUTHORITY IS SAFETY','MAYBERRY REMEMBERS',
 ];
 
 let subliminalIv = null;
@@ -3588,26 +3843,45 @@ function stopSubliminalCorruption() {
 }
 
 function handleMayberryCmd(lower) {
-  if(lower==='opie') {
-    printLine('<pre>O.P.I.E. MODEL\nOperational Psychosocial Intervention Experiment\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nOrigin: 1962\nPurpose: Manufacturing oppositional archetypes\n         for controlled dialectics.\n\n"The child is the product.\nThe town is the template.\nThe show is the program.\nMayberry is the sandbox."\n\nSee: opie_model.redacted</pre>');
+  if (!mayberryMode) { printLine(esc('Command not recognized.')); showPrompt(currentPrompt()); return; }
+
+  if (lower === 'mayberry help' || lower === 'mayberry status') {
+    mayberryMiniReport();
+    showPrompt(currentPrompt()); return;
   }
-  else if(lower==='barney') {
+
+  if(lower==='opie' || lower==='opie model') {
+    printLine('<pre>O.P.I.E. MODEL\nOperational Psychosocial Intervention Experiment\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nOrigin: 1962\nPurpose: Manufacturing oppositional archetypes\n         for controlled dialectics.\n\n"The child is the product.\nThe town is the template.\nThe show is the program.\nMayberry is the sandbox."\n\nSee: opie_model.redacted</pre>');
+    setTimeout(() => printMayberryHoward('opie', 2), 300);
+    setTimeout(() => showPrompt(currentPrompt()), 2100); return;
+  }
+  else if(lower==='opie more' || lower.includes('what about opie') || lower.includes('tell me more') && lower.includes('opie')) {
+    printMayberryHoward('opie', 3);
+    setTimeout(() => showPrompt(currentPrompt()), 2600); return;
+  }
+  else if(lower==='barney' || lower.includes('barney') || lower.includes('fife') || lower.includes('deputy')) {
     const barney = [
       '"Nip it in the bud!" — Barney Fife\n[HANDLER NOTE: Subject\'s anxiety response is a feature, not a bug.]',
       '"Now Andy—" [REDACTED]\n[CONDITIONING LOG: Barney\'s incompetence is calibrated. Deliberate.]',
       '"I\'m a deputy!" — B. Fife\n[OPIE NOTE: The deputy believes in the system. That is his function.]',
     ];
     printLine(esc(barney[Math.floor(Math.random()*barney.length)]), 'signal-bleed', true);
+    setTimeout(() => printMayberryHoward('barney', 1), 500);
+    setTimeout(() => showPrompt(currentPrompt()), 1800); return;
   }
-  else if(lower==='auntbee') {
+  else if(lower==='auntbee' || lower==='aunt bee' || lower.includes('aunt bee') || lower.includes('classified babysitter') || lower.includes('pie') || lower.includes('caregiver')) {
     printLine('Aunt Bee leaves a pie on the windowsill.', 'guardian-msg', true);
     setTimeout(() => printLine('Nothing happens.', 'guardian-msg', true), 800);
-    setTimeout(() => printLine('[HANDLER LOG: Subject accepted offering without hesitation.]', 'signal-bleed', true), 2200);
-    setTimeout(() => printLine('[CONDITIONING CYCLE: COMPLETE]', 'hughes-haunt', true), 3200);
-    showPrompt(currentPrompt()); return;
+    setTimeout(() => printLine('[HANDLER LOG: Subject accepted offering without hesitation.]', 'signal-bleed', true), 1600);
+    setTimeout(() => printMayberryHoward('auntbee', 2), 2200);
+    setTimeout(() => printLine('[CONDITIONING CYCLE: COMPLETE]', 'hughes-haunt', true), 4200);
+    setTimeout(() => showPrompt(currentPrompt()), 4700); return;
   }
-  else if(lower==='andy') { handleAndyCmd(); return; }
-  showPrompt(currentPrompt());
+  else if(lower==='andy' || lower.includes('andy') || lower.includes('sheriff')) { handleAndyCmd(); setTimeout(() => printMayberryHoward('andy', 1), 900); return; }
+
+  const category = mayberryCategoryFromInput(lower);
+  printMayberryHoward(category, lower.includes('more') ? 2 : 1);
+  setTimeout(() => showPrompt(currentPrompt()), lower.includes('more') ? 2100 : 1400);
 }
 
 function handleMayberryFile(fname) {
@@ -3764,6 +4038,79 @@ function handleMayberryFile(fname) {
       '',
       '[Ξ END DIAGRAM]',
     ].join('\n'),
+    'howard_opie_comments.log': [
+      '[HOWARD / OPIE COMMENTS // MAYBERRY MODE]',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'The Opie problem is not that the child was watched.',
+      'Children are always watched.',
+      '',
+      'The problem is that every adult in the town became',
+      'part of the same interpretive machine.',
+      '',
+      'A father could correct him.',
+      'An aunt could soften him.',
+      'A deputy could frighten him harmlessly.',
+      'A teacher could normalize him.',
+      'A neighbor could remember him.',
+      '',
+      'No one needed to conspire in the ordinary sense.',
+      'The town itself performed the conspiracy by habit.',
+      '',
+      'Howard note:',
+      '  opie did not escape the town.',
+      '  he became the town carrying itself forward.',
+      '',
+      '[RANDOMIZED HH COMMENT BANK ACTIVE]',
+      'Type: opie more',
+      '[Ξ END LOG]',
+    ].join('\n'),
+
+    'town_square_sensorium.txt': [
+      '[TOWN SQUARE SENSORIUM // CIVIC MEMORY GRID]',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'Mayberry did not need cameras.',
+      'It had windows.',
+      '',
+      'It did not need microphones.',
+      'It had counters, benches, porches, phones,',
+      'barber chairs, church steps, and store fronts.',
+      '',
+      'The town square was not merely a setting.',
+      'It was the central bus.',
+      '',
+      'All gossip returned to it.',
+      'All corrections passed through it.',
+      'All children became legible to it.',
+      '',
+      'The square looked public.',
+      'The rules were private.',
+      '',
+      '[MAYBERRY-SYS] sensorium file mounted.',
+      '[Ξ END FILE]',
+    ].join('\n'),
+
+    'porch_protocol.txt': [
+      '[PORCH PROTOCOL // DOMESTIC THRESHOLD STUDY]',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'The porch is neither inside nor outside.',
+      'That is why it matters.',
+      '',
+      'A porch allows observation without admitting surveillance.',
+      'A porch allows interview without calling it intake.',
+      'A porch allows correction without making a case file.',
+      '',
+      'Rocking chair motion creates the illusion of rest.',
+      'But the chair does not travel.',
+      '',
+      'The subject feels movement.',
+      'The subject remains in place.',
+      '',
+      'Howard note:',
+      '  do not trust a system that rocks itself to sleep.',
+      '',
+      '[Ξ END FILE]',
+    ].join('\n'),
+
   };
 
   if(lore[fname]) printText(lore[fname]);
@@ -5525,6 +5872,7 @@ const ALL_COMMANDS = [
   'view source','stop source','cicada','howard','hh','glomar','fragment','memory',
   'hh uplink','hh status','hh tape','hh repo','hh nixon','hh vegas','hh fracture',
   'hh packet','hh external','hh disconnect',
+  'opie','opie more','opie model','andy','barney','auntbee','aunt bee','town square','porch','fishing hole','laugh track','classified babysitter','mayberry help',
   'hrzn desk','desk','market','ticker','bloom',
   'wire','wire vegas','wire nixon','wire wabash','wire redrock','wire breaking','wire archive',
   'switchboard','phone','caseboard','microfilm','scrape','scrape deeper','nixon tape',
