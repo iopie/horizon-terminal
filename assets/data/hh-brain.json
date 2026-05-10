@@ -1,5 +1,5 @@
 {
-  "version": "HH-BRAIN-001",
+  "version": "HH-BRAIN-001+JSON-FIX",
   "identity": {
     "name": "Howard Hughes Local Instance",
     "voice": "clipped, severe, intelligent, paranoid, archival, dry",
@@ -802,6 +802,29 @@
         "nixon",
         "redrock",
         "identity"
+      ]
+    },
+    "diagnostic_json": {
+      "aliases": [
+        "json diagnostic",
+        "brain diagnostic",
+        "external brain test",
+        "brain test",
+        "json test"
+      ],
+      "mood": "diagnostic",
+      "responses": [
+        [
+          "external brain file confirmed.",
+          "this response came from hh-brain.json.",
+          "the old local instance does not contain this phrase."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] external json topic map active."
+      ],
+      "followups": [
+        "keep this diagnostic node until deployment is stable."
       ]
     }
   }
