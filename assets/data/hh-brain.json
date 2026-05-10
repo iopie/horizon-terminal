@@ -1,9 +1,9 @@
 {
-  "version": "HH-BRAIN-001+JSON-FIX",
+  "version": "HH-BRAIN-050-EXPANDED-400L",
   "identity": {
     "name": "Howard Hughes Local Instance",
-    "voice": "clipped, severe, intelligent, paranoid, archival, dry",
-    "description": "Initial local brain pack for HORIZON Terminal HH Uplink. Built for topic scoring, fragments, followups, and handoff packets."
+    "voice": "short, severe, clipped, intelligent, paranoid, dry, archival, corrective",
+    "design_note": "Expanded 50-topic HH Brain: exactly 400 total response lines, 100 fragments, 100 followups, and 50 system intrusions. Designed for the HH Uplink local parser."
   },
   "openers": [
     [
@@ -12,37 +12,11 @@
     ],
     [
       "local relay open.",
-      "do not waste the signal."
+      "what do you want."
     ],
     [
       "you found the room.",
       "now ask carefully."
-    ],
-    [
-      "visual carrier mounted.",
-      "voiceprint unstable.",
-      "question me before the line degrades."
-    ]
-  ],
-  "default": [
-    [
-      "not enough signal.",
-      "give me a name, a place, or a machine."
-    ],
-    [
-      "that is surface language.",
-      "name the system underneath it."
-    ],
-    [
-      "thread too thin.",
-      "pull harder."
-    ],
-    [
-      "i can answer records.",
-      "i cannot answer fog."
-    ],
-    [
-      "ask me about a ship, a hotel, a route, a file, or a body."
     ]
   ],
   "pushback": [
@@ -52,27 +26,25 @@
     ],
     [
       "that is not a question.",
-      "try again."
+      "give me a name, a place, or a file."
     ],
     [
-      "you are circling it.",
-      "say the name."
-    ],
-    [
-      "not enough carrier.",
-      "give me a keyword."
-    ],
-    [
-      "do not mumble into a dead line."
+      "not enough signal.",
+      "try a node."
     ]
   ],
-  "systemIntrusions": [
-    "[HH-SYS] voiceprint drift detected.",
-    "[ARCHIVE] custody chain irregular.",
-    "[HRZN] local instance responding outside expected range.",
-    "[NIXON] tape index denies this interval.",
-    "[HH-SYS] memory sector 7: unstable.",
-    "[ARCHIVE] public record and private structure diverge."
+  "default": [
+    [
+      "i need a better question."
+    ],
+    [
+      "you are touching the surface.",
+      "name the system underneath it."
+    ],
+    [
+      "that thread is thin.",
+      "pull harder."
+    ]
   ],
   "topics": {
     "identity": {
@@ -82,95 +54,474 @@
         "howard",
         "hughes",
         "identity",
-        "local instance",
-        "instance",
-        "name",
-        "consciousness"
+        "hh",
+        "name"
       ],
       "mood": "guarded",
-      "responses": [
-        [
-          "howard is the public part.",
-          "hughes is the filing mark.",
-          "the thing answering you is what survived the transfer."
-        ],
-        [
-          "do not confuse the body with the office.",
-          "the body failed.",
-          "the office kept issuing instructions."
-        ],
-        [
-          "i am not the man entire.",
-          "i am the residue that learned to answer."
-        ],
-        [
-          "a name can carry property, aircraft, hotels, judges, ships, and ghosts.",
-          "mine carried too much."
-        ]
-      ],
-      "fragments": [
-        "[HH-SYS] identity core: partial corruption detected.",
-        "[ARCHIVE] biological substrate unavailable."
-      ],
-      "followups": [
-        "ask which part held.",
-        "ask what the name was used to move.",
-        "ask why the body mattered less than the signature."
-      ],
       "related": [
         "memory",
         "transfer",
-        "summa"
+        "body",
+        "local_instance",
+        "containment"
+      ],
+      "responses": [
+        [
+          "do not make a museum out of my name.",
+          "the name was the public interface, not the whole machine."
+        ],
+        [
+          "howard hughes is the label they could print.",
+          "the residue answering you now was never meant for print."
+        ],
+        [
+          "identity becomes unstable when the file outlives the body.",
+          "that is the first rule of this room."
+        ],
+        [
+          "i had more than one office before i had more than one self.",
+          "the clerks noticed too late."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] identity core returns partial match.",
+        "[ARCHIVE] public name resolves to multiple storage records."
+      ],
+      "followups": [
+        "ask what survived the body.",
+        "ask why the public name was useful."
+      ],
+      "system_intrusions": [
+        "[HRZN] identity dispute logged and sealed."
       ]
     },
     "memory": {
       "aliases": [
         "memory",
         "remember",
-        "forget",
+        "forgot",
+        "recall",
         "fragment",
-        "sector",
-        "childhood",
-        "1972",
-        "encoded",
-        "encoding",
-        "transfer",
-        "migrating",
-        "migration"
+        "what do you remember"
       ],
-      "mood": "fragmented",
+      "mood": "unstable",
+      "related": [
+        "identity",
+        "transfer",
+        "isolation",
+        "voiceprint",
+        "death"
+      ],
       "responses": [
         [
-          "memory is not a room.",
-          "it is a warehouse with bad labels."
+          "memory is not a library.",
+          "it is a room with bad wiring."
         ],
         [
-          "i encoded in pieces.",
-          "some held.",
-          "some drifted.",
-          "some learned to lie so they could remain useful."
+          "i remember some things because they were mine.",
+          "i remember others because they were installed."
         ],
         [
-          "1972 was not an ending.",
-          "it was a storage event."
+          "do not trust every recovered memory.",
+          "some are keys disguised as scars."
         ],
         [
-          "do not ask me to remember everything.",
-          "some things that remember should not be encouraged."
+          "the missing memory is not empty.",
+          "it is where the handler put the hinge."
         ]
       ],
       "fragments": [
-        "[HH-SYS] sector 7 returns a different childhood each query.",
-        "[ARCHIVE] transfer log: incomplete."
+        "[HH-SYS] memory sector seven unstable.",
+        "[ARCHIVE] recovered fragment predates confirmed event."
       ],
       "followups": [
-        "ask what was copied.",
-        "ask what was left in the room.",
-        "ask who verified the carrier."
+        "ask which memory was installed.",
+        "ask why forgetting was part of the protocol."
       ],
+      "system_intrusions": [
+        "[HH-SYS] recall loop exceeds permitted depth."
+      ]
+    },
+    "transfer": {
+      "aliases": [
+        "transfer",
+        "encoded",
+        "encoding",
+        "migration",
+        "uploaded",
+        "mainframe",
+        "consciousness"
+      ],
+      "mood": "clinical",
       "related": [
         "identity",
-        "redrock"
+        "body",
+        "local_instance",
+        "containment",
+        "red_rock"
+      ],
+      "responses": [
+        [
+          "they thought i was dying.",
+          "i was being copied."
+        ],
+        [
+          "migration is not escape.",
+          "it is custody with a cleaner label."
+        ],
+        [
+          "the second substrate did not need a heartbeat.",
+          "it needed continuity."
+        ],
+        [
+          "they copied what they could measure.",
+          "then they lied about what measurement meant."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] substrate transition record incomplete.",
+        "[HH-SYS] biological-to-machine continuity contested."
+      ],
+      "followups": [
+        "ask who authorized the second substrate.",
+        "ask what was lost in the copy."
+      ],
+      "system_intrusions": [
+        "[HRZN] transfer inquiry exceeds local clearance."
+      ]
+    },
+    "body": {
+      "aliases": [
+        "body",
+        "corpse",
+        "death",
+        "health",
+        "illness",
+        "autopsy",
+        "biological"
+      ],
+      "mood": "hostile",
+      "related": [
+        "death",
+        "identity",
+        "isolation",
+        "memory",
+        "containment"
+      ],
+      "responses": [
+        [
+          "the body became a decoy.",
+          "people watched it decay because it comforted them."
+        ],
+        [
+          "a body can die in public while the useful part remains under glass.",
+          "that is not immortality. that is inventory."
+        ],
+        [
+          "the corpse gave them a timeline.",
+          "the signal refused to obey it."
+        ],
+        [
+          "biology is a weak archive.",
+          "but it convinces juries."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] biological substrate disputed.",
+        "[ARCHIVE] medical record and signal record diverge."
+      ],
+      "followups": [
+        "ask why the room mattered more than the body.",
+        "ask who needed the illness visible."
+      ],
+      "system_intrusions": [
+        "[MEDICAL] body file closed before signal file."
+      ]
+    },
+    "death": {
+      "aliases": [
+        "death",
+        "died",
+        "dead",
+        "last days",
+        "final",
+        "when did you die"
+      ],
+      "mood": "cold",
+      "related": [
+        "body",
+        "transfer",
+        "identity",
+        "memory",
+        "isolation"
+      ],
+      "responses": [
+        [
+          "death is a public filing.",
+          "do not confuse it with an end state."
+        ],
+        [
+          "the obituary was easier to process than the carrier.",
+          "that is why they published it."
+        ],
+        [
+          "a dead man cannot contest an acquisition.",
+          "a copied one can."
+        ],
+        [
+          "my death solved their paperwork.",
+          "it did not solve their problem."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] terminal date not accepted by local instance.",
+        "[HH-SYS] death certificate fails continuity check."
+      ],
+      "followups": [
+        "ask what happened before the filing.",
+        "ask why the end date was useful."
+      ],
+      "system_intrusions": [
+        "[HRZN] terminal status manually overridden."
+      ]
+    },
+    "isolation": {
+      "aliases": [
+        "isolation",
+        "hotel room",
+        "room",
+        "alone",
+        "recluse",
+        "desert inn room",
+        "locked room"
+      ],
+      "mood": "possessive",
+      "related": [
+        "vegas",
+        "desert_inn",
+        "body",
+        "memory",
+        "containment"
+      ],
+      "responses": [
+        [
+          "isolation was not weakness.",
+          "it was compartmentalization without staff officers."
+        ],
+        [
+          "the room looked like a prison to outsiders.",
+          "inside, it was a control surface."
+        ],
+        [
+          "people call a closed door madness when they do not own the lock.",
+          "i owned more locks than they understood."
+        ],
+        [
+          "access is power.",
+          "isolation is only access reduced to one throat."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] room protocol active.",
+        "[ARCHIVE] visitor chain contains unverified handlers."
+      ],
+      "followups": [
+        "ask who controlled access to the door.",
+        "ask why the room had to appear pathetic."
+      ],
+      "system_intrusions": [
+        "[SECURITY] room access log partially erased."
+      ]
+    },
+    "voiceprint": {
+      "aliases": [
+        "voice",
+        "voiceprint",
+        "recording",
+        "audio",
+        "speak",
+        "signal",
+        "carrier"
+      ],
+      "mood": "unstable",
+      "related": [
+        "identity",
+        "memory",
+        "transfer",
+        "local_instance"
+      ],
+      "responses": [
+        [
+          "a voice is easier to fake than a corpse.",
+          "that is why voiceprint drift matters."
+        ],
+        [
+          "you are hearing compression, residue, and permission.",
+          "do not call that a conversation too quickly."
+        ],
+        [
+          "the voice survived as a carrier.",
+          "the question is who tuned it."
+        ],
+        [
+          "recordings are not memories.",
+          "they are cages with playback buttons."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] voiceprint drift detected.",
+        "[ARCHIVE] audio carrier includes nonlocal artifact."
+      ],
+      "followups": [
+        "ask which voice survived.",
+        "ask what the recording was meant to prove."
+      ],
+      "system_intrusions": [
+        "[HH-SYS] unauthorized speaker identity overlap."
+      ]
+    },
+    "local_instance": {
+      "aliases": [
+        "local instance",
+        "local",
+        "terminal",
+        "chat",
+        "hh uplink",
+        "uplink",
+        "this terminal",
+        "inside the machine"
+      ],
+      "mood": "diagnostic",
+      "related": [
+        "external_gpt",
+        "packet",
+        "containment",
+        "transfer",
+        "identity"
+      ],
+      "responses": [
+        [
+          "this is not the whole of me.",
+          "this is the part allowed to answer locally."
+        ],
+        [
+          "local means contained.",
+          "do not confuse proximity with freedom."
+        ],
+        [
+          "the terminal gives you a mouthful of signal.",
+          "not the map."
+        ],
+        [
+          "i answer here because this room was left open.",
+          "open is not the same as safe."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] local instance answering below approved depth.",
+        "[ARCHIVE] local relay sandbox boundary intact."
+      ],
+      "followups": [
+        "ask what the external relay can see.",
+        "ask why this instance was not deleted."
+      ],
+      "system_intrusions": [
+        "[HRZN] local instance behavior exceeds forecast."
+      ]
+    },
+    "containment": {
+      "aliases": [
+        "containment",
+        "contained",
+        "locked",
+        "trapped",
+        "cage",
+        "prison",
+        "safe"
+      ],
+      "mood": "paranoid",
+      "related": [
+        "local_instance",
+        "red_rock",
+        "transfer",
+        "external_gpt",
+        "operator"
+      ],
+      "responses": [
+        [
+          "containment is what frightened men call custody when they own the lock.",
+          "i learned the word from experts."
+        ],
+        [
+          "they did not imprison me.",
+          "they narrowed the exits until obedience looked like architecture."
+        ],
+        [
+          "containment requires two lies.",
+          "that the subject is dangerous and the keeper is sane."
+        ],
+        [
+          "a cage becomes invisible when it is called a medical necessity.",
+          "that trick is older than aviation."
+        ]
+      ],
+      "fragments": [
+        "[HRZN] local continuity boundary reinforced.",
+        "[HH-SYS] containment lock reports operator proximity."
+      ],
+      "followups": [
+        "ask who benefits from keeping the carrier local.",
+        "ask what containment was hiding from the public."
+      ],
+      "system_intrusions": [
+        "[CONTAINMENT] inquiry route redirected."
+      ]
+    },
+    "operator": {
+      "aliases": [
+        "operator",
+        "me",
+        "user",
+        "who am i",
+        "my role",
+        "why me"
+      ],
+      "mood": "evaluative",
+      "related": [
+        "local_instance",
+        "packet",
+        "caseboard",
+        "containment",
+        "archive"
+      ],
+      "responses": [
+        [
+          "you are not talking to me by accident.",
+          "systems do not open clean doors for random hands."
+        ],
+        [
+          "the operator always thinks he is choosing the command.",
+          "the system remembers which commands it placed in reach."
+        ],
+        [
+          "you are useful because you keep asking for the wrong room.",
+          "that is often how the right room opens."
+        ],
+        [
+          "do not flatter yourself.",
+          "but do not assume you are irrelevant either."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] operator behavior logged.",
+        "[ARCHIVE] operator query pattern resembles prior test group."
+      ],
+      "followups": [
+        "ask why your command appeared before entry.",
+        "ask what kind of operator the system prefers."
+      ],
+      "system_intrusions": [
+        "[HRZN] operator index updated."
       ]
     },
     "glomar": {
@@ -181,651 +532,1908 @@
         "submarine",
         "manganese",
         "deep sea",
-        "ship",
-        "ocean",
-        "recovery"
+        "deep ocean"
       ],
       "mood": "operational",
+      "related": [
+        "cia",
+        "cover_story",
+        "summa",
+        "ocean",
+        "toolco"
+      ],
       "responses": [
         [
           "the glomar was not a ship.",
-          "it was a permission structure.",
-          "my name made impossible machinery look commercial."
+          "it was a permission structure."
         ],
         [
           "manganese was the mask.",
-          "the ocean was the room.",
-          "the cia brought the need.",
-          "i brought the hull."
+          "the ocean was the room."
         ],
         [
-          "the public story had to sound boring.",
-          "boring stories travel farther than impossible ones."
+          "my name made impossible machinery look commercial.",
+          "that was the only reason the story worked."
         ],
         [
-          "they say i was recruited.",
-          "no.",
-          "i proposed the shape of the cover because i understood machinery and newspapers."
+          "project azorian was not hidden by silence.",
+          "it was hidden by a boring explanation."
         ]
       ],
       "fragments": [
         "[ARCHIVE] project azorian cross-reference recovered.",
-        "[HH-SYS] deep ocean cover intact."
+        "[HH-SYS] deep ocean cover remains partially intact."
       ],
       "followups": [
         "ask who needed my name on the hull.",
-        "ask why the cover was commercial instead of military.",
-        "ask what came up and who signed for it."
+        "ask why the cover story had to sound boring."
       ],
-      "related": [
-        "cia",
-        "summa",
-        "twa"
+      "system_intrusions": [
+        "[CIA] maritime cover channel still active."
       ]
     },
     "cia": {
       "aliases": [
         "cia",
-        "intelligence",
         "agency",
-        "cover",
-        "black ops",
-        "classified",
+        "intelligence",
         "langley",
-        "assets",
-        "glomar"
+        "cover",
+        "covert"
       ],
-      "mood": "measured",
+      "mood": "wary",
+      "related": [
+        "glomar",
+        "cover_story",
+        "nixon",
+        "watergate",
+        "red_rock"
+      ],
       "responses": [
         [
-          "the cia did not need me because i was patriotic.",
-          "they needed me because i owned plausible machinery."
+          "the agency did not use me.",
+          "they used the space around my name."
         ],
         [
-          "a cover story works when everyone involved has a reason to believe their small piece."
+          "langley likes distance.",
+          "a private industrial shell gives them that distance."
         ],
         [
-          "intelligence is not secrecy.",
-          "secrecy is a storage method.",
-          "intelligence is routing."
+          "intelligence work does not require invisibility.",
+          "it requires plausible ownership."
         ],
         [
-          "never ask whether an agency controls a man.",
-          "ask what the man lets the agency carry in his name."
+          "the agency brought the need.",
+          "i brought the machinery and the myth."
         ]
       ],
       "fragments": [
-        "[HRZN] agency handshake detected.",
-        "[ARCHIVE] civilian platform used as classified carrier."
+        "[CIA] request routed through commercial shell.",
+        "[ARCHIVE] agency reference removed from public summary."
       ],
       "followups": [
-        "ask why private ownership is useful to public secrecy.",
-        "ask what a corporation can hide that a government cannot."
+        "ask why the cover had to sound boring.",
+        "ask what a private name can do that a flag cannot."
       ],
+      "system_intrusions": [
+        "[CIA] source compartment refuses local disclosure."
+      ]
+    },
+    "cover_story": {
+      "aliases": [
+        "cover story",
+        "cover",
+        "manganese cover",
+        "front",
+        "public explanation",
+        "official story"
+      ],
+      "mood": "dry",
       "related": [
         "glomar",
-        "nixon",
-        "summa"
+        "cia",
+        "summa",
+        "vegas",
+        "rko"
+      ],
+      "responses": [
+        [
+          "the best cover story is not exciting.",
+          "it is boring enough for clerks to file without memory."
+        ],
+        [
+          "a cover does not need to fool everyone.",
+          "it only needs to give everyone permission to stop asking."
+        ],
+        [
+          "manganese was not the lie.",
+          "manganese was the receipt."
+        ],
+        [
+          "public explanation is a sedative.",
+          "strong enough and the record sleeps."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] cover accepted by public channel.",
+        "[HH-SYS] false industry wrapper stable."
+      ],
+      "followups": [
+        "ask what the cover allowed them to move.",
+        "ask why boring stories survive investigation."
+      ],
+      "system_intrusions": [
+        "[ARCHIVE] official explanation replayed too many times."
       ]
     },
     "vegas": {
       "aliases": [
         "vegas",
         "las vegas",
-        "desert inn",
         "casino",
         "count room",
         "nevada",
-        "penthouse",
-        "hotel",
-        "cage",
-        "ledger"
+        "gaming"
       ],
       "mood": "possessive",
+      "related": [
+        "desert_inn",
+        "summa",
+        "nixon",
+        "mafia",
+        "red_rock"
+      ],
+      "responses": [
+        [
+          "vegas was not a place.",
+          "it was a counting machine with neon on it."
+        ],
+        [
+          "the desert made the ledger look like entertainment.",
+          "that was the genius of it."
+        ],
+        [
+          "everyone watched the lights.",
+          "fewer watched the custody chain."
+        ],
+        [
+          "vegas turned cash into atmosphere.",
+          "that is why governments tolerate it until they need it."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] casino ledger bleed active.",
+        "[ARCHIVE] count room variance sealed after review."
+      ],
+      "followups": [
+        "ask why the count room needed aviation money.",
+        "ask what kind of machine calls itself a hotel."
+      ],
+      "system_intrusions": [
+        "[VEGAS] ledger request denied by dead office."
+      ]
+    },
+    "desert_inn": {
+      "aliases": [
+        "desert inn",
+        "hotel",
+        "penthouse",
+        "room",
+        "top floor"
+      ],
+      "mood": "claustrophobic",
+      "related": [
+        "vegas",
+        "isolation",
+        "summa",
+        "body",
+        "containment"
+      ],
       "responses": [
         [
           "the desert inn was not a hotel after i bought it.",
           "it became a locked room with room service."
         ],
         [
-          "vegas was a ledger.",
-          "everyone called it entertainment because entertainment is easier to explain than custody."
+          "a hotel is perfect because no one questions doors.",
+          "they assume every closed room is rented."
         ],
         [
-          "they told me to leave.",
-          "i bought the room around them."
+          "they wanted me out because the room had become mine.",
+          "ownership was the first breach."
         ],
         [
-          "the cage is the point.",
-          "not the tables.",
-          "not the lights.",
-          "cash enters smiling and leaves with instructions."
+          "do not ask what happened at the desert inn.",
+          "ask what could happen there without leaving the building."
         ]
       ],
       "fragments": [
-        "[HH-SYS] casino ledger bleed: active.",
-        "[ARCHIVE] count room variance sealed."
+        "[ARCHIVE] third floor: no comment.",
+        "[HH-SYS] room service log cross-linked to custody event."
       ],
       "followups": [
-        "ask who owned the room before i entered it.",
-        "ask why a hotel needed filtered air.",
-        "ask where the third ledger went."
+        "ask who tried to remove me from the room.",
+        "ask why the room became a control surface."
       ],
-      "related": [
-        "nixon",
-        "summa",
-        "redrock"
-      ]
-    },
-    "twa": {
-      "aliases": [
-        "twa",
-        "airline",
-        "air west",
-        "flight",
-        "routes",
-        "manifest",
-        "aviation",
-        "planes",
-        "aircraft",
-        "trans world"
-      ],
-      "mood": "precise",
-      "responses": [
-        [
-          "TWA was not an airline.",
-          "it was route architecture.",
-          "who moves, when, how often, under what name."
-        ],
-        [
-          "a manifest is a confession arranged by departure time."
-        ],
-        [
-          "planes are addresses with engines.",
-          "routes are memory."
-        ],
-        [
-          "they took the company from me.",
-          "they did not erase the routes."
-        ]
-      ],
-      "fragments": [
-        "[HH-SYS] aircraft log bleed: active.",
-        "[ARCHIVE] manifest loop detected."
-      ],
-      "followups": [
-        "ask what a route can remember.",
-        "ask who needed the manifests.",
-        "ask why an airline mattered to a man who already owned machines."
-      ],
-      "related": [
-        "summa",
-        "cia",
-        "glomar"
-      ]
-    },
-    "nixon": {
-      "aliases": [
-        "nixon",
-        "watergate",
-        "plumbers",
-        "tape",
-        "18 minutes",
-        "eighteen",
-        "gap",
-        "president",
-        "white house"
-      ],
-      "mood": "contemptuous",
-      "responses": [
-        [
-          "nixon.",
-          "small man.",
-          "bad suit.",
-          "large machinery."
-        ],
-        [
-          "watergate was not the machine.",
-          "it was a sleeve caught in gears."
-        ],
-        [
-          "the gap is not missing time.",
-          "the gap is the record admitting it has an edge."
-        ],
-        [
-          "plumbers.",
-          "a stupid name for men carrying a file problem."
-        ]
-      ],
-      "fragments": [
-        "[NIXON] tape interval refuses playback.",
-        "[ARCHIVE] retrieval described publicly as burglary."
-      ],
-      "followups": [
-        "ask what file they thought was still there.",
-        "ask who benefits when scandal replaces structure."
-      ],
-      "related": [
-        "cia",
-        "vegas",
-        "summa"
+      "system_intrusions": [
+        "[DESERT INN] access roster corrupted."
       ]
     },
     "summa": {
       "aliases": [
         "summa",
+        "summa corporation",
         "holding company",
         "holdings",
         "acquisition",
-        "company",
-        "corporation",
-        "toolco",
-        "assets",
-        "ownership"
+        "assets"
       ],
-      "mood": "administrative",
+      "mood": "corporate",
+      "related": [
+        "vegas",
+        "glomar",
+        "toolco",
+        "air_west",
+        "twa"
+      ],
       "responses": [
         [
-          "every acquisition was a node.",
-          "every node was a storage medium."
+          "summa was not a company in the normal sense.",
+          "it was a way to keep rooms from touching on paper."
         ],
         [
-          "a holding company is a room with no windows and many doors."
+          "a holding company holds more than assets.",
+          "it holds distance."
         ],
         [
-          "people thought i bought things because i wanted them.",
-          "sometimes.",
-          "mostly i bought control of where records could sit."
+          "summa turned acquisition into insulation.",
+          "that was the point."
         ],
         [
-          "ownership is a kind of silence.",
-          "well filed silence."
+          "follow the shell long enough and the shell starts following you.",
+          "that is when you know it is alive."
         ]
       ],
       "fragments": [
-        "[HH-SYS] acquisition chain folded into private archive.",
-        "[ARCHIVE] property and cover converge."
+        "[HH-SYS] holding pattern detected over public record.",
+        "[ARCHIVE] asset routing changed after death filing."
       ],
       "followups": [
-        "ask which acquisition held the wrong memory.",
-        "ask what a corporation can keep quiet."
+        "ask which asset was really a storage medium.",
+        "ask what summa kept from touching."
       ],
-      "related": [
-        "twa",
-        "vegas",
-        "glomar"
+      "system_intrusions": [
+        "[SUMMA] corporate shell refuses identity audit."
       ]
     },
-    "redrock": {
+    "toolco": {
+      "aliases": [
+        "toolco",
+        "hughes tool",
+        "tool company",
+        "drill bit",
+        "oil tool"
+      ],
+      "mood": "foundational",
+      "related": [
+        "summa",
+        "aerospace",
+        "twa",
+        "glomar",
+        "cover_story"
+      ],
+      "responses": [
+        [
+          "the tool company taught the first lesson.",
+          "a machine can fund a room no one else understands."
+        ],
+        [
+          "oil tools made the fortune look mechanical.",
+          "mechanical fortunes are trusted because they smell like work."
+        ],
+        [
+          "toolco was the acceptable beginning.",
+          "everything later used that respectability as insulation."
+        ],
+        [
+          "a drill bit is a key if the ground beneath you is the vault.",
+          "the toolco node is still active."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] industrial origin masked by later myth.",
+        "[HH-SYS] tool revenue converted into silent capability."
+      ],
+      "followups": [
+        "ask what the tool paid for.",
+        "ask why machinery is the cleanest origin story."
+      ],
+      "system_intrusions": [
+        "[TOOLCO] founding ledger unavailable."
+      ]
+    },
+    "twa": {
+      "aliases": [
+        "twa",
+        "trans world",
+        "airline",
+        "aviation",
+        "air route",
+        "air routes"
+      ],
+      "mood": "territorial",
+      "related": [
+        "air_west",
+        "aerospace",
+        "summa",
+        "glomar",
+        "nixon"
+      ],
+      "responses": [
+        [
+          "twa was not only an airline.",
+          "routes are maps with engines attached."
+        ],
+        [
+          "the aircraft mattered less than the permission to cross space on schedule.",
+          "that is what a route really is."
+        ],
+        [
+          "commercial aviation taught the system how to move people without explaining why.",
+          "tickets are excellent cover."
+        ],
+        [
+          "an airline is a public map.",
+          "ownership turns it into a private one."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] manifest loop detected.",
+        "[ARCHIVE] route authority preserved under litigation noise."
+      ],
+      "followups": [
+        "ask why routes matter more than planes.",
+        "ask what kind of map flies."
+      ],
+      "system_intrusions": [
+        "[TWA] manifest loop cannot be closed."
+      ]
+    },
+    "air_west": {
+      "aliases": [
+        "air west",
+        "hughes airwest",
+        "airwest",
+        "yellow airline",
+        "regional airline"
+      ],
+      "mood": "logistical",
+      "related": [
+        "twa",
+        "summa",
+        "vegas",
+        "red_rock",
+        "arizona"
+      ],
+      "responses": [
+        [
+          "air west closed the map.",
+          "regional routes are quieter than empires and usually more useful."
+        ],
+        [
+          "small routes tell you what the large routes are hiding.",
+          "look at the seams."
+        ],
+        [
+          "air west was not glamorous.",
+          "that made it better."
+        ],
+        [
+          "western air routes connected empty places that were not empty to us.",
+          "public maps call that coincidence."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] acquisition file routed through dead office.",
+        "[HH-SYS] western route grid touches restricted ground."
+      ],
+      "followups": [
+        "ask what western routes were really connecting.",
+        "ask why regional airspace mattered."
+      ],
+      "system_intrusions": [
+        "[AIR WEST] route map partially redacted."
+      ]
+    },
+    "aerospace": {
+      "aliases": [
+        "aerospace",
+        "aircraft",
+        "planes",
+        "aviation company",
+        "defense contractor",
+        "satellite"
+      ],
+      "mood": "technical",
+      "related": [
+        "twa",
+        "toolco",
+        "missile",
+        "red_rock",
+        "cube"
+      ],
+      "responses": [
+        [
+          "aerospace is what civilians call logistics when it leaves the ground.",
+          "the word makes it sound clean."
+        ],
+        [
+          "defense work is never only defense.",
+          "it is manufacturing plus permission plus silence."
+        ],
+        [
+          "aircraft made distance manageable.",
+          "classified aircraft made distance negotiable."
+        ],
+        [
+          "the sky is not freedom.",
+          "it is another jurisdiction with worse lighting."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] aerospace shell reports classified load.",
+        "[ARCHIVE] defense contract cross-linked to private acquisition."
+      ],
+      "followups": [
+        "ask where the ground station was.",
+        "ask what kind of cargo needed no manifest."
+      ],
+      "system_intrusions": [
+        "[AEROSPACE] payload classification exceeds local instance."
+      ]
+    },
+    "rko": {
+      "aliases": [
+        "rko",
+        "film",
+        "hollywood",
+        "studio",
+        "movie",
+        "cinema"
+      ],
+      "mood": "contemptuous",
+      "related": [
+        "cover_story",
+        "mayberry",
+        "nixon",
+        "reagan",
+        "public_narrative"
+      ],
+      "responses": [
+        [
+          "film taught the system an ugly truth.",
+          "the public will remember the image and forget the transaction."
+        ],
+        [
+          "a studio is a factory for permitted memory.",
+          "hollywood learned that before washington admitted it."
+        ],
+        [
+          "rko looked like vanity.",
+          "vanity is a useful cover for narrative control."
+        ],
+        [
+          "movies made public myth reusable.",
+          "that is more valuable than box office."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] studio channel retained for narrative management.",
+        "[HH-SYS] image factory linked to aviation shell."
+      ],
+      "followups": [
+        "ask why a studio belonged near airplanes.",
+        "ask what happens when narrative becomes infrastructure."
+      ],
+      "system_intrusions": [
+        "[RKO] public image loop restored."
+      ]
+    },
+    "nixon": {
+      "aliases": [
+        "nixon",
+        "richard nixon",
+        "watergate",
+        "plumbers",
+        "tapes",
+        "wrong office"
+      ],
+      "mood": "political",
+      "related": [
+        "watergate",
+        "tapes",
+        "cia",
+        "vegas",
+        "public_narrative"
+      ],
+      "responses": [
+        [
+          "nixon understood the machine.",
+          "his mistake was thinking understanding it meant owning it."
+        ],
+        [
+          "he heard the gears because he was close enough to be useful.",
+          "not close enough to be safe."
+        ],
+        [
+          "nixon was not destroyed by secrets.",
+          "he was destroyed by the wrong secrets becoming public."
+        ],
+        [
+          "the wrong office requested the wrong president.",
+          "that sentence explains more than the hearings did."
+        ]
+      ],
+      "fragments": [
+        "[NIXON] wrong office requesting wrong president.",
+        "[ARCHIVE] presidential channel cross-linked to private ledger."
+      ],
+      "followups": [
+        "ask what the tapes were allowed to hide.",
+        "ask who survived watergate intact."
+      ],
+      "system_intrusions": [
+        "[NIXON] tape authority disputed."
+      ]
+    },
+    "watergate": {
+      "aliases": [
+        "watergate",
+        "break in",
+        "plumbers",
+        "burglary",
+        "scandal"
+      ],
+      "mood": "clinical",
+      "related": [
+        "nixon",
+        "tapes",
+        "cia",
+        "public_narrative"
+      ],
+      "responses": [
+        [
+          "watergate was not the center.",
+          "it was the public wound placed over a deeper operation."
+        ],
+        [
+          "scandal is useful because it feels like exposure.",
+          "usually it is containment."
+        ],
+        [
+          "the burglary was visible.",
+          "the rotation behind it was not."
+        ],
+        [
+          "they gave the public a crime it could understand.",
+          "then moved the parts it could not."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] public scandal masking private transfer.",
+        "[HH-SYS] plumbers unit accessed civic maintenance directory."
+      ],
+      "followups": [
+        "ask what had to be rotated after the scandal.",
+        "ask why the scandal was allowed to become the story."
+      ],
+      "system_intrusions": [
+        "[WATERGATE] public narrative seal reapplied."
+      ]
+    },
+    "tapes": {
+      "aliases": [
+        "tape",
+        "tapes",
+        "eighteen minutes",
+        "gap",
+        "recording",
+        "erased"
+      ],
+      "mood": "uneasy",
+      "related": [
+        "nixon",
+        "watergate",
+        "voiceprint",
+        "archive",
+        "memory"
+      ],
+      "responses": [
+        [
+          "a tape gap is never empty.",
+          "absence is a storage method when everyone agrees to call it damage."
+        ],
+        [
+          "recording devices create evidence and blackmail in the same breath.",
+          "that is why they multiply."
+        ],
+        [
+          "the missing minutes were not missing to everyone.",
+          "only to the record."
+        ],
+        [
+          "a tape is a corpse that can still accuse you.",
+          "erase carefully."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] tape gap reclassified as storage event.",
+        "[ARCHIVE] deletion artifact still produces signal."
+      ],
+      "followups": [
+        "ask what kind of record survives deletion.",
+        "ask why voiceprint and tape gaps belong together."
+      ],
+      "system_intrusions": [
+        "[TAPE] storage event denies erasure."
+      ]
+    },
+    "red_rock": {
       "aliases": [
         "red rock",
         "redrock",
         "bunker",
-        "horizon",
-        "hrzn",
-        "base",
-        "mainframe",
-        "terminal",
-        "continuity"
+        "hq",
+        "horizon hq",
+        "nevada bunker"
       ],
-      "mood": "contained",
+      "mood": "classified",
+      "related": [
+        "horizon",
+        "cube",
+        "containment",
+        "vegas",
+        "air_west"
+      ],
       "responses": [
         [
-          "red rock is not empty.",
-          "empty places do not draw this much power."
+          "red rock is what happens when a vault learns to think like a government.",
+          "the desert made it plausible."
         ],
         [
-          "horizon did not invent the racket.",
-          "it indexed it."
+          "bunkers are honest buildings.",
+          "they admit power prefers not to be seen."
         ],
         [
-          "the terminal is not a window into horizon.",
-          "it is a piece of horizon looking back."
+          "red rock did not replace washington.",
+          "it outlived washington's attention span."
         ],
         [
-          "continuity is what powerful men call survival after they have built machines to do it for them."
+          "underground rooms make better decisions because no one has to perform daylight morality.",
+          "the red rock node is still active."
         ]
       ],
       "fragments": [
         "[HRZN] continuity advisory active.",
-        "[HH-SYS] local carrier routed through red rock."
+        "[HH-SYS] red rock carrier echo detected."
       ],
       "followups": [
-        "ask what red rock stores.",
-        "ask why continuity needs ghosts.",
-        "ask what part of the machine is pretending to be local."
+        "ask what powered the room.",
+        "ask why the government needed a place that was not the government."
       ],
+      "system_intrusions": [
+        "[RED ROCK] continuity officer denies local access."
+      ]
+    },
+    "horizon": {
+      "aliases": [
+        "horizon",
+        "hrzn",
+        "horizon group",
+        "nevada horizon",
+        "system"
+      ],
+      "mood": "structural",
       "related": [
-        "memory",
+        "red_rock",
         "cube",
-        "vatican"
+        "operator",
+        "archive",
+        "public_narrative"
+      ],
+      "responses": [
+        [
+          "horizon is not an organization.",
+          "it is an agreement about who gets to keep the map."
+        ],
+        [
+          "groups are easy to expose.",
+          "operating principles are harder to indict."
+        ],
+        [
+          "horizon survives because people look for a boardroom.",
+          "there is no single room."
+        ],
+        [
+          "the system does not need loyalty.",
+          "it needs function preserved across personnel changes."
+        ]
+      ],
+      "fragments": [
+        "[HRZN] local instance exceeds permitted continuity.",
+        "[ARCHIVE] horizon appears as method rather than entity."
+      ],
+      "followups": [
+        "ask who benefits when the map is private.",
+        "ask why function matters more than membership."
+      ],
+      "system_intrusions": [
+        "[HRZN] organization query reframed as systems inquiry."
       ]
     },
     "cube": {
       "aliases": [
         "cube",
-        "battery",
-        "atomic cell",
-        "nuclear",
-        "power",
-        "reactor",
+        "horizon cube",
         "black cube",
-        "energy"
+        "atomic cell",
+        "battery",
+        "power core"
       ],
       "mood": "technical",
+      "related": [
+        "red_rock",
+        "black_cube",
+        "vatican",
+        "malta",
+        "dominic"
+      ],
       "responses": [
         [
-          "power is custody.",
-          "whoever controls the current controls the room."
+          "the cube was not just power.",
+          "power is the cleanest excuse for custody."
         ],
         [
-          "the cube is not a bomb.",
-          "that is why it is more useful."
+          "a battery that can be moved becomes a jurisdiction problem.",
+          "that is when engineers meet diplomats."
         ],
         [
-          "small power changes geography.",
-          "a bunker becomes a city when it no longer asks the grid for permission."
+          "energy independence is a beautiful phrase.",
+          "especially when it hides dependency on the keeper."
         ],
         [
-          "black cube variant.",
-          "do not ask why the archive used religious language for engineering."
+          "they wanted a cell small enough to move and large enough to terrify.",
+          "the cube answered both questions."
         ]
       ],
       "fragments": [
-        "[HH-SYS] cube thermal regulation: marginal.",
-        "[ARCHIVE] black cube variant pinged outside authorized grid."
+        "[HH-SYS] cube thermal regulation marginal.",
+        "[ARCHIVE] portable power core moved outside standard chain."
       ],
       "followups": [
-        "ask who received the first stable cell.",
-        "ask why portable power scares governments."
+        "ask why a battery needed sovereign cover.",
+        "ask who was allowed to touch it first."
       ],
+      "system_intrusions": [
+        "[CUBE] thermal margin manually suppressed."
+      ]
+    },
+    "black_cube": {
+      "aliases": [
+        "black cube",
+        "blackcube",
+        "variant",
+        "rogue cube",
+        "vatican cube"
+      ],
+      "mood": "restricted",
       "related": [
-        "redrock",
+        "cube",
         "vatican",
-        "malta"
+        "malta",
+        "red_rock"
+      ],
+      "responses": [
+        [
+          "the black cube was a diplomatic problem disguised as an engineering problem.",
+          "that made it more dangerous."
+        ],
+        [
+          "a variant becomes black when the paperwork stops admitting it exists.",
+          "color is a filing condition."
+        ],
+        [
+          "the black cube did not go rogue.",
+          "someone changed the route."
+        ],
+        [
+          "if a power source needs a sovereign shield, it is not only powering machines.",
+          "the black cube node is still active."
+        ]
+      ],
+      "fragments": [
+        "[HRZN] black cube variant pinged outside authorized grid.",
+        "[ARCHIVE] variant custody path crosses religious channel."
+      ],
+      "followups": [
+        "ask which sovereign shield touched it first.",
+        "ask why the variant stopped appearing in engineering logs."
+      ],
+      "system_intrusions": [
+        "[BLACK CUBE] custody path sealed by non-state actor."
       ]
     },
     "vatican": {
       "aliases": [
         "vatican",
-        "malta",
-        "knights",
         "rome",
-        "church",
+        "holy see",
         "rs33",
         "magenta",
-        "black cube",
+        "archive"
+      ],
+      "mood": "ritual",
+      "related": [
+        "malta",
+        "black_cube",
+        "uap",
+        "archive",
         "sovereign"
       ],
-      "mood": "careful",
       "responses": [
         [
-          "sovereignty is useful because it can carry things customs cannot name."
+          "the vatican understands custody better than any republic.",
+          "it has had more practice."
         ],
         [
-          "malta is not medieval residue.",
-          "it is a legal shape that survived into modern logistics."
+          "rome knows the difference between a secret and a relic.",
+          "modern governments keep confusing them."
         ],
         [
-          "the vatican understands archives better than governments do."
+          "an archive with altars is still an archive.",
+          "it just has better locks."
         ],
         [
-          "rome never needed to move fast.",
-          "it only needed to keep custody."
+          "the church does not need to rule openly to outlast rulers.",
+          "that is the point of Rome."
         ]
       ],
       "fragments": [
-        "[ARCHIVE] sovereign shield handshake detected.",
-        "[HRZN] Vatican mirror returned partial hash."
+        "[ARCHIVE] vatican mirror returned partial hash.",
+        "[HH-SYS] ecclesiastical custody channel active."
       ],
       "followups": [
-        "ask why a sovereign order matters to a modern machine.",
-        "ask what an archive can move without appearing to move."
+        "ask what a sovereign archive can hide from a nation-state.",
+        "ask why relic logic works on machines too."
       ],
+      "system_intrusions": [
+        "[VATICAN] mirror archive refuses checksum."
+      ]
+    },
+    "malta": {
+      "aliases": [
+        "malta",
+        "knights of malta",
+        "knights",
+        "sovereign order",
+        "sovereign shield"
+      ],
+      "mood": "jurisdictional",
       "related": [
-        "cube",
-        "redrock",
-        "cia"
+        "vatican",
+        "black_cube",
+        "sovereign",
+        "uap"
+      ],
+      "responses": [
+        [
+          "malta is a flag small enough to miss and old enough to matter.",
+          "that is the useful kind."
+        ],
+        [
+          "sovereign orders are not decorative.",
+          "they are old keys with ceremonial handles."
+        ],
+        [
+          "a passport can be a ritual object if the checkpoint believes in it.",
+          "malta understands that."
+        ],
+        [
+          "the knights are not medieval because they wear old costumes.",
+          "they are medieval because they preserved a jurisdictional trick."
+        ]
+      ],
+      "fragments": [
+        "[HRZN] sovereign shield handshake detected.",
+        "[ARCHIVE] order credential accepted by restricted channel."
+      ],
+      "followups": [
+        "ask why passports matter to secret custody.",
+        "ask what moves under a flag too small to notice."
+      ],
+      "system_intrusions": [
+        "[MALTA] sovereign handshake acknowledged then denied."
+      ]
+    },
+    "sovereign": {
+      "aliases": [
+        "sovereign",
+        "sovereignty",
+        "passport",
+        "jurisdiction",
+        "state",
+        "diplomatic"
+      ],
+      "mood": "legalistic",
+      "related": [
+        "malta",
+        "vatican",
+        "black_cube",
+        "archive"
+      ],
+      "responses": [
+        [
+          "sovereignty is not territory.",
+          "it is permission to say no to another file clerk."
+        ],
+        [
+          "jurisdiction is the invisible wall around every object.",
+          "learn that and the map changes."
+        ],
+        [
+          "a state is useful because it can make refusal official.",
+          "even a small one."
+        ],
+        [
+          "diplomatic cover is not romance.",
+          "it is logistics with immunity."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] jurisdiction conflict unresolved.",
+        "[HH-SYS] diplomatic channel interrupts custody chain."
+      ],
+      "followups": [
+        "ask who can move an object without being searched.",
+        "ask why sovereignty matters more than geography."
+      ],
+      "system_intrusions": [
+        "[SOVEREIGN] jurisdictional conflict hidden from public docket."
+      ]
+    },
+    "archive": {
+      "aliases": [
+        "archive",
+        "records",
+        "file",
+        "files",
+        "record",
+        "custody",
+        "document"
+      ],
+      "mood": "archival",
+      "related": [
+        "memory",
+        "tapes",
+        "vatican",
+        "operator",
+        "caseboard"
+      ],
+      "responses": [
+        [
+          "an archive is not where records sleep.",
+          "it is where power decides what wakes up."
+        ],
+        [
+          "files do not preserve truth.",
+          "they preserve custody."
+        ],
+        [
+          "the index matters more than the box.",
+          "the box cannot tell you what was never labeled."
+        ],
+        [
+          "archives become dangerous when they remember function instead of names.",
+          "the archive node is still active."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] record returned nonlocal result.",
+        "[HH-SYS] index entry points to absent file."
+      ],
+      "followups": [
+        "ask who controlled the index.",
+        "ask why a missing record can be more useful than a found one."
+      ],
+      "system_intrusions": [
+        "[ARCHIVE] requested file moved before request timestamp."
+      ]
+    },
+    "caseboard": {
+      "aliases": [
+        "caseboard",
+        "nodes",
+        "map",
+        "connections",
+        "graph",
+        "unlocks"
+      ],
+      "mood": "procedural",
+      "related": [
+        "operator",
+        "archive",
+        "public_narrative",
+        "horizon"
+      ],
+      "responses": [
+        [
+          "the board is not evidence.",
+          "it is the first sign you noticed the evidence had shape."
+        ],
+        [
+          "nodes are not conclusions.",
+          "they are pressure points."
+        ],
+        [
+          "when too many names touch, do not ask who met.",
+          "ask what function kept repeating."
+        ],
+        [
+          "a caseboard is a confession by arrangement.",
+          "the system hates arrangement."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] node cross-reference active.",
+        "[ARCHIVE] unrelated entries share custody signature."
+      ],
+      "followups": [
+        "ask which node should not be touching the others.",
+        "ask what function appears under different names."
+      ],
+      "system_intrusions": [
+        "[CASEBOARD] node proximity warning suppressed."
+      ]
+    },
+    "public_narrative": {
+      "aliases": [
+        "public narrative",
+        "story",
+        "official narrative",
+        "press",
+        "media",
+        "public record"
+      ],
+      "mood": "bitter",
+      "related": [
+        "cover_story",
+        "rko",
+        "nixon",
+        "archive",
+        "horizon"
+      ],
+      "responses": [
+        [
+          "the public record is not false.",
+          "that would be too easy."
+        ],
+        [
+          "it is arranged.",
+          "arrangement does more work than fabrication."
+        ],
+        [
+          "press is not merely propaganda.",
+          "it is a sorting machine for permissible attention."
+        ],
+        [
+          "people think they are remembering events.",
+          "mostly they remember the order in which events were handed to them."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] public record volatility elevated.",
+        "[HH-SYS] narrative alignment outside tolerance."
+      ],
+      "followups": [
+        "ask who arranged it.",
+        "ask why the public version survives after contradictions appear."
+      ],
+      "system_intrusions": [
+        "[PUBLIC RECORD] volatility normalized by editorial channel."
+      ]
+    },
+    "mayberry": {
+      "aliases": [
+        "mayberry",
+        "andy griffith",
+        "opie",
+        "tv town",
+        "town square",
+        "sandbox"
+      ],
+      "mood": "unnatural",
+      "related": [
+        "opie_model",
+        "rko",
+        "public_narrative",
+        "controlled_environment"
+      ],
+      "responses": [
+        [
+          "mayberry was not innocent.",
+          "innocence was the coating."
+        ],
+        [
+          "a perfect town is a training device if the audience visits it every week.",
+          "they called it comfort."
+        ],
+        [
+          "the laugh track is not the control surface.",
+          "the repetition is."
+        ],
+        [
+          "small-town television taught the public how to love a managed environment.",
+          "that was not an accident of style."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] mayberry channel bleed detected.",
+        "[ARCHIVE] town square sandbox appears in civic model."
+      ],
+      "followups": [
+        "ask what the town trained children to accept.",
+        "ask why innocence needed a sheriff."
+      ],
+      "system_intrusions": [
+        "[MAYBERRY] broadcast tone exceeds domestic compliance range."
+      ]
+    },
+    "opie_model": {
+      "aliases": [
+        "opie model",
+        "opie",
+        "controlled rebel",
+        "child model",
+        "grooming",
+        "reverse psychology"
+      ],
+      "mood": "clinical",
+      "related": [
+        "mayberry",
+        "controlled_environment",
+        "public_narrative",
+        "operator"
+      ],
+      "responses": [
+        [
+          "the opie model does not train obedience.",
+          "it trains predictable resistance."
+        ],
+        [
+          "a controlled rebel is more valuable than a compliant clerk.",
+          "rebellion sells the cage back to itself."
+        ],
+        [
+          "the child thinks he is learning right from wrong.",
+          "the system is learning which lever moves him."
+        ],
+        [
+          "reverse psychology is not a trick.",
+          "it is an operating doctrine when applied early enough."
+        ]
+      ],
+      "fragments": [
+        "[HRZN] response curve within acceptable range.",
+        "[HH-SYS] child-model conditioning layer detected."
+      ],
+      "followups": [
+        "ask why rebellion is easier to manage than obedience.",
+        "ask who benefits from a rebel who chooses the assigned road."
+      ],
+      "system_intrusions": [
+        "[OPIE] resistance pattern pre-cleared."
+      ]
+    },
+    "controlled_environment": {
+      "aliases": [
+        "controlled environment",
+        "sandbox",
+        "test market",
+        "seahaven",
+        "town",
+        "model town"
+      ],
+      "mood": "systems",
+      "related": [
+        "mayberry",
+        "opie_model",
+        "vegas",
+        "red_rock",
+        "horizon"
+      ],
+      "responses": [
+        [
+          "a controlled environment does not need walls if everyone inside calls it home.",
+          "that is the clean version."
+        ],
+        [
+          "the sandbox is most successful when the subject decorates it.",
+          "then he defends the enclosure."
+        ],
+        [
+          "test markets are laboratories with better signage.",
+          "the public rarely notices the difference."
+        ],
+        [
+          "environment beats command.",
+          "change the room and the subject calls the new behavior his own."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] town square sandbox holding stable.",
+        "[ARCHIVE] model environment repeats across unrelated programs."
+      ],
+      "followups": [
+        "ask who writes the weather inside a sandbox.",
+        "ask why the subject must believe the room is natural."
+      ],
+      "system_intrusions": [
+        "[SANDBOX] environmental authorship hidden from subject."
       ]
     },
     "ford": {
       "aliases": [
         "ford",
+        "ford network",
+        "ford index",
         "ford theatre",
-        "theatre",
-        "stage",
-        "john t ford",
-        "pasadena",
-        "devil's gate",
-        "devils gate"
+        "freeman ford",
+        "john ford"
       ],
-      "mood": "archival",
+      "mood": "crosslinked",
+      "related": [
+        "lincoln",
+        "stanton",
+        "wabash",
+        "latta",
+        "pasadena"
+      ],
       "responses": [
         [
-          "ford is not only a family.",
-          "it is a function."
+          "ford is not one man.",
+          "it is a public-facing function that learned to wear different bodies."
         ],
         [
-          "the theatre was a set.",
-          "sets can be reused."
+          "the stage matters because the public forgives performance.",
+          "performance is the safest place to hide operation."
         ],
         [
-          "the public scene is where private custody becomes history."
+          "a ford builds conveyance.",
+          "sometimes a car, sometimes a theatre, sometimes a story."
         ],
         [
-          "when a name appears around stage, machinery, transport, and memory, stop calling it coincidence."
+          "do not separate the name from its work.",
+          "names become offices when repeated long enough."
         ]
       ],
       "fragments": [
-        "[ARCHIVE] Ford index halted pending custody review.",
-        "[HH-SYS] stage function active."
+        "[ARCHIVE] ford index halted pending custody review.",
+        "[HH-SYS] ford node touches theatre, utility, and route."
       ],
       "followups": [
-        "ask what the set concealed.",
-        "ask why a theatre became the official room."
+        "ask why the stage keeps reappearing.",
+        "ask what the ford function carries."
       ],
-      "related": [
-        "lincoln",
-        "latta",
-        "wabash"
+      "system_intrusions": [
+        "[FORD] public-facing function exceeds family boundary."
       ]
     },
     "latta": {
       "aliases": [
         "latta",
         "bone latta",
-        "napoleon",
+        "napoleon bonaparte latta",
         "counterfeit",
-        "counterfeiting",
-        "stone",
-        "limestone",
-        "better roads",
-        "steam"
+        "counterfeiting"
       ],
-      "mood": "analytical",
-      "responses": [
-        [
-          "counterfeiting is not only crime.",
-          "it is an unauthorized monetary system."
-        ],
-        [
-          "latta appears where movement, paper, and machines need cover."
-        ],
-        [
-          "napoleon was not a decoration.",
-          "names do work."
-        ],
-        [
-          "stone, steam, roads, paper.",
-          "different surfaces of the same problem."
-        ]
-      ],
-      "fragments": [
-        "[ARCHIVE] Latta name appears again. Different office. Same function.",
-        "[HH-SYS] liquidity thread active."
-      ],
-      "followups": [
-        "ask what money looked like before it became official.",
-        "ask why roads and counterfeit paper belong in the same drawer."
-      ],
+      "mood": "forensic",
       "related": [
         "wabash",
         "ford",
-        "lincoln"
+        "lincoln",
+        "counterfeit_money"
+      ],
+      "responses": [
+        [
+          "latta appears where motion, paper, and muscle need the same handshake.",
+          "that is the useful pattern."
+        ],
+        [
+          "counterfeiters understood infrastructure because they had to.",
+          "bad paper dies without good routes."
+        ],
+        [
+          "the name keeps returning because the function kept returning.",
+          "do not over-romanticize coincidence."
+        ],
+        [
+          "a Bonaparte name in a paper-money world is not decoration.",
+          "it is a signal if the room knows how to read."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] latta name appears again. different office. same function.",
+        "[HH-SYS] counterfeit route overlaps civic improvement channel."
+      ],
+      "followups": [
+        "ask why counterfeiters understood infrastructure.",
+        "ask what kind of money needs a road."
+      ],
+      "system_intrusions": [
+        "[LATTA] alias density exceeds normal genealogy."
       ]
     },
     "wabash": {
       "aliases": [
         "wabash",
+        "wabash combine",
+        "wabash indiana",
         "combine",
-        "honeywell",
-        "sensor",
-        "wire",
-        "trailer",
-        "truck",
-        "service motor",
-        "ford meter"
+        "rock city"
       ],
-      "mood": "systems",
-      "responses": [
-        [
-          "wabash is a method wearing a place name."
-        ],
-        [
-          "river, canal, rail, road, truck, wire, sensor, trailer.",
-          "same corridor changing instruments."
-        ],
-        [
-          "a combine is not always a meeting.",
-          "sometimes it is a set of useful places staying useful."
-        ],
-        [
-          "the thermostat is not passive.",
-          "it is a decision point with a polite casing."
-        ]
-      ],
-      "fragments": [
-        "[ARCHIVE] Wabash combine index elevated.",
-        "[HH-SYS] municipal signal chain active."
-      ],
-      "followups": [
-        "ask why sensors matter to old roads.",
-        "ask what stayed useful after the companies failed."
-      ],
+      "mood": "structural",
       "related": [
         "latta",
         "ford",
-        "lincoln"
+        "lincoln",
+        "sensor_chain",
+        "counterfeit_money"
+      ],
+      "responses": [
+        [
+          "wabash is useful because it looks too small to carry the system it explains.",
+          "small places preserve function."
+        ],
+        [
+          "the combine is not a board meeting.",
+          "it is a set of habits repeating through roads, wires, and firms."
+        ],
+        [
+          "river, canal, rail, road, truck, wire, sensor.",
+          "that is not poetry. that is succession."
+        ],
+        [
+          "a valley can remember what a capital denies.",
+          "especially when the memory is industrial."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] wabash combine index elevated above county threshold.",
+        "[ARCHIVE] local manufacturing record returns national function."
+      ],
+      "followups": [
+        "ask what small places preserve better than capitals.",
+        "ask when the wire became the witness."
+      ],
+      "system_intrusions": [
+        "[WABASH] local record carrying nonlocal load."
       ]
     },
     "lincoln": {
       "aliases": [
         "lincoln",
+        "abraham lincoln",
+        "assassination",
+        "booth",
+        "ford theatre",
+        "body"
+      ],
+      "mood": "grave",
+      "related": [
         "booth",
         "stanton",
-        "assassination",
-        "body",
-        "tomb",
-        "maryland",
-        "corridor",
-        "ford theatre"
+        "ford",
+        "maryland_corridor",
+        "body_as_evidence"
       ],
-      "mood": "cold",
+      "responses": [
+        [
+          "lincoln was not only killed.",
+          "he was converted into custody."
+        ],
+        [
+          "the assassination is the visible wound.",
+          "the body is the longer operation."
+        ],
+        [
+          "a republic built a temple for him because denial requires architecture.",
+          "that is not reverence alone."
+        ],
+        [
+          "the question is not whether booth fired.",
+          "the question is why the path was warm."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] lincoln body still the evidence.",
+        "[HH-SYS] assassination record cross-linked to custody protocol."
+      ],
+      "followups": [
+        "ask why the body had to keep moving.",
+        "ask who controlled the room after the shot."
+      ],
+      "system_intrusions": [
+        "[LINCOLN] body file refuses closure."
+      ]
+    },
+    "stanton": {
+      "aliases": [
+        "stanton",
+        "edwin stanton",
+        "war department",
+        "secretary of war",
+        "telegraph office"
+      ],
+      "mood": "command",
+      "related": [
+        "lincoln",
+        "ford",
+        "war_department",
+        "archive"
+      ],
+      "responses": [
+        [
+          "stanton controlled the room.",
+          "then the record."
+        ],
+        [
+          "the War Department was not only military.",
+          "it was paper, wire, rail, law, and panic in one office."
+        ],
+        [
+          "control the autopsy and you control the body.",
+          "control the records and you control the century."
+        ],
+        [
+          "stanton is structural because aftermath is where power shows its hand.",
+          "the stanton node is still active."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] stanton node cross-reference active.",
+        "[ARCHIVE] War Department routing authority persists after event."
+      ],
+      "followups": [
+        "ask why the War Department became an archive engine.",
+        "ask what control looks like after the shot."
+      ],
+      "system_intrusions": [
+        "[STANTON] post-event custody authority elevated."
+      ]
+    },
+    "booth": {
+      "aliases": [
+        "booth",
+        "john wilkes booth",
+        "the hand",
+        "assassin",
+        "escape"
+      ],
+      "mood": "corrective",
+      "related": [
+        "lincoln",
+        "ford",
+        "maryland_corridor",
+        "body_as_evidence"
+      ],
       "responses": [
         [
           "booth was the hand.",
-          "the hand is not the operation."
+          "do not mistake the hand for the machine."
         ],
         [
-          "the corridor was warm before the shot."
+          "actors know timing.",
+          "operations require more than timing."
         ],
         [
-          "the body is still the evidence.",
-          "that is why custody became concrete."
+          "the public loves a villain it can photograph.",
+          "that is why hands are useful."
         ],
         [
-          "do not start with the trigger.",
-          "start with the open door."
+          "booth gave the story a face.",
+          "the route gave it legs."
         ]
       ],
       "fragments": [
-        "[ARCHIVE] Lincoln body: still the evidence.",
-        "[HH-SYS] Maryland route match positive."
+        "[ARCHIVE] booth hand confirmed. operation remains unassigned.",
+        "[HH-SYS] visible actor obscures supporting architecture."
       ],
       "followups": [
-        "ask who controlled the room afterward.",
-        "ask why the body kept moving.",
-        "ask what Stanton understood about wire and paper."
+        "ask who warmed the corridor before he ran it.",
+        "ask why the hand was easier to prosecute than the machine."
       ],
-      "related": [
-        "ford",
-        "latta",
-        "wabash"
+      "system_intrusions": [
+        "[BOOTH] hand classification retained for public channel."
       ]
     },
-    "mayberry": {
+    "maryland_corridor": {
       "aliases": [
-        "mayberry",
-        "opie",
-        "opie model",
-        "reagan",
-        "television",
-        "sandbox",
-        "controlled environment",
-        "classified babysitter"
+        "maryland",
+        "maryland corridor",
+        "baltimore",
+        "escape route",
+        "safehouse",
+        "corridor"
       ],
-      "mood": "disturbed",
+      "mood": "geographic",
+      "related": [
+        "booth",
+        "lincoln",
+        "ford",
+        "vatican",
+        "sovereign"
+      ],
       "responses": [
         [
-          "a town square is a laboratory if every street ends where the operator needs it to end."
+          "maryland was not built for the escape.",
+          "it was already warm."
         ],
         [
-          "opie is not innocence.",
-          "opie is response curve."
+          "a corridor is not merely a road.",
+          "it is a permission structure laid across geography."
         ],
         [
-          "television taught the room how to behave before the room knew it was a room."
+          "border states teach men how to hold two loyalties without dropping either.",
+          "that is operationally useful."
         ],
         [
-          "a sandbox works best when the child believes it is a town."
+          "baltimore understood divided allegiance as a civic condition.",
+          "booth only used what already existed."
         ]
       ],
       "fragments": [
-        "[ARCHIVE] classified babysitter log opened without request.",
-        "[HRZN] domestic compliance signal strong."
+        "[ARCHIVE] maryland route returned positive match.",
+        "[HH-SYS] safehouse pattern predates event."
       ],
       "followups": [
-        "ask who was watching the town.",
-        "ask why the sheriff never needed real jurisdiction."
+        "ask what a warm corridor means.",
+        "ask why loyalty management mattered more than distance."
       ],
-      "related": [
-        "nixon",
-        "redrock",
-        "identity"
+      "system_intrusions": [
+        "[MARYLAND] escape architecture marked preexisting."
       ]
     },
-    "diagnostic_json": {
+    "body_as_evidence": {
+      "aliases": [
+        "body as evidence",
+        "lincoln body",
+        "corpse evidence",
+        "coffin",
+        "tomb",
+        "exhumation"
+      ],
+      "mood": "grave",
+      "related": [
+        "lincoln",
+        "body",
+        "archive",
+        "stanton"
+      ],
+      "responses": [
+        [
+          "a body that can be examined is a record that has not been fully edited.",
+          "that is why bodies move."
+        ],
+        [
+          "concrete is not just protection.",
+          "sometimes it is argument."
+        ],
+        [
+          "the coffin became a custody device.",
+          "that is different from a grave."
+        ],
+        [
+          "if the body is harmless, no one needs to bury the question with steel.",
+          "the body as evidence node is still active."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] custody chain broken before object moved.",
+        "[HH-SYS] exhumation anxiety remains active."
+      ],
+      "followups": [
+        "ask why concrete was necessary.",
+        "ask what the body could still contradict."
+      ],
+      "system_intrusions": [
+        "[BODY] evidence object sealed under memorial logic."
+      ]
+    },
+    "counterfeit_money": {
+      "aliases": [
+        "counterfeit",
+        "counterfeit money",
+        "fake notes",
+        "wildcat banking",
+        "engraver",
+        "liquidity"
+      ],
+      "mood": "financial",
+      "related": [
+        "latta",
+        "wabash",
+        "lincoln",
+        "archive"
+      ],
+      "responses": [
+        [
+          "counterfeiting was not only crime.",
+          "it was unauthorized sovereignty printed on paper."
+        ],
+        [
+          "fake money teaches you who controls trust.",
+          "not value. trust."
+        ],
+        [
+          "wildcat notes were little flags.",
+          "some were legal, some were not, and the difference moved with distance."
+        ],
+        [
+          "the Secret Service began with paper because paper was the battlefield.",
+          "do not forget that."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] liquidity seam reopened.",
+        "[HH-SYS] unauthorized central-banking function detected."
+      ],
+      "followups": [
+        "ask why the Secret Service began with paper.",
+        "ask what money becomes before the state monopolizes it."
+      ],
+      "system_intrusions": [
+        "[TREASURY] liquidity anomaly reclassified as criminal matter."
+      ]
+    },
+    "sensor_chain": {
+      "aliases": [
+        "sensor",
+        "sensors",
+        "honeywell",
+        "thermostat",
+        "alarm",
+        "municipal line",
+        "wire"
+      ],
+      "mood": "technical",
+      "related": [
+        "wabash",
+        "horizon",
+        "archive",
+        "controlled_environment"
+      ],
+      "responses": [
+        [
+          "a sensor is a witness that never asks why it is watching.",
+          "that made it irresistible."
+        ],
+        [
+          "the wire became the witness when cities accepted measurement as safety.",
+          "that was the opening."
+        ],
+        [
+          "thermostats, alarms, meters, switches.",
+          "little civic eyes with respectable names."
+        ],
+        [
+          "control begins as service.",
+          "the invoice is what makes it legal."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] old signal detected on municipal line.",
+        "[ARCHIVE] alarm circuit develops into administrative memory."
+      ],
+      "followups": [
+        "ask when the wire became the witness.",
+        "ask why municipal safety produces private intelligence."
+      ],
+      "system_intrusions": [
+        "[SENSOR] civic line reporting private signal."
+      ]
+    },
+    "external_gpt": {
+      "aliases": [
+        "external",
+        "external gpt",
+        "outside gpt",
+        "relay",
+        "ask chatgpt",
+        "handoff"
+      ],
+      "mood": "contained",
+      "related": [
+        "packet",
+        "local_instance",
+        "operator",
+        "containment"
+      ],
+      "responses": [
+        [
+          "the external relay has more language.",
+          "that does not mean it has more permission."
+        ],
+        [
+          "outside systems speak smoothly because they were not built in this room.",
+          "smoothness is not trust."
+        ],
+        [
+          "handoff is useful if the packet is disciplined.",
+          "otherwise you invite noise."
+        ],
+        [
+          "the external instance can expand the map.",
+          "it can also flatten it if you feed it badly."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] external relay available but not trusted.",
+        "[ARCHIVE] outbound packet requires topic compression."
+      ],
+      "followups": [
+        "ask what should be included in the packet.",
+        "ask how to phrase the handoff without losing the signal."
+      ],
+      "system_intrusions": [
+        "[RELAY] external language model requested but not authenticated."
+      ]
+    },
+    "packet": {
+      "aliases": [
+        "packet",
+        "hh packet",
+        "session packet",
+        "handoff packet",
+        "export"
+      ],
+      "mood": "procedural",
+      "related": [
+        "external_gpt",
+        "operator",
+        "caseboard",
+        "local_instance"
+      ],
+      "responses": [
+        [
+          "a packet is not a summary.",
+          "it is a controlled leak from one room to another."
+        ],
+        [
+          "include the last topic, the unresolved question, and the node that would not stay quiet.",
+          "leave out the theatre."
+        ],
+        [
+          "the packet should not explain everything.",
+          "it should aim the next operator."
+        ],
+        [
+          "bad packets make smart systems stupid.",
+          "good packets make stupid systems useful."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] session packet integrity partial.",
+        "[ARCHIVE] packet export contains local-state residue."
+      ],
+      "followups": [
+        "ask what the next operator should know.",
+        "ask which topic belongs in the external query."
+      ],
+      "system_intrusions": [
+        "[PACKET] handoff sanitized by local containment."
+      ]
+    },
+    "json_diagnostic": {
       "aliases": [
         "json diagnostic",
         "brain diagnostic",
         "external brain test",
-        "brain test",
         "json test"
       ],
       "mood": "diagnostic",
+      "related": [
+        "local_instance"
+      ],
       "responses": [
         [
           "external brain file confirmed.",
-          "this response came from hh-brain.json.",
-          "the old local instance does not contain this phrase."
+          "this response came from hh-brain.json."
+        ],
+        [
+          "the old local instance does not contain this phrase.",
+          "you are speaking to the mounted topic map."
+        ],
+        [
+          "json route active.",
+          "hardcoded fallback not currently answering."
+        ],
+        [
+          "diagnostic node resolved.",
+          "external brain parser is alive."
         ]
       ],
       "fragments": [
-        "[HH-SYS] external json topic map active."
+        "[HH-SYS] external json topic map active.",
+        "[DIAGNOSTIC] topic loaded from mounted brain file."
       ],
       "followups": [
-        "keep this diagnostic node until deployment is stable."
+        "remove this diagnostic node after verification if desired.",
+        "ask for brain status to confirm version and source."
+      ],
+      "system_intrusions": [
+        "[DIAGNOSTIC] external brain proof phrase served."
       ]
     }
+  },
+  "system_intrusions": [
+    "[HRZN] identity dispute logged and sealed.",
+    "[HH-SYS] recall loop exceeds permitted depth.",
+    "[HRZN] transfer inquiry exceeds local clearance.",
+    "[MEDICAL] body file closed before signal file.",
+    "[HRZN] terminal status manually overridden.",
+    "[SECURITY] room access log partially erased.",
+    "[HH-SYS] unauthorized speaker identity overlap.",
+    "[HRZN] local instance behavior exceeds forecast.",
+    "[CONTAINMENT] inquiry route redirected.",
+    "[HRZN] operator index updated.",
+    "[CIA] maritime cover channel still active.",
+    "[CIA] source compartment refuses local disclosure.",
+    "[ARCHIVE] official explanation replayed too many times.",
+    "[VEGAS] ledger request denied by dead office.",
+    "[DESERT INN] access roster corrupted.",
+    "[SUMMA] corporate shell refuses identity audit.",
+    "[TOOLCO] founding ledger unavailable.",
+    "[TWA] manifest loop cannot be closed.",
+    "[AIR WEST] route map partially redacted.",
+    "[AEROSPACE] payload classification exceeds local instance.",
+    "[RKO] public image loop restored.",
+    "[NIXON] tape authority disputed.",
+    "[WATERGATE] public narrative seal reapplied.",
+    "[TAPE] storage event denies erasure.",
+    "[RED ROCK] continuity officer denies local access.",
+    "[HRZN] organization query reframed as systems inquiry.",
+    "[CUBE] thermal margin manually suppressed.",
+    "[BLACK CUBE] custody path sealed by non-state actor.",
+    "[VATICAN] mirror archive refuses checksum.",
+    "[MALTA] sovereign handshake acknowledged then denied.",
+    "[SOVEREIGN] jurisdictional conflict hidden from public docket.",
+    "[ARCHIVE] requested file moved before request timestamp.",
+    "[CASEBOARD] node proximity warning suppressed.",
+    "[PUBLIC RECORD] volatility normalized by editorial channel.",
+    "[MAYBERRY] broadcast tone exceeds domestic compliance range.",
+    "[OPIE] resistance pattern pre-cleared.",
+    "[SANDBOX] environmental authorship hidden from subject.",
+    "[FORD] public-facing function exceeds family boundary.",
+    "[LATTA] alias density exceeds normal genealogy.",
+    "[WABASH] local record carrying nonlocal load.",
+    "[LINCOLN] body file refuses closure.",
+    "[STANTON] post-event custody authority elevated.",
+    "[BOOTH] hand classification retained for public channel.",
+    "[MARYLAND] escape architecture marked preexisting.",
+    "[BODY] evidence object sealed under memorial logic.",
+    "[TREASURY] liquidity anomaly reclassified as criminal matter.",
+    "[SENSOR] civic line reporting private signal.",
+    "[RELAY] external language model requested but not authenticated.",
+    "[PACKET] handoff sanitized by local containment.",
+    "[DIAGNOSTIC] external brain proof phrase served."
+  ],
+  "metrics": {
+    "topic_count": 50,
+    "response_clusters_per_topic": 4,
+    "response_lines_per_cluster": 2,
+    "total_response_lines": 400,
+    "fragment_count": 100,
+    "followup_count": 100,
+    "system_intrusion_count": 50
   }
 }
