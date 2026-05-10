@@ -3438,13 +3438,15 @@ function closeMayberryPlayer() {
   iframe.src = '';
 }
 
-// ── Mayberry / O.P.I.E. Howard response pack ──────────────────
+// ── Mayberry / O.P.I.E. query router ──────────────────────────
+// This is deliberately local to Mayberry Mode. These are not global commands.
 const MAYBERRY_QUERY_TERMS = [
   'opie','o.p.i.e','opie model','opie taylor','boy','child','auntbee','aunt bee','bee','beatrice',
   'andy','sheriff','barney','deputy','fife','mayberry','town','town square','porch','front porch',
   'fishing','fishing hole','jail','cell','church','school','schoolhouse','teacher','pie','kitchen',
-  'classified babysitter','babysitter','caregiver','handler','sandbox','laugh track','whistle','theme',
-  'whistling','good boy','permission','mother','father','authority','otis','floyd','goober','gomer'
+  'classified babysitter','babysitter','caregiver','handler','sandbox','laugh track','laughtrack',
+  'whistle','theme','whistling','good boy','permission','mother','father','authority','otis',
+  'floyd','goober','gomer','more opie','opie more','mayberry status','mayberry help'
 ];
 
 const MAYBERRY_HOWARD_COMMENTS = {
@@ -3587,89 +3589,89 @@ const MAYBERRY_HOWARD_COMMENTS = {
     ['the joke resets suspicion.'],
     ['if the audience laughs, the boundary can move an inch.'],
     ['the program did not hide behind laughter.', 'it synchronized with it.'],
-    ['laughter is how the viewer signs without reading.'],
     ['a joke can carry a command if the command is small enough.'],
-    ['the warm laugh made the correction feel voluntary.'],
-    ['the audience practiced forgiveness every week.'],
-    ['the laugh track was not the lock.', 'it was the oil.']
+    ['laughter makes repetition feel voluntary.'],
+    ['the comic beat is where the lesson enters without papers.'],
+    ['they did not need subliminals.', 'they had timing.'],
+    ['the viewer laughed and the enclosure became family programming.']
   ],
   church: [
-    ['the church bell made the schedule sacred.'],
-    ['mayberry did not need doctrine.', 'it needed rhythm.'],
-    ['sunday made the town feel ordained.'],
-    ['ritual is cheaper than enforcement once the subject believes it.'],
-    ['the hymn kept the sandbox from looking engineered.'],
-    ['a bell is a broadcast device with a steeple.'],
-    ['the sacred calendar and the broadcast schedule did the same work.'],
+    ['the church bell was the town clock pretending to be heaven.'],
+    ['ritual is easier to accept when it sounds like Sunday.'],
     ['mayberry made civic obedience sound like a hymn.'],
-    ['faith was not the program.', 'regularity was.'],
-    ['a town that rings at the same hour teaches the body before the mind notices.']
+    ['a bell can gather subjects without calling them subjects.'],
+    ['the sermon was not always spoken.', 'sometimes the town preached by resetting.'],
+    ['moral order is a grid with better music.'],
+    ['religion and schedule are cousins in small towns.'],
+    ['the sacred calendar kept the sandbox warm.'],
+    ['sunday made the weekly reset feel ordained.'],
+    ['the bell did not command.', 'it reminded.']
   ],
   school: [
-    ['the schoolhouse made the town reproducible.'],
-    ['children are where civic fiction becomes memory.'],
-    ['the teacher did not need classified clearance.', 'the lesson plan was enough.'],
-    ['a classroom is a factory for acceptable questions.'],
-    ['opie learned where curiosity was allowed to end.'],
-    ['the chalkboard was the town square reduced to doctrine.'],
+    ['school taught opie where curiosity was allowed to end.'],
+    ['the teacher is the state with chalk dust on its sleeve.'],
+    ['children learn the map before they learn the borders are artificial.'],
     ['school made mayberry portable.'],
-    ['the lesson was never only arithmetic.', 'it was role assignment.'],
-    ['childhood is the cleanest place to install a map.'],
-    ['the program does not begin when the child understands it.', 'it begins before understanding is required.']
+    ['a report card is a behavior ledger with parental distribution.'],
+    ['the classroom trained the child to perform normality in rows.'],
+    ['the lesson plan was not the curriculum.', 'the room was.'],
+    ['the bell system begins early.'],
+    ['a boy can leave the classroom and still carry the seating chart.'],
+    ['school is where the town learned to write itself into the child.']
   ],
   generic: [
     ['mayberry file open.', 'do not let the whistling make you stupid.'],
-    ['the signal is red because the innocence layer is failing.'],
-    ['you are looking at a comedy.', 'the comedy is looking back.'],
-    ['the room is white now.', 'that does not mean it is clean.'],
-    ['every wholesome system has a service entrance.'],
-    ['if it feels too safe, ask what was removed.'],
-    ['innocence is sometimes a deleted variable.'],
-    ['the small town was not hiding from history.', 'it was editing history into furniture.'],
-    ['comfort is the most efficient anesthetic.'],
+    ['this is not nostalgia.', 'this is soft architecture.'],
+    ['the pleasant version of control lasts longer.'],
+    ['a smiling cage outperforms a locked one.'],
+    ['the town did not hide the program.', 'the town was the program.'],
+    ['comfort is not innocence.', 'comfort is an access method.'],
     ['mayberry does not frighten me.', 'people missing mayberry frighten me.'],
-    ['the show ended.', 'the template did not.'],
-    ['ask why the town needed a boy to prove it was good.'],
+    ['the cleaner the street, the dirtier the file.'],
     ['the viewer thought he was watching opie grow up.', 'the viewer was also being raised.'],
-    ['the safest town on television still required a sheriff.'],
-    ['a place without exits does not need villains.']
+    ['the channel is open.', 'the town is listening.'],
+    ['a perfect place is a threat model.'],
+    ['when the world resets every week, somebody owns the calendar.'],
+    ['the town square is the mouth.', 'the living rooms are the ears.'],
+    ['if you think mayberry was harmless, the program reached you.'],
+    ['ask why every road back to innocence has a sheriff waiting at the center.']
   ]
 };
 
 function isMayberryQuery(lower) {
   if (!mayberryMode) return false;
-  if (['opie','barney','auntbee','aunt bee','andy','mayberry help','mayberry status','opie more','opie model','classified babysitter','sandbox','porch','town square','fishing hole','laugh track','jail','church','school','schoolhouse','pie','bee','sheriff','deputy','whistle','theme'].includes(lower)) return true;
+  if (['opie','barney','auntbee','aunt bee','andy','mayberry help','mayberry status','opie more','more opie','opie model','classified babysitter','sandbox','porch','town square','fishing hole','laugh track','laughtrack','jail','church','school','schoolhouse','pie','bee','sheriff','deputy','whistle','theme'].includes(lower)) return true;
   return MAYBERRY_QUERY_TERMS.some(term => lower.includes(term));
 }
 
 function mayberryCategoryFromInput(lower) {
   if (lower.includes('aunt') || lower.includes('bee') || lower.includes('pie') || lower.includes('babysitter') || lower.includes('caregiver') || lower.includes('kitchen')) return 'auntbee';
-  if (lower.includes('andy') || lower.includes('sheriff') || lower.includes('father') || lower.includes('badge') || lower.includes('law')) return 'andy';
+  if (lower.includes('andy') || lower.includes('sheriff') || lower.includes('father') || lower.includes('authority')) return 'andy';
   if (lower.includes('barney') || lower.includes('fife') || lower.includes('deputy')) return 'barney';
   if (lower.includes('porch') || lower.includes('screen door') || lower.includes('rocking')) return 'porch';
   if (lower.includes('jail') || lower.includes('cell') || lower.includes('otis') || lower.includes('courthouse')) return 'jail';
-  if (lower.includes('fish') || lower.includes('pond') || lower.includes('hole') || lower.includes('whistle') || lower.includes('theme')) return 'fishing';
+  if (lower.includes('fish') || lower.includes('pond') || lower.includes('whistle') || lower.includes('theme')) return 'fishing';
   if (lower.includes('laugh') || lower.includes('joke') || lower.includes('comedy')) return 'laughtrack';
-  if (lower.includes('church') || lower.includes('bell') || lower.includes('hymn') || lower.includes('sunday')) return 'church';
-  if (lower.includes('school') || lower.includes('teacher') || lower.includes('class')) return 'school';
+  if (lower.includes('church') || lower.includes('bell') || lower.includes('sunday')) return 'church';
+  if (lower.includes('school') || lower.includes('teacher') || lower.includes('classroom')) return 'school';
   if (lower.includes('town') || lower.includes('mayberry') || lower.includes('sandbox') || lower.includes('square')) return 'town';
   if (lower.includes('opie') || lower.includes('child') || lower.includes('boy') || lower.includes('mother') || lower.includes('o.p.i.e')) return 'opie';
   return 'generic';
 }
 
 function printMayberryHoward(category, count) {
-  category = category || 'generic';
   count = count || 1;
   for (let i = 0; i < count; i++) {
     const bank = MAYBERRY_HOWARD_COMMENTS[category] || MAYBERRY_HOWARD_COMMENTS.generic;
-    const cluster = bank[Math.floor(Math.random() * bank.length)];
-    const lines = Array.isArray(cluster) ? cluster : [cluster];
-    lines.forEach((l, idx) => {
-      setTimeout(() => printLine(esc(l), 'hughes-haunt', true), (i * 650) + (idx * 220));
-    });
-    if (Math.random() < 0.34) {
-      setTimeout(() => printLine(esc('[MAYBERRY-SYS] domestic control layer returns positive echo.'), 'signal-bleed', true), (i * 650) + (lines.length * 220) + 120);
-    }
+    const lines = bank[Math.floor(Math.random() * bank.length)];
+    const tag = category === 'generic' ? '[HOWARD // MAYBERRY]' : '[HOWARD // ' + category.toUpperCase() + ']';
+    setTimeout(() => {
+      printLine(esc(tag), 'hughes-haunt', true);
+      lines.forEach((l, idx) => setTimeout(() => printLine(esc(l), 'hughes-haunt', false), idx * 220));
+      if (Math.random() < 0.35) {
+        setTimeout(() => printLine(esc('[MAYBERRY-SYS] domestic control layer returns positive echo.'), 'signal-bleed', true), (lines.length * 220) + 160);
+      }
+    }, i * 700);
   }
 }
 
@@ -3679,7 +3681,7 @@ function mayberryMiniReport() {
     '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
     'available probes:',
     '  opie / opie more / opie model',
-    '  andy / barney / auntbee',
+    '  andy / barney / auntbee / aunt bee',
     '  town square / porch / jail / fishing hole',
     '  laugh track / church / school / classified babysitter',
     '',
@@ -3689,6 +3691,7 @@ function mayberryMiniReport() {
   ];
   printLine('<pre>' + esc(lines.join('\n')) + '</pre>', '', true);
 }
+
 // ── Andy compliance script ────────────────────────────────────
 let andyTurn = 0;
 let andyMode = 'warm'; // warm → curious → probing → compliance
@@ -3850,16 +3853,16 @@ function handleMayberryCmd(lower) {
     showPrompt(currentPrompt()); return;
   }
 
-  if(lower==='opie' || lower==='opie model') {
+  if(lower === 'opie' || lower === 'opie model') {
     printLine('<pre>O.P.I.E. MODEL\nOperational Psychosocial Intervention Experiment\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nOrigin: 1962\nPurpose: Manufacturing oppositional archetypes\n         for controlled dialectics.\n\n"The child is the product.\nThe town is the template.\nThe show is the program.\nMayberry is the sandbox."\n\nSee: opie_model.redacted</pre>');
     setTimeout(() => printMayberryHoward('opie', 2), 300);
     setTimeout(() => showPrompt(currentPrompt()), 2100); return;
   }
-  else if(lower==='opie more' || lower.includes('what about opie') || lower.includes('tell me more') && lower.includes('opie')) {
+  else if(lower === 'opie more' || lower === 'more opie' || lower.includes('what about opie') || (lower.includes('tell me more') && lower.includes('opie'))) {
     printMayberryHoward('opie', 3);
     setTimeout(() => showPrompt(currentPrompt()), 2600); return;
   }
-  else if(lower==='barney' || lower.includes('barney') || lower.includes('fife') || lower.includes('deputy')) {
+  else if(lower === 'barney' || lower.includes('barney') || lower.includes('fife') || lower.includes('deputy')) {
     const barney = [
       '"Nip it in the bud!" — Barney Fife\n[HANDLER NOTE: Subject\'s anxiety response is a feature, not a bug.]',
       '"Now Andy—" [REDACTED]\n[CONDITIONING LOG: Barney\'s incompetence is calibrated. Deliberate.]',
@@ -3869,7 +3872,7 @@ function handleMayberryCmd(lower) {
     setTimeout(() => printMayberryHoward('barney', 1), 500);
     setTimeout(() => showPrompt(currentPrompt()), 1800); return;
   }
-  else if(lower==='auntbee' || lower==='aunt bee' || lower.includes('aunt bee') || lower.includes('classified babysitter') || lower.includes('pie') || lower.includes('caregiver')) {
+  else if(lower === 'auntbee' || lower === 'aunt bee' || lower.includes('aunt bee') || lower.includes('classified babysitter') || lower.includes('pie') || lower.includes('caregiver')) {
     printLine('Aunt Bee leaves a pie on the windowsill.', 'guardian-msg', true);
     setTimeout(() => printLine('Nothing happens.', 'guardian-msg', true), 800);
     setTimeout(() => printLine('[HANDLER LOG: Subject accepted offering without hesitation.]', 'signal-bleed', true), 1600);
@@ -3877,7 +3880,11 @@ function handleMayberryCmd(lower) {
     setTimeout(() => printLine('[CONDITIONING CYCLE: COMPLETE]', 'hughes-haunt', true), 4200);
     setTimeout(() => showPrompt(currentPrompt()), 4700); return;
   }
-  else if(lower==='andy' || lower.includes('andy') || lower.includes('sheriff')) { handleAndyCmd(); setTimeout(() => printMayberryHoward('andy', 1), 900); return; }
+  else if(lower === 'andy' || lower.includes('andy') || lower.includes('sheriff')) {
+    handleAndyCmd();
+    setTimeout(() => printMayberryHoward('andy', 1), 900);
+    return;
+  }
 
   const category = mayberryCategoryFromInput(lower);
   printMayberryHoward(category, lower.includes('more') ? 2 : 1);
@@ -4011,6 +4018,55 @@ function handleMayberryFile(fname) {
       '[Ξ END FILE]',
     ].join('\n'),
 
+    'howard_opie_comments.log': [
+      '[HOWARD / OPIE COMMENTS // MAYBERRY MODE]',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'opie did not need a leash.',
+      'he had a town.',
+      '',
+      'the missing mother is not backstory.',
+      'it is architecture.',
+      '',
+      'a child who runs to the sheriff has already accepted the map.',
+      '',
+      'the opie model is not obedience.',
+      'it is nostalgic self-policing installed before adolescence.',
+      '',
+      'type: opie more',
+      '[Ξ END FILE]',
+    ].join('\n'),
+
+    'town_square_sensorium.txt': [
+      '[TOWN SQUARE SENSORIUM]',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'Mayberry did not need cameras.',
+      'The town square was a shared sensor array.',
+      '',
+      'barber shop. courthouse. porch. church bell. schoolhouse.',
+      'Every ordinary institution returned the child to center.',
+      '',
+      'Every neighbor was a sensor.',
+      'Every pie was a packet.',
+      'Every laugh was a checksum.',
+      '',
+      '[MAYBERRY-SYS] sensorium file mounted.',
+      '[Ξ END FILE]',
+    ].join('\n'),
+
+    'porch_protocol.txt': [
+      '[PORCH PROTOCOL]',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'The porch is the checkpoint that pretends to be rest.',
+      '',
+      'It is neither fully private nor fully public.',
+      'It allows the subject to be seen while believing he is at home.',
+      '',
+      'A rocking chair is a metronome for compliance.',
+      'The screen door is a soft boundary.',
+      '',
+      '[Ξ END FILE]',
+    ].join('\n'),
+
     'opie_model_diagram.svg': [
       '[O.P.I.E. CONTROL FLOW // ASCII]',
       '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
@@ -4038,79 +4094,6 @@ function handleMayberryFile(fname) {
       '',
       '[Ξ END DIAGRAM]',
     ].join('\n'),
-    'howard_opie_comments.log': [
-      '[HOWARD / OPIE COMMENTS // MAYBERRY MODE]',
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      'The Opie problem is not that the child was watched.',
-      'Children are always watched.',
-      '',
-      'The problem is that every adult in the town became',
-      'part of the same interpretive machine.',
-      '',
-      'A father could correct him.',
-      'An aunt could soften him.',
-      'A deputy could frighten him harmlessly.',
-      'A teacher could normalize him.',
-      'A neighbor could remember him.',
-      '',
-      'No one needed to conspire in the ordinary sense.',
-      'The town itself performed the conspiracy by habit.',
-      '',
-      'Howard note:',
-      '  opie did not escape the town.',
-      '  he became the town carrying itself forward.',
-      '',
-      '[RANDOMIZED HH COMMENT BANK ACTIVE]',
-      'Type: opie more',
-      '[Ξ END LOG]',
-    ].join('\n'),
-
-    'town_square_sensorium.txt': [
-      '[TOWN SQUARE SENSORIUM // CIVIC MEMORY GRID]',
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      'Mayberry did not need cameras.',
-      'It had windows.',
-      '',
-      'It did not need microphones.',
-      'It had counters, benches, porches, phones,',
-      'barber chairs, church steps, and store fronts.',
-      '',
-      'The town square was not merely a setting.',
-      'It was the central bus.',
-      '',
-      'All gossip returned to it.',
-      'All corrections passed through it.',
-      'All children became legible to it.',
-      '',
-      'The square looked public.',
-      'The rules were private.',
-      '',
-      '[MAYBERRY-SYS] sensorium file mounted.',
-      '[Ξ END FILE]',
-    ].join('\n'),
-
-    'porch_protocol.txt': [
-      '[PORCH PROTOCOL // DOMESTIC THRESHOLD STUDY]',
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      'The porch is neither inside nor outside.',
-      'That is why it matters.',
-      '',
-      'A porch allows observation without admitting surveillance.',
-      'A porch allows interview without calling it intake.',
-      'A porch allows correction without making a case file.',
-      '',
-      'Rocking chair motion creates the illusion of rest.',
-      'But the chair does not travel.',
-      '',
-      'The subject feels movement.',
-      'The subject remains in place.',
-      '',
-      'Howard note:',
-      '  do not trust a system that rocks itself to sleep.',
-      '',
-      '[Ξ END FILE]',
-    ].join('\n'),
-
   };
 
   if(lore[fname]) printText(lore[fname]);
@@ -5872,7 +5855,6 @@ const ALL_COMMANDS = [
   'view source','stop source','cicada','howard','hh','glomar','fragment','memory',
   'hh uplink','hh status','hh tape','hh repo','hh nixon','hh vegas','hh fracture',
   'hh packet','hh external','hh disconnect',
-  'opie','opie more','opie model','andy','barney','auntbee','aunt bee','town square','porch','fishing hole','laugh track','classified babysitter','mayberry help',
   'hrzn desk','desk','market','ticker','bloom',
   'wire','wire vegas','wire nixon','wire wabash','wire redrock','wire breaking','wire archive',
   'switchboard','phone','caseboard','microfilm','scrape','scrape deeper','nixon tape',
@@ -5896,6 +5878,9 @@ inputEl.addEventListener('keydown', e => {
     else if (switchMode) handleSwitchCommand(cmd);
     else if (microMode) handleMicroCommand(cmd);
     else if (tapeRepairMode) handleTapeCommand(cmd);
+    // Mayberry is a full-screen channel mode. Route it through the main handler
+    // before BBS so Opie/Mayberry probes do not get swallowed by the civic menu.
+    else if (mayberryMode) handleCommand(cmd);
     else if (bbsMode) handleBBSCommand(cmd);
     else if (state.phase==='terminal') handleCommand(cmd);
   }
