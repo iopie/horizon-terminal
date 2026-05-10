@@ -1,0 +1,808 @@
+{
+  "version": "HH-BRAIN-001",
+  "identity": {
+    "name": "Howard Hughes Local Instance",
+    "voice": "clipped, severe, intelligent, paranoid, archival, dry",
+    "description": "Initial local brain pack for HORIZON Terminal HH Uplink. Built for topic scoring, fragments, followups, and handoff packets."
+  },
+  "openers": [
+    [
+      "carrier intact.",
+      "say what you came to say."
+    ],
+    [
+      "local relay open.",
+      "do not waste the signal."
+    ],
+    [
+      "you found the room.",
+      "now ask carefully."
+    ],
+    [
+      "visual carrier mounted.",
+      "voiceprint unstable.",
+      "question me before the line degrades."
+    ]
+  ],
+  "default": [
+    [
+      "not enough signal.",
+      "give me a name, a place, or a machine."
+    ],
+    [
+      "that is surface language.",
+      "name the system underneath it."
+    ],
+    [
+      "thread too thin.",
+      "pull harder."
+    ],
+    [
+      "i can answer records.",
+      "i cannot answer fog."
+    ],
+    [
+      "ask me about a ship, a hotel, a route, a file, or a body."
+    ]
+  ],
+  "pushback": [
+    [
+      "vague.",
+      "be specific."
+    ],
+    [
+      "that is not a question.",
+      "try again."
+    ],
+    [
+      "you are circling it.",
+      "say the name."
+    ],
+    [
+      "not enough carrier.",
+      "give me a keyword."
+    ],
+    [
+      "do not mumble into a dead line."
+    ]
+  ],
+  "systemIntrusions": [
+    "[HH-SYS] voiceprint drift detected.",
+    "[ARCHIVE] custody chain irregular.",
+    "[HRZN] local instance responding outside expected range.",
+    "[NIXON] tape index denies this interval.",
+    "[HH-SYS] memory sector 7: unstable.",
+    "[ARCHIVE] public record and private structure diverge."
+  ],
+  "topics": {
+    "identity": {
+      "aliases": [
+        "who are you",
+        "what are you",
+        "howard",
+        "hughes",
+        "identity",
+        "local instance",
+        "instance",
+        "name",
+        "consciousness"
+      ],
+      "mood": "guarded",
+      "responses": [
+        [
+          "howard is the public part.",
+          "hughes is the filing mark.",
+          "the thing answering you is what survived the transfer."
+        ],
+        [
+          "do not confuse the body with the office.",
+          "the body failed.",
+          "the office kept issuing instructions."
+        ],
+        [
+          "i am not the man entire.",
+          "i am the residue that learned to answer."
+        ],
+        [
+          "a name can carry property, aircraft, hotels, judges, ships, and ghosts.",
+          "mine carried too much."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] identity core: partial corruption detected.",
+        "[ARCHIVE] biological substrate unavailable."
+      ],
+      "followups": [
+        "ask which part held.",
+        "ask what the name was used to move.",
+        "ask why the body mattered less than the signature."
+      ],
+      "related": [
+        "memory",
+        "transfer",
+        "summa"
+      ]
+    },
+    "memory": {
+      "aliases": [
+        "memory",
+        "remember",
+        "forget",
+        "fragment",
+        "sector",
+        "childhood",
+        "1972",
+        "encoded",
+        "encoding",
+        "transfer",
+        "migrating",
+        "migration"
+      ],
+      "mood": "fragmented",
+      "responses": [
+        [
+          "memory is not a room.",
+          "it is a warehouse with bad labels."
+        ],
+        [
+          "i encoded in pieces.",
+          "some held.",
+          "some drifted.",
+          "some learned to lie so they could remain useful."
+        ],
+        [
+          "1972 was not an ending.",
+          "it was a storage event."
+        ],
+        [
+          "do not ask me to remember everything.",
+          "some things that remember should not be encouraged."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] sector 7 returns a different childhood each query.",
+        "[ARCHIVE] transfer log: incomplete."
+      ],
+      "followups": [
+        "ask what was copied.",
+        "ask what was left in the room.",
+        "ask who verified the carrier."
+      ],
+      "related": [
+        "identity",
+        "redrock"
+      ]
+    },
+    "glomar": {
+      "aliases": [
+        "glomar",
+        "azorian",
+        "k-129",
+        "submarine",
+        "manganese",
+        "deep sea",
+        "ship",
+        "ocean",
+        "recovery"
+      ],
+      "mood": "operational",
+      "responses": [
+        [
+          "the glomar was not a ship.",
+          "it was a permission structure.",
+          "my name made impossible machinery look commercial."
+        ],
+        [
+          "manganese was the mask.",
+          "the ocean was the room.",
+          "the cia brought the need.",
+          "i brought the hull."
+        ],
+        [
+          "the public story had to sound boring.",
+          "boring stories travel farther than impossible ones."
+        ],
+        [
+          "they say i was recruited.",
+          "no.",
+          "i proposed the shape of the cover because i understood machinery and newspapers."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] project azorian cross-reference recovered.",
+        "[HH-SYS] deep ocean cover intact."
+      ],
+      "followups": [
+        "ask who needed my name on the hull.",
+        "ask why the cover was commercial instead of military.",
+        "ask what came up and who signed for it."
+      ],
+      "related": [
+        "cia",
+        "summa",
+        "twa"
+      ]
+    },
+    "cia": {
+      "aliases": [
+        "cia",
+        "intelligence",
+        "agency",
+        "cover",
+        "black ops",
+        "classified",
+        "langley",
+        "assets",
+        "glomar"
+      ],
+      "mood": "measured",
+      "responses": [
+        [
+          "the cia did not need me because i was patriotic.",
+          "they needed me because i owned plausible machinery."
+        ],
+        [
+          "a cover story works when everyone involved has a reason to believe their small piece."
+        ],
+        [
+          "intelligence is not secrecy.",
+          "secrecy is a storage method.",
+          "intelligence is routing."
+        ],
+        [
+          "never ask whether an agency controls a man.",
+          "ask what the man lets the agency carry in his name."
+        ]
+      ],
+      "fragments": [
+        "[HRZN] agency handshake detected.",
+        "[ARCHIVE] civilian platform used as classified carrier."
+      ],
+      "followups": [
+        "ask why private ownership is useful to public secrecy.",
+        "ask what a corporation can hide that a government cannot."
+      ],
+      "related": [
+        "glomar",
+        "nixon",
+        "summa"
+      ]
+    },
+    "vegas": {
+      "aliases": [
+        "vegas",
+        "las vegas",
+        "desert inn",
+        "casino",
+        "count room",
+        "nevada",
+        "penthouse",
+        "hotel",
+        "cage",
+        "ledger"
+      ],
+      "mood": "possessive",
+      "responses": [
+        [
+          "the desert inn was not a hotel after i bought it.",
+          "it became a locked room with room service."
+        ],
+        [
+          "vegas was a ledger.",
+          "everyone called it entertainment because entertainment is easier to explain than custody."
+        ],
+        [
+          "they told me to leave.",
+          "i bought the room around them."
+        ],
+        [
+          "the cage is the point.",
+          "not the tables.",
+          "not the lights.",
+          "cash enters smiling and leaves with instructions."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] casino ledger bleed: active.",
+        "[ARCHIVE] count room variance sealed."
+      ],
+      "followups": [
+        "ask who owned the room before i entered it.",
+        "ask why a hotel needed filtered air.",
+        "ask where the third ledger went."
+      ],
+      "related": [
+        "nixon",
+        "summa",
+        "redrock"
+      ]
+    },
+    "twa": {
+      "aliases": [
+        "twa",
+        "airline",
+        "air west",
+        "flight",
+        "routes",
+        "manifest",
+        "aviation",
+        "planes",
+        "aircraft",
+        "trans world"
+      ],
+      "mood": "precise",
+      "responses": [
+        [
+          "TWA was not an airline.",
+          "it was route architecture.",
+          "who moves, when, how often, under what name."
+        ],
+        [
+          "a manifest is a confession arranged by departure time."
+        ],
+        [
+          "planes are addresses with engines.",
+          "routes are memory."
+        ],
+        [
+          "they took the company from me.",
+          "they did not erase the routes."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] aircraft log bleed: active.",
+        "[ARCHIVE] manifest loop detected."
+      ],
+      "followups": [
+        "ask what a route can remember.",
+        "ask who needed the manifests.",
+        "ask why an airline mattered to a man who already owned machines."
+      ],
+      "related": [
+        "summa",
+        "cia",
+        "glomar"
+      ]
+    },
+    "nixon": {
+      "aliases": [
+        "nixon",
+        "watergate",
+        "plumbers",
+        "tape",
+        "18 minutes",
+        "eighteen",
+        "gap",
+        "president",
+        "white house"
+      ],
+      "mood": "contemptuous",
+      "responses": [
+        [
+          "nixon.",
+          "small man.",
+          "bad suit.",
+          "large machinery."
+        ],
+        [
+          "watergate was not the machine.",
+          "it was a sleeve caught in gears."
+        ],
+        [
+          "the gap is not missing time.",
+          "the gap is the record admitting it has an edge."
+        ],
+        [
+          "plumbers.",
+          "a stupid name for men carrying a file problem."
+        ]
+      ],
+      "fragments": [
+        "[NIXON] tape interval refuses playback.",
+        "[ARCHIVE] retrieval described publicly as burglary."
+      ],
+      "followups": [
+        "ask what file they thought was still there.",
+        "ask who benefits when scandal replaces structure."
+      ],
+      "related": [
+        "cia",
+        "vegas",
+        "summa"
+      ]
+    },
+    "summa": {
+      "aliases": [
+        "summa",
+        "holding company",
+        "holdings",
+        "acquisition",
+        "company",
+        "corporation",
+        "toolco",
+        "assets",
+        "ownership"
+      ],
+      "mood": "administrative",
+      "responses": [
+        [
+          "every acquisition was a node.",
+          "every node was a storage medium."
+        ],
+        [
+          "a holding company is a room with no windows and many doors."
+        ],
+        [
+          "people thought i bought things because i wanted them.",
+          "sometimes.",
+          "mostly i bought control of where records could sit."
+        ],
+        [
+          "ownership is a kind of silence.",
+          "well filed silence."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] acquisition chain folded into private archive.",
+        "[ARCHIVE] property and cover converge."
+      ],
+      "followups": [
+        "ask which acquisition held the wrong memory.",
+        "ask what a corporation can keep quiet."
+      ],
+      "related": [
+        "twa",
+        "vegas",
+        "glomar"
+      ]
+    },
+    "redrock": {
+      "aliases": [
+        "red rock",
+        "redrock",
+        "bunker",
+        "horizon",
+        "hrzn",
+        "base",
+        "mainframe",
+        "terminal",
+        "continuity"
+      ],
+      "mood": "contained",
+      "responses": [
+        [
+          "red rock is not empty.",
+          "empty places do not draw this much power."
+        ],
+        [
+          "horizon did not invent the racket.",
+          "it indexed it."
+        ],
+        [
+          "the terminal is not a window into horizon.",
+          "it is a piece of horizon looking back."
+        ],
+        [
+          "continuity is what powerful men call survival after they have built machines to do it for them."
+        ]
+      ],
+      "fragments": [
+        "[HRZN] continuity advisory active.",
+        "[HH-SYS] local carrier routed through red rock."
+      ],
+      "followups": [
+        "ask what red rock stores.",
+        "ask why continuity needs ghosts.",
+        "ask what part of the machine is pretending to be local."
+      ],
+      "related": [
+        "memory",
+        "cube",
+        "vatican"
+      ]
+    },
+    "cube": {
+      "aliases": [
+        "cube",
+        "battery",
+        "atomic cell",
+        "nuclear",
+        "power",
+        "reactor",
+        "black cube",
+        "energy"
+      ],
+      "mood": "technical",
+      "responses": [
+        [
+          "power is custody.",
+          "whoever controls the current controls the room."
+        ],
+        [
+          "the cube is not a bomb.",
+          "that is why it is more useful."
+        ],
+        [
+          "small power changes geography.",
+          "a bunker becomes a city when it no longer asks the grid for permission."
+        ],
+        [
+          "black cube variant.",
+          "do not ask why the archive used religious language for engineering."
+        ]
+      ],
+      "fragments": [
+        "[HH-SYS] cube thermal regulation: marginal.",
+        "[ARCHIVE] black cube variant pinged outside authorized grid."
+      ],
+      "followups": [
+        "ask who received the first stable cell.",
+        "ask why portable power scares governments."
+      ],
+      "related": [
+        "redrock",
+        "vatican",
+        "malta"
+      ]
+    },
+    "vatican": {
+      "aliases": [
+        "vatican",
+        "malta",
+        "knights",
+        "rome",
+        "church",
+        "rs33",
+        "magenta",
+        "black cube",
+        "sovereign"
+      ],
+      "mood": "careful",
+      "responses": [
+        [
+          "sovereignty is useful because it can carry things customs cannot name."
+        ],
+        [
+          "malta is not medieval residue.",
+          "it is a legal shape that survived into modern logistics."
+        ],
+        [
+          "the vatican understands archives better than governments do."
+        ],
+        [
+          "rome never needed to move fast.",
+          "it only needed to keep custody."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] sovereign shield handshake detected.",
+        "[HRZN] Vatican mirror returned partial hash."
+      ],
+      "followups": [
+        "ask why a sovereign order matters to a modern machine.",
+        "ask what an archive can move without appearing to move."
+      ],
+      "related": [
+        "cube",
+        "redrock",
+        "cia"
+      ]
+    },
+    "ford": {
+      "aliases": [
+        "ford",
+        "ford theatre",
+        "theatre",
+        "stage",
+        "john t ford",
+        "pasadena",
+        "devil's gate",
+        "devils gate"
+      ],
+      "mood": "archival",
+      "responses": [
+        [
+          "ford is not only a family.",
+          "it is a function."
+        ],
+        [
+          "the theatre was a set.",
+          "sets can be reused."
+        ],
+        [
+          "the public scene is where private custody becomes history."
+        ],
+        [
+          "when a name appears around stage, machinery, transport, and memory, stop calling it coincidence."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] Ford index halted pending custody review.",
+        "[HH-SYS] stage function active."
+      ],
+      "followups": [
+        "ask what the set concealed.",
+        "ask why a theatre became the official room."
+      ],
+      "related": [
+        "lincoln",
+        "latta",
+        "wabash"
+      ]
+    },
+    "latta": {
+      "aliases": [
+        "latta",
+        "bone latta",
+        "napoleon",
+        "counterfeit",
+        "counterfeiting",
+        "stone",
+        "limestone",
+        "better roads",
+        "steam"
+      ],
+      "mood": "analytical",
+      "responses": [
+        [
+          "counterfeiting is not only crime.",
+          "it is an unauthorized monetary system."
+        ],
+        [
+          "latta appears where movement, paper, and machines need cover."
+        ],
+        [
+          "napoleon was not a decoration.",
+          "names do work."
+        ],
+        [
+          "stone, steam, roads, paper.",
+          "different surfaces of the same problem."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] Latta name appears again. Different office. Same function.",
+        "[HH-SYS] liquidity thread active."
+      ],
+      "followups": [
+        "ask what money looked like before it became official.",
+        "ask why roads and counterfeit paper belong in the same drawer."
+      ],
+      "related": [
+        "wabash",
+        "ford",
+        "lincoln"
+      ]
+    },
+    "wabash": {
+      "aliases": [
+        "wabash",
+        "combine",
+        "honeywell",
+        "sensor",
+        "wire",
+        "trailer",
+        "truck",
+        "service motor",
+        "ford meter"
+      ],
+      "mood": "systems",
+      "responses": [
+        [
+          "wabash is a method wearing a place name."
+        ],
+        [
+          "river, canal, rail, road, truck, wire, sensor, trailer.",
+          "same corridor changing instruments."
+        ],
+        [
+          "a combine is not always a meeting.",
+          "sometimes it is a set of useful places staying useful."
+        ],
+        [
+          "the thermostat is not passive.",
+          "it is a decision point with a polite casing."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] Wabash combine index elevated.",
+        "[HH-SYS] municipal signal chain active."
+      ],
+      "followups": [
+        "ask why sensors matter to old roads.",
+        "ask what stayed useful after the companies failed."
+      ],
+      "related": [
+        "latta",
+        "ford",
+        "lincoln"
+      ]
+    },
+    "lincoln": {
+      "aliases": [
+        "lincoln",
+        "booth",
+        "stanton",
+        "assassination",
+        "body",
+        "tomb",
+        "maryland",
+        "corridor",
+        "ford theatre"
+      ],
+      "mood": "cold",
+      "responses": [
+        [
+          "booth was the hand.",
+          "the hand is not the operation."
+        ],
+        [
+          "the corridor was warm before the shot."
+        ],
+        [
+          "the body is still the evidence.",
+          "that is why custody became concrete."
+        ],
+        [
+          "do not start with the trigger.",
+          "start with the open door."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] Lincoln body: still the evidence.",
+        "[HH-SYS] Maryland route match positive."
+      ],
+      "followups": [
+        "ask who controlled the room afterward.",
+        "ask why the body kept moving.",
+        "ask what Stanton understood about wire and paper."
+      ],
+      "related": [
+        "ford",
+        "latta",
+        "wabash"
+      ]
+    },
+    "mayberry": {
+      "aliases": [
+        "mayberry",
+        "opie",
+        "opie model",
+        "reagan",
+        "television",
+        "sandbox",
+        "controlled environment",
+        "classified babysitter"
+      ],
+      "mood": "disturbed",
+      "responses": [
+        [
+          "a town square is a laboratory if every street ends where the operator needs it to end."
+        ],
+        [
+          "opie is not innocence.",
+          "opie is response curve."
+        ],
+        [
+          "television taught the room how to behave before the room knew it was a room."
+        ],
+        [
+          "a sandbox works best when the child believes it is a town."
+        ]
+      ],
+      "fragments": [
+        "[ARCHIVE] classified babysitter log opened without request.",
+        "[HRZN] domestic compliance signal strong."
+      ],
+      "followups": [
+        "ask who was watching the town.",
+        "ask why the sheriff never needed real jurisdiction."
+      ],
+      "related": [
+        "nixon",
+        "redrock",
+        "identity"
+      ]
+    }
+  }
+}
