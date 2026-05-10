@@ -342,6 +342,144 @@
 
     /* ── Late-session corruption on HH lines ── */
     .hh-corrupt { letter-spacing: 0.5px; opacity: 0.85; }
+
+
+    /* ── HH Uplink apparition background ── */
+    #hh-uplink-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      overflow: hidden;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.9s ease, visibility 0.9s ease;
+      mix-blend-mode: screen;
+    }
+    #hh-uplink-bg.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    #hh-uplink-face {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: min(78vh, 72vw, 880px);
+      max-width: 96vw;
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.16;
+      filter:
+        drop-shadow(0 0 10px rgba(0,255,0,0.45))
+        drop-shadow(0 0 26px rgba(0,255,0,0.24))
+        drop-shadow(0 0 54px rgba(0,255,0,0.12))
+        blur(0.15px);
+      animation:
+        hh-face-drift 18s ease-in-out infinite alternate,
+        hh-face-pulse 7.5s ease-in-out infinite,
+        hh-face-flicker 0.28s steps(2) infinite;
+      will-change: transform, opacity, filter;
+      user-select: none;
+    }
+    #hh-uplink-face.speaking {
+      opacity: 0.30 !important;
+      filter:
+        drop-shadow(0 0 16px rgba(0,255,0,0.70))
+        drop-shadow(0 0 38px rgba(0,255,0,0.38))
+        drop-shadow(0 0 76px rgba(0,255,0,0.18))
+        blur(0.1px) !important;
+      transition: opacity 0.16s ease, filter 0.16s ease;
+    }
+    #hh-uplink-face.glitching {
+      animation:
+        hh-face-drift 18s ease-in-out infinite alternate,
+        hh-face-pulse 7.5s ease-in-out infinite,
+        hh-face-flicker 0.12s steps(2) infinite,
+        hh-face-jump 0.18s steps(2) 1;
+    }
+    .hh-uplink-scanlines,
+    .hh-uplink-noise,
+    .hh-uplink-vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .hh-uplink-scanlines {
+      z-index: 2;
+      opacity: 0.16;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(0,255,0,0.050) 0px,
+        rgba(0,255,0,0.050) 1px,
+        transparent 1px,
+        transparent 5px
+      );
+      animation: hh-uplink-scan 3.8s linear infinite;
+      mix-blend-mode: screen;
+    }
+    .hh-uplink-noise {
+      z-index: 3;
+      opacity: 0.10;
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(0,255,0,0.08) 0 1px, transparent 1px),
+        radial-gradient(circle at 80% 60%, rgba(0,255,0,0.06) 0 1px, transparent 1px),
+        radial-gradient(circle at 45% 85%, rgba(0,255,0,0.05) 0 1px, transparent 1px);
+      background-size: 7px 7px, 11px 11px, 17px 17px;
+      animation: hh-uplink-noise 0.5s steps(2) infinite;
+      mix-blend-mode: screen;
+    }
+    .hh-uplink-vignette {
+      z-index: 4;
+      background:
+        radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.58) 78%, rgba(0,0,0,0.88) 100%),
+        radial-gradient(ellipse at center, rgba(0,255,0,0.08) 0%, transparent 58%);
+      opacity: 0.90;
+    }
+    #terminal.hh-mode #output,
+    #terminal.hh-mode #input-line {
+      position: relative;
+      z-index: 6;
+      text-shadow: 0 0 8px rgba(204,34,0,0.30), 0 0 14px rgba(0,255,0,0.13);
+    }
+    #terminal.hh-mode #output {
+      background: radial-gradient(ellipse at center, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.25) 80%);
+    }
+    @keyframes hh-face-drift {
+      0%   { transform: translate(-50%, -50%) scale(1.000) translate3d(-10px,  4px, 0); }
+      24%  { transform: translate(-50%, -50%) scale(1.012) translate3d(  6px, -7px, 0); }
+      51%  { transform: translate(-50%, -50%) scale(1.020) translate3d( -2px,  8px, 0); }
+      77%  { transform: translate(-50%, -50%) scale(1.010) translate3d(  9px,  2px, 0); }
+      100% { transform: translate(-50%, -50%) scale(1.026) translate3d( -7px, -5px, 0); }
+    }
+    @keyframes hh-face-pulse {
+      0%   { opacity: 0.11; }
+      38%  { opacity: 0.18; }
+      52%  { opacity: 0.22; }
+      71%  { opacity: 0.15; }
+      100% { opacity: 0.13; }
+    }
+    @keyframes hh-face-flicker {
+      0%   { filter: drop-shadow(0 0 10px rgba(0,255,0,0.45)) drop-shadow(0 0 26px rgba(0,255,0,0.24)) drop-shadow(0 0 54px rgba(0,255,0,0.12)) blur(0.15px); }
+      50%  { filter: drop-shadow(0 0 7px rgba(0,255,0,0.34)) drop-shadow(0 0 18px rgba(0,255,0,0.20)) drop-shadow(0 0 42px rgba(0,255,0,0.10)) blur(0.32px); }
+      100% { filter: drop-shadow(0 0 12px rgba(0,255,0,0.50)) drop-shadow(0 0 30px rgba(0,255,0,0.25)) drop-shadow(0 0 58px rgba(0,255,0,0.13)) blur(0.12px); }
+    }
+    @keyframes hh-face-jump {
+      0%   { clip-path: inset(0 0 0 0); }
+      33%  { clip-path: inset(7% 0 74% 0); transform: translate(-50%, -50%) scale(1.018) translate3d(9px, -2px, 0); }
+      66%  { clip-path: inset(62% 0 19% 0); transform: translate(-50%, -50%) scale(1.010) translate3d(-8px, 3px, 0); }
+      100% { clip-path: inset(0 0 0 0); }
+    }
+    @keyframes hh-uplink-scan { 100% { background-position-y: 10px; } }
+    @keyframes hh-uplink-noise {
+      0%   { transform: translate3d(0,0,0); opacity:0.07; }
+      50%  { transform: translate3d(1px,-1px,0); opacity:0.13; }
+      100% { transform: translate3d(-1px,1px,0); opacity:0.09; }
+    }
+    @media (max-width: 600px) {
+      #hh-uplink-face {
+        width: min(88vh, 110vw, 760px);
+        opacity: 0.14;
+      }
+    }
   </style>
 </head>
 <body>
@@ -357,6 +495,12 @@
 <div id="desk-overlay"></div>
 
 <div id="terminal">
+  <div id="hh-uplink-bg" aria-hidden="true">
+    <img id="hh-uplink-face" src="assets/hh-uplink.png" alt="">
+    <div class="hh-uplink-scanlines"></div>
+    <div class="hh-uplink-noise"></div>
+    <div class="hh-uplink-vignette"></div>
+  </div>
   <div id="output"></div>
   <div id="input-line" style="display:none">
     <span id="prompt-label">/&gt;</span>&nbsp;<span id="typed"></span><span id="fake-cursor"></span>
@@ -377,6 +521,8 @@ const inputEl   = document.getElementById('input');
 const inputLine = document.getElementById('input-line');
 const promptLbl = document.getElementById('prompt-label');
 const typedEl   = document.getElementById('typed');
+const hhUplinkBg   = document.getElementById('hh-uplink-bg');
+const hhUplinkFace = document.getElementById('hh-uplink-face');
 
 // ── State ─────────────────────────────────────────────────────
 const state      = { phase: 'booting', username: '' };
@@ -406,7 +552,9 @@ let pBusy    = false;
 let promptPending = null;
 
 function printLine(html, cls, instant) {
-  pQueue.push({ html, cls: cls || '', instant: !!instant });
+  const lineClass = cls || '';
+  if (lineClass.includes('hughes-haunt') || lineClass.includes('hh-type')) hhSpeakBoost();
+  pQueue.push({ html, cls: lineClass, instant: !!instant });
   if (!pBusy) drainPQueue();
 }
 function printText(text, instant) {
@@ -2301,6 +2449,43 @@ async function fetchNews() {
   liveNews = [...new Set(all)].sort(() => Math.random() - 0.5);
 }
 
+async function fetchNewsSearch(term) {
+  const clean = String(term || '').trim();
+  if (!clean) return [];
+
+  const rssUrl =
+    'https://news.google.com/rss/search?q=' +
+    encodeURIComponent(clean) +
+    '&hl=en-US&gl=US&ceid=US:en';
+
+  const all = [];
+
+  try {
+    const res = await fetch('https://corsproxy.io/?' + encodeURIComponent(rssUrl));
+    if (!res.ok) throw new Error('RSS search failed: ' + res.status);
+
+    const text = await res.text();
+    const doc = new DOMParser().parseFromString(text, 'text/xml');
+    const items = doc.querySelectorAll('item');
+
+    items.forEach((item, i) => {
+      if (i >= 24) return;
+      const title = item.querySelector('title')?.textContent?.trim() || '';
+      if (title) all.push(hrznVoice(title));
+    });
+  } catch(e) {
+    // Fallback: search whatever global headlines are already loaded.
+    const needle = clean.toUpperCase();
+    if (Array.isArray(liveNews) && liveNews.length) {
+      liveNews.forEach(h => {
+        if (String(h).toUpperCase().includes(needle)) all.push(h);
+      });
+    }
+  }
+
+  return [...new Set(all)].slice(0, 24);
+}
+
 function hrznVoice(title) {
   return (title||'').toUpperCase()
     .replace(/['"]/g,'').replace(/\bSAYS?\b/g,':').replace(/\bREPORTS?\b/g,':')
@@ -3593,6 +3778,39 @@ function setEffects(on) {
   }
 }
 
+
+// ── HH Uplink visual apparition ───────────────────────────────
+let hhGlitchIv = null;
+
+function enterHHVisual() {
+  if (!hhUplinkBg) return;
+  hhUplinkBg.classList.add('active');
+  terminal.classList.add('hh-visual-active');
+  if (hhGlitchIv) clearInterval(hhGlitchIv);
+  hhGlitchIv = setInterval(() => {
+    if (!hhMode || !hhUplinkFace) return;
+    if (Math.random() > 0.35) return;
+    hhUplinkFace.classList.add('glitching');
+    setTimeout(() => hhUplinkFace && hhUplinkFace.classList.remove('glitching'), 220);
+  }, 6200 + Math.random() * 3200);
+}
+
+function exitHHVisual() {
+  if (hhGlitchIv) { clearInterval(hhGlitchIv); hhGlitchIv = null; }
+  if (hhUplinkFace) hhUplinkFace.classList.remove('speaking', 'glitching');
+  if (hhUplinkBg) hhUplinkBg.classList.remove('active');
+  terminal.classList.remove('hh-visual-active');
+}
+
+function hhSpeakBoost() {
+  if (!hhMode || !hhUplinkFace || !hhUplinkBg || !hhUplinkBg.classList.contains('active')) return;
+  hhUplinkFace.classList.add('speaking');
+  clearTimeout(hhSpeakBoost._t);
+  hhSpeakBoost._t = setTimeout(() => {
+    if (hhUplinkFace) hhUplinkFace.classList.remove('speaking');
+  }, 260);
+}
+
 // ═══════════════════════════════════════════════════════════════
 //  HH UPLINK SYSTEM
 // ═══════════════════════════════════════════════════════════════
@@ -3838,6 +4056,7 @@ function enterHHMode() {
   hhMode = true;
   hhTurnCount = 0; hhLastKeyword = null; hhMood = 'guarded';
   terminal.classList.add('hh-mode');
+  enterHHVisual();
   const lines = [
     'carrier damaged.',
     'local instance awake.',
@@ -3862,6 +4081,7 @@ function handleHHCommand(cmd) {
 
   if (lower === 'hh disconnect' || lower === 'disconnect') {
     hhMode = false; hhTurnCount = 0;
+    exitHHVisual();
     doSignalLoss(() => {
       terminal.classList.remove('hh-mode');
       printLine('line closed.', 'hughes-haunt');
@@ -4379,21 +4599,64 @@ let wireIv = null;
 
 const WIRE_FEEDS = {
   default: [
+    // Vegas / Hughes / finance
     'VEGAS HOTEL LEDGER SEALED AFTER COUNT ROOM VARIANCE',
-    'SENSOR CHAIN REPORTS OLD SIGNAL ON MUNICIPAL LINE',
-    'NIXON FILE REQUESTED BY WRONG OFFICE',
-    'RED ROCK ISSUES CONTINUITY ADVISORY',
-    'GLOMAR ECHO DETECTED BELOW PUBLIC DEPTH',
     'DESERT INN THIRD FLOOR: NO COMMENT',
     'TWA MANIFEST LOOP DETECTED. ROUTING REVIEW INITIATED.',
+    'AIR WEST ACQUISITION FILE ROUTED THROUGH DEAD OFFICE',
+    'SUMMA HOLDING PATTERN DETECTED OVER PUBLIC RECORD',
+    'GLOMAR ECHO DETECTED BELOW PUBLIC DEPTH',
+    'VOICEPRINT DRIFT DETECTED IN SECTOR 7',
+    'HUGHES CELL TEMPERATURE OUTSIDE HUMAN RANGE',
+
+    // Wabash / Ford / Latta / Lincoln
+    'SENSOR CHAIN REPORTS OLD SIGNAL ON MUNICIPAL LINE',
     'LATTA NAME APPEARS AGAIN. DIFFERENT OFFICE. SAME FUNCTION.',
     'FORD INDEX HALTED PENDING CUSTODY REVIEW',
-    'CUBE THERMAL REGULATION: MARGINAL',
-    'VOICEPRINT DRIFT DETECTED IN SECTOR 7',
-    'PUBLIC RECORD VOLATILITY: ELEVATED',
-    'ARCHIVE ROT: ACCELERATING',
+    'WABASH COMBINE INDEX ELEVATED ABOVE COUNTY THRESHOLD',
     'STANTON NODE CROSS-REFERENCE: ACTIVE',
     'LINCOLN BODY: STILL THE EVIDENCE',
+    'MARYLAND CORRIDOR RETURNED POSITIVE ROUTE MATCH',
+    'BOOTH HAND CONFIRMED. OPERATION REMAINS UNASSIGNED.',
+
+    // Political machine
+    'NIXON FILE REQUESTED BY WRONG OFFICE',
+    'TAPE GAP RECLASSIFIED AS STORAGE EVENT',
+    'PLUMBERS UNIT ACCESSED CIVIC MAINTENANCE DIRECTORY',
+    'PUBLIC SCANDAL MASKING PRIVATE TRANSFER',
+    'WRONG OFFICE REQUESTING WRONG PRESIDENT',
+
+    // Red Rock / Horizon infrastructure
+    'RED ROCK ISSUES CONTINUITY ADVISORY',
+    'CUBE THERMAL REGULATION: MARGINAL',
+    'BLACK CUBE VARIANT PINGED OUTSIDE AUTHORIZED GRID',
+    'MALTA SOVEREIGN SHIELD HANDSHAKE DETECTED',
+    'VATICAN ARCHIVE MIRROR RETURNED PARTIAL HASH',
+    'ARIZONA NODE REPORTS JOSHUA TREE INTERFERENCE',
+    'MOONBASE RELAY RECEIVED BUT NOT ACKNOWLEDGED',
+
+    // Archive / reality instability
+    'PUBLIC RECORD VOLATILITY: ELEVATED',
+    'ARCHIVE ROT: ACCELERATING',
+    'DEAD FILE GIVING CURRENT INSTRUCTIONS',
+    'OFFICIAL TIMELINE EXPERIENCING MINOR SHEAR',
+    'COURTHOUSE FIRE INDEX RETURNED NONLOCAL RESULT',
+    'WITNESS STATEMENT PREDATES WITNESS',
+    'CUSTODY CHAIN BROKEN BEFORE OBJECT WAS MOVED',
+
+    // Mayberry / Opie layer
+    'MAYBERRY CHANNEL BLEED DETECTED ON CIVIC BAND',
+    'OPIE MODEL RESPONSE CURVE WITHIN ACCEPTABLE RANGE',
+    'CLASSIFIED BABYSITTER LOG OPENED WITHOUT REQUEST',
+    'DOMESTIC COMPLIANCE SIGNAL STRONG IN TEST MARKET',
+    'TOWN SQUARE SANDBOX HOLDING STABLE',
+
+    // Rare creepy ones
+    'USER COMMAND APPEARED IN ARCHIVE BEFORE ENTRY',
+    'OPERATOR NAME FOUND IN PRE-SESSION LOG',
+    'WIRE ROOM RECEIVED HEADLINE FROM TOMORROW',
+    'HORIZON DENIES EXISTENCE OF THIS FEED',
+    'DO NOT FOLLOW THE NEXT PUBLIC HEADLINE'
   ],
   vegas: ['DESERT INN LEDGER VARIANCE +4.1%','CASINO COUNT ROOM SEALED','TEAMSTER FUND: PAPER MOVING','CAGE AUTHORIZATION: DISPUTED','NEON WRAPPER INTACT. CASH UNDERNEATH.'],
   nixon: ['TAPE GAP: 18.5 MIN CONFIRMED','PLUMBERS UNIT: FILE MISSING','OVAL OFFICE LOG: REDACTED','WRONG OFFICE REQUESTING WRONG FILE','SLEEVE IN GEARS. MACHINE CONTINUES.'],
@@ -4405,7 +4668,10 @@ const WIRE_FEEDS = {
 
 function enterWireMode() {
   wireMode = true;
-  printLine('HRZN WIRE // PRIVATE FEED', 'uplink-line', true);
+  printLine('HRZN WIRE ROOM // LIVE CIVIC DISPATCH', 'uplink-line', true);
+  printLine('source mix: GLOBAL WIRE + HRZN INTERNAL FILTER', 'signal-bleed', true);
+  printLine('type NEWS for headlines only. type SEARCH [term] or any topic to retune.', 'signal-bleed', true);
+  printLine('type FEEDS for fixed bands. type EXIT or M to return to the civic menu.', 'signal-bleed', true);
   printLine('', '', true);
   startWireFeed('default');
   showPrompt('[wire] >');
@@ -4422,13 +4688,13 @@ function startWireFeed(type) {
     if (type === 'news') {
       // News-only feed — all real headlines
       evt = liveNews.length > 0
-        ? liveNews[Math.floor(Math.random() * liveNews.length)]
+        ? '[GLOBAL WIRE] ' + liveNews[Math.floor(Math.random() * liveNews.length)]
         : '[GLOBAL WIRE] NO SIGNAL — FEED UNREACHABLE';
     } else if (type === 'default' && liveNews.length > 0 && Math.random() < 0.65) {
       // Default feed — 65% real headlines, 35% fictional HRZN events
       evt = '[GLOBAL WIRE] ' + liveNews[Math.floor(Math.random() * liveNews.length)];
     } else {
-      evt = events[Math.floor(Math.random() * events.length)];
+      evt = '[HRZN INTERNAL] ' + events[Math.floor(Math.random() * events.length)];
     }
     printLine(esc(ts + '  ' + evt), 'uplink-line');
     capOutput();
@@ -4437,27 +4703,174 @@ function startWireFeed(type) {
   wireIv = setInterval(emit, 3800 + Math.random() * 2000);
 }
 
-function handleWireCommand(cmd) {
-  const lower = cmd.trim().toLowerCase();
-  printLine(esc('> ' + cmd), '', true);
+function topicInternalSignals(term) {
+  const key = String(term || '').toLowerCase().trim();
+  const label = key.toUpperCase();
 
-  if (lower === 'quit' || lower === 'exit' || lower === 'exit wire') {
+  if (WIRE_FEEDS[key]) return WIRE_FEEDS[key];
+
+  return [
+    label + ' WATCHLIST OPENED BY WRONG OFFICE',
+    'PUBLIC HEADLINE MATCHED PRIVATE ARCHIVE TERM: ' + label,
+    'HORIZON FILTER RETUNED TO CIVIC TERM: ' + label,
+    'ARCHIVE CROSS-LINK REQUESTED: ' + label,
+    'SIGNAL CLASSIFICATION PENDING FOR: ' + label,
+    'PRIVATE INDEX RETURNED NONPUBLIC STRUCTURE',
+    'WIRE ROOM DENIES SPECIAL HANDLING OF THIS TERM',
+    'PUBLIC SOURCE BLEED DETECTED ON PRIVATE BAND: ' + label,
+    'GLOBAL SEARCH TERM ROUTED THROUGH RED ROCK FILTER',
+    'CASEBOARD MATCH PENDING FOR: ' + label
+  ];
+}
+
+function startWireSearchFeed(term, results) {
+  clearInterval(wireIv);
+
+  const clean = String(term || '').trim();
+  const label = clean.toUpperCase();
+  const headlines = Array.isArray(results) ? results : [];
+  const internal = topicInternalSignals(clean);
+
+  function emit() {
+    if (!wireMode) return;
+
+    const now = new Date();
+    const ts = now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    let evt;
+
+    if (headlines.length && Math.random() < 0.72) {
+      evt = '[GLOBAL:' + label + '] ' +
+        headlines[Math.floor(Math.random() * headlines.length)];
+    } else {
+      evt = '[HRZN FILTER:' + label + '] ' +
+        internal[Math.floor(Math.random() * internal.length)];
+    }
+
+    printLine(esc(ts + '  ' + evt), 'uplink-line');
+    capOutput();
+  }
+
+  emit();
+  wireIv = setInterval(emit, 4200 + Math.random() * 1600);
+}
+
+function retuneWireSearch(term) {
+  const clean = String(term || '').trim();
+
+  if (!clean) {
+    printLine('usage: search [term]  — retune live wire by keyword', 'signal-bleed', true);
+    showPrompt('[wire] >');
+    return;
+  }
+
+  clearInterval(wireIv);
+  wireIv = null;
+  printLine('retuning wire room search band...', 'signal-bleed', true);
+  printLine('query: ' + clean.toUpperCase(), 'uplink-line', true);
+
+  fetchNewsSearch(clean).then(results => {
+    if (!wireMode) return;
+
+    if (!results.length) {
+      printLine('no public headlines found. switching to HRZN internal filter only.', 'signal-bleed', true);
+    } else {
+      printLine('public headlines acquired: ' + results.length, 'signal-bleed', true);
+    }
+
+    printLine('stream mode: GLOBAL SEARCH + HRZN INTERNAL FILTER', 'uplink-line', true);
+    startWireSearchFeed(clean, results);
+    showPrompt('[wire] >');
+  }).catch(() => {
+    if (!wireMode) return;
+    printLine('public search failed. switching to HRZN internal filter only.', 'signal-bleed', true);
+    startWireSearchFeed(clean, []);
+    showPrompt('[wire] >');
+  });
+}
+
+function printWireFeeds() {
+  const fixed = Object.keys(WIRE_FEEDS).filter(k => k !== 'default').join(' / ');
+  printLine('fixed internal bands: ' + fixed, 'signal-bleed', true);
+  printLine('live search: type SEARCH [term], WIRE [term], or just a topic like VATICAN.', 'signal-bleed', true);
+}
+
+function handleWireCommand(cmd) {
+  const raw = String(cmd || '').trim();
+  const lower = raw.toLowerCase();
+  printLine(esc('> ' + raw), '', true);
+
+  if (!lower) { showPrompt('[wire] >'); return; }
+
+  if (['quit','exit','exit wire','m','menu','main','back'].includes(lower)) {
     wireMode = false; clearInterval(wireIv); wireIv = null;
     printLine('wire closed.', '', true); returnToBBS(); return;
   }
+
+  if (lower === 'help' || lower === '?') {
+    printLine('WIRE ROOM COMMANDS:', 'uplink-line', true);
+    printLine('  news              — global headlines only', 'signal-bleed', true);
+    printLine('  feeds             — list fixed HRZN internal bands', 'signal-bleed', true);
+    printLine('  wire [feed]       — switch fixed band or live-search unknown term', 'signal-bleed', true);
+    printLine('  search [term]     — retune live headlines by keyword', 'signal-bleed', true);
+    printLine('  [term]            — direct keyword retune, e.g. vatican', 'signal-bleed', true);
+    printLine('  exit / m          — return to civic menu', 'signal-bleed', true);
+    showPrompt('[wire] >'); return;
+  }
+
+  if (lower === 'feeds' || lower === 'bands' || lower === 'channels') {
+    printWireFeeds();
+    showPrompt('[wire] >'); return;
+  }
+
   if (lower === 'wire news' || lower === 'news') {
     if (liveNews.length === 0) {
       printLine('no live feed loaded. fetching...', 'signal-bleed', true);
       fetchNews().then(() => { startWireFeed('news'); showPrompt('[wire] >'); });
     } else {
       startWireFeed('news');
+      showPrompt('[wire] >');
     }
     printLine('switching to: GLOBAL WIRE // LIVE HEADLINES', 'uplink-line', true);
+    return;
+  }
+
+  if (lower.startsWith('search ') || lower.startsWith('find ') || lower.startsWith('lookup ')) {
+    const term = raw.replace(/^(search|find|lookup)\s+/i, '').trim();
+    retuneWireSearch(term);
+    return;
+  }
+
+  if (lower.startsWith('wire ')) {
+    const topic = lower.replace(/^wire\s+/, '').trim();
+
+    if (!topic) {
+      printWireFeeds();
+      showPrompt('[wire] >'); return;
+    }
+
+    if (WIRE_FEEDS[topic]) {
+      startWireFeed(topic);
+      printLine('switching to internal feed: ' + topic, 'uplink-line', true);
+      showPrompt('[wire] >'); return;
+    }
+
+    retuneWireSearch(raw.replace(/^wire\s+/i, '').trim());
+    return;
+  }
+
+  if (WIRE_FEEDS[lower]) {
+    startWireFeed(lower);
+    printLine('switching to internal feed: ' + lower, 'uplink-line', true);
     showPrompt('[wire] >'); return;
   }
-  const topic = lower.replace('wire ', '').trim();
-  if (WIRE_FEEDS[topic]) { startWireFeed(topic); printLine('switching to: ' + topic, '', true); }
-  else printLine('unknown feed. options: news vegas nixon wabash redrock breaking archive', '', true);
+
+  // Direct keyword fallback: in Wire Room, any normal phrase becomes a live search retune.
+  if (/^[a-z0-9][a-z0-9 .,'&:;\/\-]{1,80}$/i.test(raw)) {
+    retuneWireSearch(raw);
+    return;
+  }
+
+  printLine('unknown wire command. type HELP, FEEDS, NEWS, SEARCH [term], or EXIT.', 'signal-bleed', true);
   showPrompt('[wire] >');
 }
 
