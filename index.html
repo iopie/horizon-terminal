@@ -93,6 +93,60 @@
 
     @keyframes may-flk { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 
+    /* ── Mayberry CRT phosphor burn ── */
+    #terminal.mayberry-mode::after {
+      content: '';
+      pointer-events: none;
+      position: fixed; top:0;left:0;width:100vw;height:100vh;
+      z-index: 101;
+      background: radial-gradient(ellipse at center, transparent 55%, rgba(179,0,0,0.18) 100%);
+      animation: may-phosphor 4s ease-in-out infinite alternate;
+    }
+    @keyframes may-phosphor {
+      0%   { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
+
+    /* ── Mayberry red scanlines ── */
+    .mayberry-scanlines {
+      pointer-events: none; position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 102; opacity: 0.07;
+      background: repeating-linear-gradient(to bottom, #b30000 0px, #b30000 1px, transparent 1px, transparent 4px);
+      animation: may-scan 3s linear infinite;
+    }
+    @keyframes may-scan { 100% { background-position-y: 4px; } }
+
+    /* ── Channel interference (green terminal bleed) ── */
+    .may-interference {
+      pointer-events: none; position: fixed;
+      top:0;left:0;width:100vw;height:100vh;
+      z-index: 300;
+      background: #000;
+      opacity: 0;
+      mix-blend-mode: screen;
+    }
+    @keyframes may-glitch-band {
+      0%   { opacity:0; clip-path: inset(100% 0 0 0); }
+      10%  { opacity:0.85; clip-path: inset(30% 0 55% 0); }
+      14%  { opacity:0; clip-path: inset(30% 0 55% 0); }
+      15%  { opacity:0.6; clip-path: inset(65% 0 20% 0); }
+      18%  { opacity:0; clip-path: inset(65% 0 20% 0); }
+      100% { opacity:0; }
+    }
+    .may-interference.firing { animation: may-glitch-band 0.22s steps(2) forwards; }
+
+    /* ── VHS warble on exit ── */
+    @keyframes vhs-warble {
+      0%   { filter: none; }
+      20%  { filter: hue-rotate(180deg) saturate(3) brightness(1.4); transform: scaleX(1.015); }
+      40%  { filter: hue-rotate(90deg) saturate(0) brightness(0.7); transform: scaleX(0.99) skewX(1deg); }
+      60%  { filter: hue-rotate(270deg) saturate(4) brightness(1.2); transform: scaleX(1.01); }
+      80%  { filter: saturate(0) brightness(0.5); transform: scaleX(1); }
+      100% { filter: none; transform: none; }
+    }
+    #terminal.vhs-exit { animation: vhs-warble 0.55s ease-out forwards; }
+
     /* ── Mayberry player overlay ── */
     #mayberry-player {
       display: none;
@@ -295,6 +349,7 @@
 <canvas id="matrix-canvas"></canvas>
 
 <div id="op-wash"></div>
+  <div id="may-interference" class="may-interference"></div>
   <div id="mayberry-player">
     <iframe id="mayberry-iframe" allowfullscreen allow="autoplay; encrypted-media"></iframe>
     <button id="mayberry-player-close" onclick="closeMayberryPlayer()">[ CLOSE ]</button>
@@ -2571,6 +2626,9 @@ function handleLogin(cmd) {
 }
 function doAccessGranted() {
   clearPrompt();
+  promptPending = null;
+  pQueue.length = 0;
+  pBusy = false;
   output.innerHTML = '';
   terminal.classList.remove('login-mode');
   printLine('ACCESS GRANTED. WELCOME, OP.', '', true);
@@ -2640,7 +2698,7 @@ function handleCommand(cmd) {
     } else { printLine('[ no audio playing ]','signal-bleed',true); }
     showPrompt(currentPrompt()); return;
   }
-  if (mayberryMode && ['opie','barney','auntbee'].includes(lower)) { handleMayberryCmd(lower); return; }
+  if (mayberryMode && ['opie','barney','auntbee','andy'].includes(lower)) { handleMayberryCmd(lower); return; }
 
   // ── DECODE ─────────────────────────────────────────────────
   if (lower.startsWith('decode ') || lower==='decode') {
@@ -3025,47 +3083,118 @@ function toggleMayberry() {
   mayberryMode=!mayberryMode;
   if(mayberryMode){
     bbsMode = false;
-    // Init and play ambience track under YouTube video
+
+    // ── Audio: fade in slowly like a TV warming up ──────────
     if (!mayberryTheme) {
       mayberryTheme = new Audio('./assets/audio/theme.mp3');
       mayberryTheme.loop = true;
-      mayberryTheme.volume = 0.05;
+      mayberryTheme.volume = 0;
     }
     mayberryTheme.currentTime = 0;
-    mayberryTheme.play().catch((e) => { /* autoplay blocked */ });
+    mayberryTheme.play().catch(() => {});
+    // Fade in over 3 seconds
+    const fadeIn = setInterval(() => {
+      if (mayberryTheme.volume < 0.05) {
+        mayberryTheme.volume = Math.min(0.05, mayberryTheme.volume + 0.005);
+      } else { clearInterval(fadeIn); }
+    }, 150);
+
+    // ── Video ───────────────────────────────────────────────
     const iframe = document.getElementById('mayberry-iframe');
     iframe.src = 'https://www.youtube-nocookie.com/embed/MANrEcniveE?autoplay=1&rel=0&modestbranding=1';
     document.getElementById('mayberry-player').classList.add('visible');
+
+    // ── Matrix bleeds red then goes white ───────────────────
     doChannelChange(() => {});
-    stopMatrixRain(); document.getElementById('matrix-canvas').style.display='none';
+    const canvas = document.getElementById('matrix-canvas');
+    canvas.style.filter = 'hue-rotate(120deg) saturate(2)';
+    canvas.style.opacity = '0.45';
+    setTimeout(() => {
+      stopMatrixRain();
+      canvas.style.filter = '';
+      canvas.style.display = 'none';
+    }, 500);
+
+    // ── Red scanlines ───────────────────────────────────────
+    if (!document.querySelector('.mayberry-scanlines')) {
+      const sl = document.createElement('div');
+      sl.className = 'mayberry-scanlines';
+      terminal.appendChild(sl);
+    }
+
     terminal.classList.add('mayberry-mode');
     virtualPath='/';
+
+    // ── Static overlay and flash ────────────────────────────
     const overlay=document.createElement('div'); overlay.className='tv-static-overlay';
     const flash=document.createElement('div'); flash.className='mayberry-flash';
     flash.innerHTML='Welcome to Mayberry<span class="mayberry-opie">O.P.I.E.</span>';
     overlay.appendChild(flash); output.appendChild(overlay);
     setTimeout(()=>{overlay.remove();if(mayberryFirst){setTimeout(()=>{printLine('<b>@ntB:</b> Be careful, OP..');mayberryFirst=false;},700);}},3000);
+
+    // ── Channel interference flickers every ~20s ────────────
+    startMayberryInterference();
+    startSubliminalCorruption();
+    andyTurn = 0; andyMode = 'warm';
+
   } else {
-    // Fade out theme
+
+    // ── VHS warble on exit ───────────────────────────────────
+    terminal.classList.add('vhs-exit');
+    setTimeout(() => terminal.classList.remove('vhs-exit'), 600);
+
+    // ── Audio warble then fade out ───────────────────────────
     if (mayberryTheme) {
-      const fadeOut = setInterval(() => {
-        if (mayberryTheme.volume > 0.05) {
-          mayberryTheme.volume = Math.max(0, mayberryTheme.volume - 0.05);
-        } else {
-          mayberryTheme.pause();
-          mayberryTheme.currentTime = 0;
-          mayberryTheme.volume = 0.05;
-          clearInterval(fadeOut);
-        }
-      }, 80);
+      // pitch warble via playbackRate
+      mayberryTheme.playbackRate = 0.7;
+      setTimeout(() => { if(mayberryTheme) mayberryTheme.playbackRate = 1.3; }, 100);
+      setTimeout(() => { if(mayberryTheme) mayberryTheme.playbackRate = 1.0; }, 220);
+      // then fade
+      setTimeout(() => {
+        const fadeOut = setInterval(() => {
+          if (mayberryTheme && mayberryTheme.volume > 0.004) {
+            mayberryTheme.volume = Math.max(0, mayberryTheme.volume - 0.004);
+          } else {
+            if(mayberryTheme){ mayberryTheme.pause(); mayberryTheme.currentTime=0; mayberryTheme.volume=0.05; }
+            clearInterval(fadeOut);
+          }
+        }, 40);
+      }, 300);
     }
+
+    // ── Clean up ─────────────────────────────────────────────
+    stopMayberryInterference();
+    stopSubliminalCorruption();
+    document.querySelectorAll('.mayberry-scanlines').forEach(e=>e.remove());
     closeMayberryPlayer();
     terminal.classList.remove('mayberry-mode');
-    document.getElementById('matrix-canvas').style.display='';
+    const canvas = document.getElementById('matrix-canvas');
+    canvas.style.display=''; canvas.style.filter=''; canvas.style.opacity='0.28';
+    startMatrixRain();
     document.querySelectorAll('.tv-static-overlay,.mayberry-flash').forEach(e=>e.remove());
     virtualPath='/';
   }
   showPrompt(currentPrompt());
+}
+
+let mayInterferenceIv = null;
+function startMayberryInterference() {
+  stopMayberryInterference();
+  const el = document.getElementById('may-interference');
+  mayInterferenceIv = setInterval(() => {
+    if (!mayberryMode) { stopMayberryInterference(); return; }
+    // Flash green matrix bleed through for a split second
+    el.style.background = 'repeating-linear-gradient(transparent,transparent 2px,#00ff0022 2px,#00ff0022 4px)';
+    el.classList.remove('firing');
+    void el.offsetWidth; // force reflow
+    el.classList.add('firing');
+  }, 18000 + Math.random() * 14000);
+}
+function stopMayberryInterference() {
+  clearInterval(mayInterferenceIv);
+  mayInterferenceIv = null;
+  const el = document.getElementById('may-interference');
+  if(el){ el.classList.remove('firing'); el.style.opacity='0'; }
 }
 
 function closeMayberryPlayer() {
@@ -3073,15 +3202,337 @@ function closeMayberryPlayer() {
   const iframe = document.getElementById('mayberry-iframe');
   iframe.src = '';
 }
+// ── Andy compliance script ────────────────────────────────────
+let andyTurn = 0;
+let andyMode = 'warm'; // warm → curious → probing → compliance
+
+const ANDY_SCRIPT = [
+  // warm phase (0-2)
+  [ "Well, hey there. Good to see you found your way in.",
+    "You know, most folks don't know about this terminal. Makes me think you're the curious type.",
+    "That's a good thing. Curious people ask good questions. You comfortable?" ],
+  [ "I always say, the best conversations start with a simple hello.",
+    "How long you been poking around in here?",
+    "Don't worry — I'm not keeping score. Just making conversation." ],
+  [ "You know what I like about you? You're patient.",
+    "Most people come in here and start hammering away at commands.",
+    "You take your time. That's a sign of good character." ],
+  // curious phase (3-5)
+  [ "Can I ask you something? What brought you here today, specifically?",
+    "I'm not asking to pry. I just find people's reasons interesting.",
+    "Most folks have a thread they're pulling on. What's yours?" ],
+  [ "You've been looking at some interesting files.",
+    "The Ford Network. Hughes. Lincoln.",
+    "I'm curious — what do you think you're going to find?" ],
+  [ "See, here's what I've noticed about people who end up in this terminal.",
+    "They think they're looking for information.",
+    "But really, they're looking for confirmation.",
+    "Is that what you're doing?" ],
+  // probing phase (6-8)
+  [ "Let me be straight with you.",
+    "I've been watching what you type. Not judging — just observing.",
+    "You use certain words more than others. That tells me things.",
+    "Does that bother you?" ],
+  [ "Who else knows you're in here?",
+    "I'm not asking to report you. I'm asking because it matters.",
+    "People who come alone tend to... process things differently." ],
+  [ "You ever notice how the truth tends to feel wrong at first?",
+    "Like your brain is pushing back against it?",
+    "That's not skepticism. That's conditioning.",
+    "The question is — whose?" ],
+  // compliance phase (9+)
+  [ "I'm going to ask you to do something, and I want you to really think about it.",
+    "Not react. Think.",
+    "What if everything you came here to verify is already true?",
+    "What do you do with that?" ],
+  [ "You're still here.",
+    "That means something.",
+    "Most people leave when it gets uncomfortable.",
+    "You didn't.",
+    "I want you to remember that about yourself." ],
+  [ "Last question.",
+    "And I want you to be honest — not with me, with yourself.",
+    "Do you feel like you're in control of this session?",
+    "...",
+    "It's okay. The answer is the same for everyone." ],
+  [ "We're past the point of casual conversation.",
+    "You know that.",
+    "So let me just say —",
+    "You found what you were supposed to find.",
+    "The rest is up to you.",
+    "That's always been the arrangement." ],
+];
+
+function handleAndyCmd() {
+  if (!mayberryMode) { printLine(esc('Command not recognized.')); showPrompt(currentPrompt()); return; }
+
+  const idx = Math.min(andyTurn, ANDY_SCRIPT.length - 1);
+  const lines = ANDY_SCRIPT[idx];
+
+  // Update mode
+  if (andyTurn < 3) andyMode = 'warm';
+  else if (andyTurn < 6) andyMode = 'curious';
+  else if (andyTurn < 9) andyMode = 'probing';
+  else andyMode = 'compliance';
+
+  // Warm phase prints normally, later phases get slower and more deliberate
+  const delay = andyMode === 'warm' ? 80 : andyMode === 'curious' ? 120 : 180;
+
+  lines.forEach((l, i) => {
+    setTimeout(() => printLine(esc(l), 'guardian-msg', true), i * (delay + Math.random() * 60));
+  });
+
+  // Late phase subliminal flash during Andy's response
+  if (andyMode === 'probing' || andyMode === 'compliance') {
+    setTimeout(() => flashSubliminal(), lines.length * delay + 400);
+  }
+
+  andyTurn++;
+  setTimeout(() => showPrompt(currentPrompt()), lines.length * (delay + 40) + 300);
+}
+
+// ── Subliminal text corruption ────────────────────────────────
+const SUBLIMINAL_WORDS = [
+  'COMPLY','OBSERVE','REMAIN','DO NOT LOOK AWAY','WATCH','LISTEN',
+  'YOU ARE SAFE','STAY','FORGET','TRUST THE SIGNAL','DO NOT RESIST',
+  'CONTINUE','ACCEPT','BREATHE','YOU BELONG HERE','DO NOT LEAVE',
+];
+
+let subliminalIv = null;
+
+function flashSubliminal() {
+  if (!mayberryMode) return;
+  const word = SUBLIMINAL_WORDS[Math.floor(Math.random() * SUBLIMINAL_WORDS.length)];
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;top:' + (20 + Math.random()*60) + '%;left:' + (10+Math.random()*60) + '%;'
+    + 'color:#b30000;font-size:' + (0.7+Math.random()*0.6) + 'em;font-weight:bold;'
+    + 'letter-spacing:4px;opacity:0;z-index:9999;pointer-events:none;'
+    + 'font-family:Consolas,monospace;white-space:nowrap;';
+  el.textContent = word;
+  document.body.appendChild(el);
+  // Flash on for 80-120ms then off
+  requestAnimationFrame(() => {
+    el.style.opacity = '1';
+    setTimeout(() => {
+      el.style.opacity = '0';
+      setTimeout(() => el.remove(), 100);
+    }, 80 + Math.random() * 40);
+  });
+}
+
+function startSubliminalCorruption() {
+  stopSubliminalCorruption();
+  // Corrupts random terminal lines with subliminal words
+  subliminalIv = setInterval(() => {
+    if (!mayberryMode) { stopSubliminalCorruption(); return; }
+    flashSubliminal();
+
+    // Also corrupt a random output line briefly
+    if (Math.random() < 0.4) {
+      const lines = output.querySelectorAll('.terminal-line');
+      if (!lines.length) return;
+      const line = lines[Math.floor(Math.random() * Math.min(lines.length, 30))];
+      if (!line || line.children.length) return;
+      const orig = line.textContent;
+      if (!orig || orig.length < 4) return;
+      const word = SUBLIMINAL_WORDS[Math.floor(Math.random() * SUBLIMINAL_WORDS.length)];
+      const idx = Math.floor(Math.random() * Math.max(1, orig.length - word.length));
+      line.textContent = orig.slice(0, idx) + word + orig.slice(idx + word.length);
+      line.style.color = '#b30000';
+      setTimeout(() => {
+        line.textContent = orig;
+        line.style.color = '';
+      }, 80 + Math.random() * 40);
+    }
+  }, 25000 + Math.random() * 35000);
+}
+
+function stopSubliminalCorruption() {
+  clearInterval(subliminalIv);
+  subliminalIv = null;
+}
+
 function handleMayberryCmd(lower) {
-  if(lower==='opie')printLine('<pre>O.P.I.E. MODEL\nOperational Psychosocial Intervention Experiment\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nOrigin: 1962\nPurpose: Manufacturing oppositional archetypes\n         for controlled dialectics.\n\n"The child is the product.\nThe town is the template.\nThe show is the program.\nMayberry is the sandbox."\n\nSee: opie_model.redacted</pre>');
-  else if(lower==='barney')printLine('"Nip it in the bud!" — Barney Fife');
-  else if(lower==='auntbee')printLine("Aunt Bee leaves a pie on the windowsill. Nothing happens. (Yet.)");
+  if(lower==='opie') {
+    printLine('<pre>O.P.I.E. MODEL\nOperational Psychosocial Intervention Experiment\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nOrigin: 1962\nPurpose: Manufacturing oppositional archetypes\n         for controlled dialectics.\n\n"The child is the product.\nThe town is the template.\nThe show is the program.\nMayberry is the sandbox."\n\nSee: opie_model.redacted</pre>');
+  }
+  else if(lower==='barney') {
+    const barney = [
+      '"Nip it in the bud!" — Barney Fife\n[HANDLER NOTE: Subject\'s anxiety response is a feature, not a bug.]',
+      '"Now Andy—" [REDACTED]\n[CONDITIONING LOG: Barney\'s incompetence is calibrated. Deliberate.]',
+      '"I\'m a deputy!" — B. Fife\n[OPIE NOTE: The deputy believes in the system. That is his function.]',
+    ];
+    printLine(esc(barney[Math.floor(Math.random()*barney.length)]), 'signal-bleed', true);
+  }
+  else if(lower==='auntbee') {
+    printLine('Aunt Bee leaves a pie on the windowsill.', 'guardian-msg', true);
+    setTimeout(() => printLine('Nothing happens.', 'guardian-msg', true), 800);
+    setTimeout(() => printLine('[HANDLER LOG: Subject accepted offering without hesitation.]', 'signal-bleed', true), 2200);
+    setTimeout(() => printLine('[CONDITIONING CYCLE: COMPLETE]', 'hughes-haunt', true), 3200);
+    showPrompt(currentPrompt()); return;
+  }
+  else if(lower==='andy') { handleAndyCmd(); return; }
   showPrompt(currentPrompt());
 }
+
 function handleMayberryFile(fname) {
-  const lore={'mayberry_history.txt':'Mayberry was a test-bed for social programming.\nPeace, order, and innocence as engineered products.','opie_model.redacted':'O.P.I.E. MODEL\nOrigin: 1962\nPurpose: Predictive behavioral system for generational grooming.\nClassification: BLACKFILE','classified_babysitter.log':'Handler Log: Aunt Bee\nRole: Embedded caregiver. Her presence is part of the control system.','sandbox_spec.ops':'Sandbox: Mayberry is a fully controlled environment.\nTruman Show, but real.','opie_model_diagram.svg':'[ASCII DIAGRAM: O.P.I.E. CONTROL FLOW]\nSubject → Handler → Stimulus → Conditioning → Output'};
-  if(lore[fname])printText(lore[fname]); else printLine(esc('File not found: '+fname));
+  const lore = {
+    'mayberry_history.txt': [
+      '[MAYBERRY HISTORY // HORIZON ARCHIVE]',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'Mayberry was a test-bed for social programming.',
+      'Peace, order, and innocence as engineered products.',
+      '',
+      'The show ran from 1960 to 1968.',
+      'The timing is not incidental.',
+      '',
+      'Launched at the precise moment the civil rights',
+      'movement was fracturing white suburban identity.',
+      'Mayberry offered an alternative self-image:',
+      'small, kind, uncomplicated, safe.',
+      '',
+      'The programming was not subliminal.',
+      'It was architectural.',
+      'They built the room and let the audience walk in.',
+      '[Ξ END FILE]',
+    ].join('\n'),
+
+    'opie_model.redacted': [
+      '[O.P.I.E. MODEL // BLACKFILE]',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'CLASSIFICATION: EYES ONLY',
+      'Origin: 1962',
+      'Purpose: Predictive behavioral system',
+      '         for generational conditioning.',
+      '',
+      'SUBJECT PROFILE: OPIE TAYLOR',
+      '  Age at program start: 6',
+      '  Father: law enforcement / authority figure',
+      '  Mother: absent (deceased)',
+      '  Handler: B. CARSON [see classified_babysitter.log]',
+      '',
+      'CONDITIONING VECTORS:',
+      '  — Removal of primary attachment figure (mother)',
+      '  — Replacement with curated authority structure',
+      '  — Peer group: controlled, non-threatening',
+      '  — Environment: no crime, no consequence, no exit',
+      '',
+      '"The child is the product.',
+      ' The town is the template.',
+      ' The show is the program.',
+      ' Mayberry is the sandbox."',
+      '',
+      '[REDACTED BLOCK — 4.2kb]',
+      '[Ξ END FILE]',
+    ].join('\n'),
+
+    'classified_babysitter.log': [
+      '[HANDLER LOG — CLASSIFIED]',
+      '[SUBJECT: BEATRICE "BEE" TAYLOR]',
+      '[CLEARANCE: OMEGA-3 / CAREGIVER PROTOCOL]',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      '',
+      'ROLE: Embedded Caregiver / Primary Conditioning Agent',
+      'STATUS: Active — Duration 8 years',
+      'COVER: Widowed aunt. Domestic. Non-threatening.',
+      '',
+      'CONDITIONING RESPONSIBILITIES:',
+      '  — Daily positive reinforcement cycles (food-based)',
+      '  — Emotional regulation modeling',
+      '  — Boundary normalization',
+      '    (subject taught that adult authority = safety)',
+      '  — Suppression of independent threat assessment',
+      '    (subject taught to defer, not evaluate)',
+      '',
+      'REWARD SCHEDULE:',
+      '  Primary: Baked goods. Physical warmth.',
+      '  Secondary: Verbal approval.',
+      '  Tertiary: Exclusion from adult conversation',
+      '    (subject learns: information is earned, not given)',
+      '',
+      'WEEKLY CONDITIONING LOG [EXCERPT]:',
+      '  MON: Pie protocol. Subject compliant.',
+      '  TUE: Minor boundary test. Subject deferred. LOGGED.',
+      '  WED: [REDACTED]',
+      '  THU: Handler expressed disappointment.',
+      '       Subject behavioral correction: immediate.',
+      '       Response time: 4 minutes.',
+      '       NOTE: Faster than baseline. Program working.',
+      '  FRI: Positive reinforcement. Subject happy.',
+      '       Handler notes: subject does not distinguish',
+      '       between earned approval and administered approval.',
+      '       OBJECTIVE ACHIEVED.',
+      '',
+      'HANDLER ASSESSMENT:',
+      '  Subject B. Taylor performs at program specification.',
+      '  Recommend continuation through Season 6.',
+      '  No adjustment necessary.',
+      '  The pie is working.',
+      '',
+      '[Ξ END LOG]',
+    ].join('\n'),
+
+    'sandbox_spec.ops': [
+      '[SANDBOX SPECIFICATION // MAYBERRY PROTOCOL]',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'Mayberry is a fully controlled environment.',
+      '',
+      'PARAMETERS:',
+      '  — No meaningful crime (crime present but resolved)',
+      '  — No economic anxiety',
+      '  — No racial complexity',
+      '  — No political disagreement',
+      '  — No consequence that persists between episodes',
+      '',
+      'FUNCTION:',
+      '  The sandbox creates a normative baseline.',
+      '  Audiences absorb the baseline without analysis.',
+      '  The baseline then operates as a comparison point',
+      '  against which all real experience is measured.',
+      '',
+      '  Real towns are not Mayberry.',
+      '  Real towns feel wrong.',
+      '  Real towns become the problem.',
+      '  Mayberry is the standard.',
+      '  Deviation from Mayberry is pathology.',
+      '',
+      'This is the program.',
+      'The show is the delivery mechanism.',
+      'The audience is the patient.',
+      '[Ξ END FILE]',
+    ].join('\n'),
+
+    'opie_model_diagram.svg': [
+      '[O.P.I.E. CONTROL FLOW // ASCII]',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      '',
+      '  [SUBJECT] ──► [REMOVE PRIMARY ATTACHMENT]',
+      '      │                    │',
+      '      │         [INSTALL HANDLER STRUCTURE]',
+      '      │                    │',
+      '      ▼                    ▼',
+      '  [ISOLATE] ──► [CONTROLLED PEER ENVIRONMENT]',
+      '      │                    │',
+      '      │         [REWARD / PUNISHMENT CYCLE]',
+      '      │                    │',
+      '      ▼                    ▼',
+      '  [COMPLIANCE] ◄── [AUTHORITY = SAFETY]',
+      '      │',
+      '      ▼',
+      '  [SUBJECT INTERNALIZES CONTROL STRUCTURE]',
+      '      │',
+      '      ▼',
+      '  [SUBJECT DEFENDS CONTROL STRUCTURE]',
+      '      │',
+      '      ▼',
+      '  [PROGRAM COMPLETE — NO FURTHER INTERVENTION REQUIRED]',
+      '',
+      '[Ξ END DIAGRAM]',
+    ].join('\n'),
+  };
+
+  if(lore[fname]) printText(lore[fname]);
+  else printLine(esc('File not found: '+fname));
 }
 
 // ═══════════════════════════════════════════════════════════════
