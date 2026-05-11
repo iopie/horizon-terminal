@@ -5087,9 +5087,8 @@ function handleHHCommand(cmd) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  HRZN DESK MODE — WCG LIVE API BUILD
-//  Wabash Combine Global / Global Reach Desk
-//  This replaces the old fictional-only HRZN Desk.
+//  HRZN DESK MODE — WCG GLOBAL REACH DESK v2
+//  GitHub-feed first: terminal stays local, desk reads /data/live/*.json
 // ═══════════════════════════════════════════════════════════════
 let deskMode = false;
 let deskIv = null;
@@ -5102,9 +5101,6 @@ let deskError = '';
 let deskLoading = false;
 let deskLastUpdated = 0;
 
-// Set this before the script loads OR with the desk command:
-//   api https://your-worker.your-subdomain.workers.dev
-// The terminal also falls back to /data/live/*.json so GitHub Pages can work in cache mode.
 const WCG_DEFAULT_API_BASE = '';
 let WCG_API_BASE = (window.WCG_API_BASE || localStorage.getItem('WCG_API_BASE') || WCG_DEFAULT_API_BASE || '').replace(/\/$/, '');
 const WCG_STATIC_DESK_URLS = [
@@ -5115,55 +5111,57 @@ const WCG_STATIC_DESK_URLS = [
 
 const WCG_FALLBACK_DASHBOARD = {
   timestamp: new Date().toISOString(),
-  mode: 'fallback',
+  mode: 'local-fallback',
   identity: {
     system: 'WCG',
     title: 'Wabash Combine Global',
     screen: 'Global Reach Desk',
-    subtitle: 'live adapter not connected'
+    subtitle: 'GitHub feed not loaded'
   },
   indices: {
     wabash_combine_index: { value: null, change: null, label: 'WABASH COMBINE INDEX' },
     global_reach_index: { value: null, change: null, label: 'GLOBAL REACH INDEX' },
-    sacred_register_score: { value: null, change: null, label: 'SACRED REGISTER' },
-    christendom_field: { value: null, change: null, label: 'CHRISTENDOM FIELD' },
-    abrahamic_field: { value: null, change: null, label: 'ABRAHAMIC FIELD' }
+    global_reach_movers: { value: null, change: null, label: 'GLOBAL REACH MOVERS' },
+    sacred_register_score: { value: null, change: null, label: 'SACRED REGISTER' }
   },
   movers: [],
   wire: [
-    { type: 'SYSTEM', headline: 'WCG live API not connected. Use: api https://your-worker.workers.dev', source: 'local terminal' },
-    { type: 'SYSTEM', headline: 'Fallback mode will still render the desk while the live feed is offline.', source: 'local terminal' }
+    { type: 'SYSTEM', headline: 'No WCG feed found. Expected: data/live/wcg_desk_latest.json', source: 'local terminal' }
   ],
   predictions: [],
-  sectors: [
-    { id: 'wire', name: 'WIRE / SENSOR / CONTROL', score: null, notes: 'Honeywell, sensors, telemetry, control systems' },
-    { id: 'defense', name: 'DEFENSE / AEROSPACE', score: null, notes: 'Lockheed, Hughes, Rockwell, ranges, black projects' },
-    { id: 'energy', name: 'ENERGY / CHEMICAL', score: null, notes: 'Standard Oil, fuel, refinery, petrochemical field' },
-    { id: 'media', name: 'MEDIA / CONSUMER ELECTRONICS', score: null, notes: 'Apple, Sony, screens, cameras, personal terminals' },
-    { id: 'sacred', name: 'SACRED REGISTER', score: null, notes: 'Christendom, Abrahamic field, Rome, Byzantium, Mecca, Jerusalem' }
-  ],
-  sacred: {
-    summary: 'Sacred Register offline fallback.',
-    metrics: [],
-    traditions: []
-  },
+  sectors: [],
+  sacred: { summary: 'Sacred Register feed offline.', metrics: [], traditions: [] },
+  real_metrics: [],
+  lookups: {},
   sources: []
 };
 
-function wcgNum(v, suffix) {
+function wcgVal(v) {
+  if (v === null || v === undefined || v === '' || Number.isNaN(Number(v))) return '--';
+  return String(v);
+}
+function wcgNum(v, opts) {
+  opts = opts || {};
   if (v === null || v === undefined || v === '' || Number.isNaN(Number(v))) return '--';
   const n = Number(v);
-  if (Math.abs(n) >= 1e12) return '$' + (n / 1e12).toFixed(2) + 'T';
-  if (Math.abs(n) >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
-  if (Math.abs(n) >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
-  if (Math.abs(n) >= 1000) return n.toLocaleString();
-  return n.toFixed(n % 1 ? 2 : 0) + (suffix || '');
+  const unit = opts.unit || '';
+  if (opts.percent) return (opts.sign && n > 0 ? '+' : '') + n.toFixed(opts.decimals ?? 2) + '%';
+  if (opts.currency || unit === 'USD') {
+    if (Math.abs(n) >= 1e12) return '$' + (n / 1e12).toFixed(2) + 'T';
+    if (Math.abs(n) >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+    if (Math.abs(n) >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+    if (Math.abs(n) >= 1000) return '$' + Math.round(n).toLocaleString();
+    return '$' + n.toFixed(2);
+  }
+  if (Math.abs(n) >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+  if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+  if (Math.abs(n) >= 1000) return Math.round(n).toLocaleString();
+  return n.toFixed(n % 1 ? (opts.decimals ?? 2) : 0);
 }
 function wcgPct(v) {
   if (v === null || v === undefined || v === '' || Number.isNaN(Number(v))) return '--';
   const n = Number(v);
-  const sign = n > 0 ? '+' : '';
-  return sign + n.toFixed(2) + '%';
+  return (n > 0 ? '+' : '') + n.toFixed(2) + '%';
 }
 function wcgScore(v) {
   if (v === null || v === undefined || v === '' || Number.isNaN(Number(v))) return '--';
@@ -5176,26 +5174,34 @@ function wcgBar(v, width) {
   const f = Math.round((n / 100) * w);
   return '█'.repeat(f) + '░'.repeat(Math.max(0, w - f));
 }
-function wcgPanel(title, body, extra) {
-  return '<div style="border:1px solid #332200;background:rgba(18,12,0,.58);padding:8px;margin-bottom:10px;' + (extra || '') + '">' +
+function wcgPanel(title, body, extraStyle) {
+  return '<div style="border:1px solid #332200;background:rgba(18,12,0,.58);padding:8px;margin-bottom:10px;' + (extraStyle || '') + '">' +
     '<div style="color:#ffaa00;border-bottom:1px solid #332200;margin-bottom:6px;font-weight:bold;letter-spacing:1px">' + esc(title) + '</div>' +
-    body +
-    '</div>';
+    body + '</div>';
 }
-function wcgSmallLine(left, right, color) {
-  return '<div style="display:flex;justify-content:space-between;gap:12px;line-height:1.6">' +
-    '<span style="color:#5d4612">' + esc(left) + '</span>' +
+function wcgLine(left, right, color) {
+  return '<div style="display:flex;justify-content:space-between;gap:12px;line-height:1.55">' +
+    '<span style="color:#6e520f">' + esc(left) + '</span>' +
     '<span style="color:' + (color || '#ffcc44') + ';text-align:right">' + esc(right) + '</span>' +
     '</div>';
 }
+function wcgTag(text, color) {
+  return '<span style="border:1px solid #332200;color:' + (color || '#aa7a18') + ';padding:1px 4px;margin-right:4px;white-space:nowrap">' + esc(text) + '</span>';
+}
+function wcgMetricDisplay(m) {
+  if (m.display !== undefined) return String(m.display);
+  if (m.unit === 'USD') return wcgNum(m.value, { currency:true });
+  if (m.unit === 'percent') return wcgNum(m.value, { percent:true, decimals: m.decimals ?? 1 });
+  return wcgNum(m.value, { decimals: m.decimals ?? 1 });
+}
+function wcgData() { return deskData || WCG_FALLBACK_DASHBOARD; }
 function wcgSourceStamp() {
-  const mode = (deskData && deskData.mode) ? deskData.mode : 'offline';
-  const ts = deskData && deskData.timestamp ? new Date(deskData.timestamp) : null;
+  const d = wcgData();
+  const ts = d.timestamp ? new Date(d.timestamp) : null;
   const t = ts && !Number.isNaN(ts.getTime()) ? ts.toLocaleString() : 'not loaded';
-  const api = WCG_API_BASE ? WCG_API_BASE : 'static /data/live fallback';
+  const endpoint = WCG_API_BASE ? WCG_API_BASE : 'GitHub feed: data/live/wcg_desk_latest.json';
   return '<div style="color:#443300;font-size:10px;border-top:1px solid #221100;margin-top:8px;padding-top:5px">' +
-    'feed: ' + esc(mode) + ' // updated: ' + esc(t) + ' // endpoint: ' + esc(api) +
-    '</div>';
+    'feed: ' + esc(d.mode || 'unknown') + ' // updated: ' + esc(t) + ' // ' + esc(endpoint) + '</div>';
 }
 
 async function wcgFetchJSON(endpoint, params) {
@@ -5217,6 +5223,22 @@ async function wcgFetchJSON(endpoint, params) {
     throw lastErr || new Error('No static desk feed found');
   }
   throw new Error('No WCG API base configured for ' + endpoint);
+}
+
+function wcgFindLookup(query) {
+  const d = wcgData();
+  const q = String(query || '').trim().toUpperCase();
+  if (!q) return null;
+  const pool = d.lookups || d.lookup || d.entities || {};
+  if (!pool) return null;
+  if (!Array.isArray(pool) && pool[q]) return Object.assign({ symbol:q }, pool[q]);
+  const arr = Array.isArray(pool) ? pool : Object.keys(pool).map(k => Object.assign({ symbol:k }, pool[k]));
+  return arr.find(x => {
+    const sym = String(x.symbol || x.ticker || '').toUpperCase();
+    const name = String(x.name || '').toUpperCase();
+    const aliases = (x.aliases || []).map(a => String(a).toUpperCase());
+    return sym === q || name === q || name.includes(q) || aliases.includes(q);
+  }) || null;
 }
 
 async function loadWCGDesk(force) {
@@ -5243,23 +5265,38 @@ async function loadWCGDesk(force) {
 }
 
 async function loadWCGLookup(symbol) {
-  const sym = String(symbol || '').trim().toUpperCase();
+  const sym = String(symbol || '').trim();
   if (!sym) return;
   deskView = 'lookup';
-  deskFocus = sym;
+  deskFocus = sym.toUpperCase();
   deskLookup = null;
   deskLoading = true;
   if (deskContainer) deskContainer.innerHTML = buildDeskHTML();
-  try {
-    deskLookup = await wcgFetchJSON('/lookup', { symbol: sym });
+
+  const local = wcgFindLookup(sym);
+  if (local) {
+    deskLookup = local;
     deskError = '';
-  } catch (e) {
-    deskError = e && e.message ? e.message : String(e);
+    deskLoading = false;
+    if (deskContainer && deskMode) deskContainer.innerHTML = buildDeskHTML();
+    return;
+  }
+
+  if (WCG_API_BASE) {
+    try {
+      deskLookup = await wcgFetchJSON('/lookup', { symbol: sym });
+      deskError = '';
+    } catch (e) {
+      deskError = e && e.message ? e.message : String(e);
+    }
+  }
+  if (!deskLookup) {
     deskLookup = {
-      symbol: sym,
-      name: sym,
-      status: 'offline',
-      wcg_reading: 'Lookup requires the WCG API endpoint. Use: api https://your-worker.workers.dev',
+      symbol: deskFocus,
+      name: deskFocus,
+      status: 'not indexed in local GitHub feed',
+      description: 'This symbol is not in the local WCG feed yet. Add it to data/live/wcg_desk_latest.json or connect a live lookup API later.',
+      wcg_reading: 'Unscored entity. Awaiting index classification.',
       scores: {}
     };
   }
@@ -5268,105 +5305,117 @@ async function loadWCGLookup(symbol) {
 }
 
 function renderWCGHeader() {
-  const d = deskData || WCG_FALLBACK_DASHBOARD;
+  const d = wcgData();
   const id = d.identity || {};
   const now = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-  const online = deskError ? '[FEED DEGRADED]' : deskLoading ? '[LOADING]' : '[LIVE]';
+  const online = deskError ? 'FEED DEGRADED' : deskLoading ? 'LOADING' : (WCG_API_BASE ? 'LIVE API' : 'GITHUB FEED');
   const col = deskError ? '#ff6644' : deskLoading ? '#ffaa00' : '#ff4400';
-  return '<div style="color:#554400;border-bottom:1px solid #332200;padding-bottom:4px;margin-bottom:8px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">' +
+  return '<div style="color:#554400;border-bottom:1px solid #332200;padding-bottom:5px;margin-bottom:8px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">' +
     '<span style="color:#ffaa00;font-weight:bold;letter-spacing:2px">' + esc(id.system || 'WCG') + ' // ' + esc(id.title || 'WABASH COMBINE GLOBAL') + '</span>' +
-    '<span style="color:#886600">' + esc(id.screen || 'GLOBAL REACH DESK') + '</span>' +
+    '<span style="color:#aa7a18">' + esc(id.screen || 'GLOBAL REACH DESK') + '</span>' +
+    '<span style="color:#5d4612">' + esc(id.subtitle || 'Wabash River Valley core node') + '</span>' +
     '<span>' + esc(now) + '</span>' +
-    '<span class="live-indicator" style="color:' + col + '">' + online + '</span>' +
-    '<span style="color:#443300">view: ' + esc(deskView) + '</span>' +
+    '<span class="live-indicator" style="color:' + col + '">' + esc(online) + '</span>' +
+    '<span style="color:#443300">view: ' + esc(deskView) + (deskFocus ? ' / ' + esc(deskFocus) : '') + '</span>' +
     '</div>';
 }
 function renderWCGError() {
   if (!deskError) return '';
   return wcgPanel('FEED NOTICE', '<div style="color:#ff6644">' + esc(deskError) + '</div>' +
-    '<div style="color:#aa7a18;margin-top:5px">Set endpoint: <b>api https://your-worker.workers.dev</b></div>');
+    '<div style="color:#aa7a18;margin-top:5px">Static mode expects: <b>data/live/wcg_desk_latest.json</b></div>');
 }
 function renderWCGIndices() {
-  const idx = (deskData || WCG_FALLBACK_DASHBOARD).indices || {};
-  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:6px">';
+  const idx = wcgData().indices || {};
+  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:6px">';
   Object.keys(idx).forEach(k => {
     const item = typeof idx[k] === 'object' ? idx[k] : { value: idx[k] };
     const label = item.label || k.replace(/_/g, ' ').toUpperCase();
     const value = item.value;
     const chg = item.change;
     const color = Number(chg) >= 0 ? '#00bb00' : '#ff4444';
-    html += '<div style="border:1px solid #221100;background:rgba(0,0,0,.35);padding:6px">' +
-      '<div style="color:#5d4612;font-size:10px">' + esc(label) + '</div>' +
-      '<div style="display:flex;align-items:baseline;gap:10px">' +
-      '<span style="color:#ffcc44;font-size:20px;font-weight:bold">' + esc(wcgScore(value)) + '</span>' +
-      '<span style="color:' + color + ';font-size:11px">' + esc(wcgPct(chg)) + '</span>' +
-      '</div>' +
-      '<div style="color:#886600;letter-spacing:0">' + wcgBar(value, 22) + '</div>' +
+    const note = item.note || item.method || '';
+    html += '<div style="border:1px solid #221100;background:rgba(0,0,0,.38);padding:6px;min-height:74px">' +
+      '<div style="color:#6e520f;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(label) + '</div>' +
+      '<div style="display:flex;align-items:baseline;gap:10px"><span style="color:#ffcc44;font-size:20px;font-weight:bold">' + esc(wcgScore(value)) + '</span>' +
+      '<span style="color:' + color + ';font-size:11px">' + esc(wcgPct(chg)) + '</span></div>' +
+      '<div style="color:#886600;letter-spacing:0;font-size:11px">' + wcgBar(value, 20) + '</div>' +
+      '<div style="color:#443300;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(note) + '</div>' +
       '</div>';
   });
   html += '</div>';
-  return wcgPanel('GLOBAL REACH INDEX BOARD', html);
+  return wcgPanel('WCG INDEX BOARD', html);
 }
-function renderWCGMovers() {
-  const movers = ((deskData || {}).movers || []).slice(0, 10);
+function renderWCGRealMetrics(limit) {
+  const metrics = (wcgData().real_metrics || wcgData().metrics || []).slice(0, limit || 12);
+  let html = '';
+  if (!metrics.length) html = '<div style="color:#665522">No real metric feed loaded yet.</div>';
+  metrics.forEach(m => {
+    const src = m.source ? ' // ' + m.source : '';
+    const year = m.year ? ' [' + m.year + ']' : '';
+    html += '<div style="border-bottom:1px dotted #221100;padding:2px 0">' +
+      '<div style="display:flex;justify-content:space-between;gap:10px"><span style="color:#7b5d16">' + esc(m.label || m.id || '') + esc(year) + '</span>' +
+      '<span style="color:#ffcc44;font-weight:bold">' + esc(wcgMetricDisplay(m)) + '</span></div>' +
+      '<div style="color:#443300;font-size:9px">' + esc(src) + '</div></div>';
+  });
+  return wcgPanel('REAL DATA LAYER', html);
+}
+function renderWCGMovers(limit) {
+  const movers = (wcgData().movers || []).slice(0, limit || 12);
   let html = '<table style="width:100%;border-collapse:collapse;font-size:11px">' +
-    '<tr style="color:#554400;border-bottom:1px solid #332200"><td>SYM</td><td>NAME</td><td style="text-align:right">PX</td><td style="text-align:right">CHG</td><td style="text-align:right">GRMS</td><td>READING</td></tr>';
-  if (!movers.length) {
-    html += '<tr><td colspan="6" style="color:#665522">No live movers loaded yet.</td></tr>';
-  }
+    '<tr style="color:#554400;border-bottom:1px solid #332200"><td>SYM</td><td>NAME</td><td style="text-align:right">PX</td><td style="text-align:right">CHG</td><td style="text-align:right">GRMS</td><td>WCG READING</td></tr>';
+  if (!movers.length) html += '<tr><td colspan="6" style="color:#665522">No movers loaded yet.</td></tr>';
   movers.forEach(m => {
     const chg = m.change_percent ?? m.changePercent ?? m.change ?? null;
     const col = Number(chg) >= 0 ? '#00bb00' : '#ff4444';
     html += '<tr style="border-bottom:1px solid #1a1000">' +
       '<td style="color:#ffcc44;font-weight:bold">' + esc(m.symbol || '') + '</td>' +
       '<td style="color:#aa7a18">' + esc(m.name || '') + '</td>' +
-      '<td style="text-align:right;color:#886600">' + esc(m.price !== undefined ? wcgNum(m.price) : '--') + '</td>' +
+      '<td style="text-align:right;color:#886600">' + esc(m.price !== undefined && m.price !== null ? wcgNum(m.price, {currency:true}) : '--') + '</td>' +
       '<td style="text-align:right;color:' + col + '">' + esc(wcgPct(chg)) + '</td>' +
       '<td style="text-align:right;color:#ffcc44">' + esc(wcgScore(m.global_reach_mover_score ?? m.score)) + '</td>' +
-      '<td style="color:#443300;font-size:10px">' + esc(m.wcg_reading || m.reading || m.function || '') + '</td>' +
-      '</tr>';
+      '<td style="color:#443300;font-size:10px">' + esc(m.wcg_reading || m.reading || m.function || '') + '</td></tr>';
   });
   html += '</table>';
-  return wcgPanel('TOP GLOBAL REACH MOVERS', html);
+  return wcgPanel('GLOBAL REACH MOVERS', html);
 }
 function renderWCGWire(limit) {
-  const wire = ((deskData || {}).wire || []).slice(0, limit || 12);
+  const wire = (wcgData().wire || []).slice(0, limit || 12);
   let html = '';
   if (!wire.length) html += '<div style="color:#665522">No wire items loaded.</div>';
   wire.forEach(w => {
     const type = w.type || w.category || 'WIRE';
     const src = w.source ? ' // ' + w.source : '';
+    const stamp = w.timestamp ? ' ' + w.timestamp : '';
     html += '<div style="border-bottom:1px dotted #332200;padding:3px 0">' +
       '<span style="color:#ffcc44">[' + esc(type) + ']</span> ' +
       '<span style="color:#aa7a18">' + esc(w.headline || w.title || '') + '</span>' +
-      '<span style="color:#443300;font-size:10px">' + esc(src) + '</span>' +
-      '</div>';
+      '<span style="color:#443300;font-size:10px">' + esc(src + stamp) + '</span></div>';
   });
   return wcgPanel('LIVE WIRE FEED', html);
 }
-function renderWCGPredictions() {
-  const preds = ((deskData || {}).predictions || []).slice(0, 10);
+function renderWCGPredictions(limit) {
+  const preds = (wcgData().predictions || []).slice(0, limit || 10);
   let html = '<table style="width:100%;border-collapse:collapse;font-size:10px">' +
-    '<tr style="color:#554400;border-bottom:1px solid #332200"><td>MARKET</td><td style="text-align:right">PROB</td><td style="text-align:right">VOL</td><td>SOURCE</td></tr>';
+    '<tr style="color:#554400;border-bottom:1px solid #332200"><td>MARKET</td><td style="text-align:right">PROB</td><td style="text-align:right">HEAT</td><td>SOURCE</td></tr>';
   if (!preds.length) html += '<tr><td colspan="4" style="color:#665522">No prediction feed loaded.</td></tr>';
   preds.forEach(p => {
-    html += '<tr style="border-bottom:1px solid #1a1000">' +
-      '<td style="color:#aa7a18">' + esc(p.title || p.question || p.market || '') + '</td>' +
-      '<td style="text-align:right;color:#ffcc44">' + esc(p.probability !== undefined ? wcgPct(Number(p.probability) * (Number(p.probability) <= 1 ? 100 : 1)) : '--') + '</td>' +
-      '<td style="text-align:right;color:#886600">' + esc(p.volume !== undefined ? wcgNum(p.volume) : '--') + '</td>' +
-      '<td style="color:#443300">' + esc(p.source || '') + '</td>' +
-      '</tr>';
+    const prob = p.probability !== undefined && p.probability !== null ? (Number(p.probability) <= 1 ? Number(p.probability) * 100 : Number(p.probability)) : null;
+    html += '<tr style="border-bottom:1px solid #1a1000"><td style="color:#aa7a18">' + esc(p.title || p.question || p.market || '') + '</td>' +
+      '<td style="text-align:right;color:#ffcc44">' + esc(prob !== null ? prob.toFixed(1) + '%' : '--') + '</td>' +
+      '<td style="text-align:right;color:#886600">' + esc(wcgScore(p.heat ?? p.volume_score ?? p.score)) + '</td>' +
+      '<td style="color:#443300">' + esc(p.source || '') + '</td></tr>';
   });
   html += '</table>';
   return wcgPanel('PREDICTION ENGINE', html);
 }
 function renderWCGSectors() {
-  const sectors = ((deskData || WCG_FALLBACK_DASHBOARD).sectors || []);
+  const sectors = wcgData().sectors || [];
   let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:6px">';
   sectors.forEach(s => {
     const score = s.score ?? s.heat ?? null;
+    const id = s.id || s.symbol || '';
     html += '<div style="border:1px solid #221100;padding:6px;background:rgba(0,0,0,.35)">' +
-      '<div style="color:#ffcc44;font-weight:bold">' + esc(s.name || s.id || '') + '</div>' +
+      '<div style="display:flex;justify-content:space-between;gap:8px"><span style="color:#ffcc44;font-weight:bold">' + esc(s.name || id) + '</span><span style="color:#5d4612">' + esc(id) + '</span></div>' +
       '<div style="color:#886600;letter-spacing:0">' + wcgBar(score, 16) + ' ' + esc(wcgScore(score)) + '</div>' +
       '<div style="color:#443300;font-size:10px">' + esc(s.notes || s.description || '') + '</div>' +
       '</div>';
@@ -5374,23 +5423,34 @@ function renderWCGSectors() {
   html += '</div>';
   return wcgPanel('GLOBAL REACH SECTOR BOARD', html);
 }
+function renderWCGSectorDetail() {
+  const q = deskFocus.toLowerCase();
+  const sectors = wcgData().sectors || [];
+  const s = sectors.find(x => String(x.id || '').toLowerCase() === q || String(x.name || '').toLowerCase().includes(q));
+  if (!s) return wcgPanel('SECTOR // ' + deskFocus, '<div style="color:#aa7a18">Sector not indexed in local feed.</div>');
+  let html = '<div style="color:#ffcc44;font-weight:bold">' + esc(s.name || s.id) + '</div>' +
+    '<div style="color:#886600;letter-spacing:0">' + wcgBar(s.score ?? s.heat, 24) + ' ' + esc(wcgScore(s.score ?? s.heat)) + '</div>' +
+    '<div style="color:#aa7a18;margin:6px 0">' + esc(s.notes || s.description || '') + '</div>';
+  if (Array.isArray(s.entities)) html += '<div>' + s.entities.map(e => wcgTag(e, '#ffcc44')).join('') + '</div>';
+  if (Array.isArray(s.watch_fields)) html += '<div style="margin-top:8px;color:#554400">WATCH: ' + esc(s.watch_fields.join(' / ')) + '</div>';
+  return wcgPanel('SECTOR DETAIL // ' + (s.id || deskFocus), html);
+}
 function renderWCGSacred() {
-  const s = (deskData || {}).sacred || WCG_FALLBACK_DASHBOARD.sacred || {};
+  const s = wcgData().sacred || WCG_FALLBACK_DASHBOARD.sacred || {};
   let html = '<div style="color:#aa7a18;margin-bottom:8px">' + esc(s.summary || 'Sacred Register') + '</div>';
   if (Array.isArray(s.metrics)) {
     s.metrics.forEach(m => {
-      html += '<div style="display:flex;gap:8px;align-items:center;line-height:1.7">' +
-        '<span style="color:#5d4612;width:190px;flex-shrink:0">' + esc(m.label || m.name || '') + '</span>' +
-        '<span style="color:#c7d8ff;letter-spacing:0">' + wcgBar(m.value, 18) + '</span>' +
-        '<span style="color:#c7d8ff">' + esc(wcgScore(m.value)) + '</span>' +
-        '</div>';
+      html += '<div style="display:flex;gap:8px;align-items:center;line-height:1.7"><span style="color:#6e520f;width:205px;flex-shrink:0">' + esc(m.label || m.name || '') + '</span>' +
+        '<span style="color:#c7d8ff;letter-spacing:0">' + wcgBar(m.value, 18) + '</span><span style="color:#c7d8ff">' + esc(wcgScore(m.value)) + '</span></div>';
     });
   }
   if (Array.isArray(s.traditions) && s.traditions.length) {
-    html += '<div style="margin-top:8px;color:#554400;border-bottom:1px solid #332200">TRADITIONS / REGISTERS</div>';
-    s.traditions.slice(0, 12).forEach(t => {
-      html += wcgSmallLine(t.name || t.symbol || '', (t.estimate || t.role || ''), '#c7d8ff');
-    });
+    html += '<div style="margin-top:8px;color:#554400;border-bottom:1px solid #332200">DENOMINATION / REGISTER ESTIMATES</div>';
+    s.traditions.slice(0, 18).forEach(t => { html += wcgLine(t.name || t.symbol || '', (t.estimate || t.role || t.adherents || ''), '#c7d8ff'); });
+  }
+  if (Array.isArray(s.axis_cities) && s.axis_cities.length) {
+    html += '<div style="margin-top:8px;color:#554400;border-bottom:1px solid #332200">AXIS CITIES</div>';
+    s.axis_cities.slice(0, 16).forEach(a => { html += wcgLine(a.name || '', a.function || a.role || '', '#c7d8ff'); });
   }
   return wcgPanel('SACRED REGISTER // CHRISTENDOM + ABRAHAMIC FIELD', html);
 }
@@ -5398,32 +5458,35 @@ function renderWCGLookup() {
   const l = deskLookup || { symbol: deskFocus, name: deskFocus, status: deskLoading ? 'loading' : 'not loaded', scores: {} };
   const q = l.quote || l.market || l;
   const scores = l.scores || l.wcg_scores || {};
-  let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">';
-  html += '<div>' +
-    '<div style="color:#ffcc44;font-size:18px;font-weight:bold">' + esc(l.symbol || deskFocus || '') + ' // ' + esc(l.name || '') + '</div>' +
-    '<div style="color:#5d4612">' + esc(l.exchange || l.sector || l.industry || l.status || '') + '</div>' +
-    wcgSmallLine('PRICE', q.price !== undefined ? wcgNum(q.price) : '--') +
-    wcgSmallLine('DAY CHANGE', q.change_percent !== undefined ? wcgPct(q.change_percent) : (q.changePercent !== undefined ? wcgPct(q.changePercent) : '--')) +
-    wcgSmallLine('MARKET CAP', q.market_cap !== undefined ? wcgNum(q.market_cap) : (l.market_cap !== undefined ? wcgNum(l.market_cap) : '--')) +
-    wcgSmallLine('VOLUME', q.volume !== undefined ? wcgNum(q.volume) : '--') +
+  const tags = l.tags || l.domains || [];
+  let html = '<div style="display:grid;grid-template-columns:minmax(260px,1fr) minmax(240px,.8fr);gap:12px">';
+  html += '<div><div style="color:#ffcc44;font-size:18px;font-weight:bold">' + esc(l.symbol || deskFocus || '') + ' // ' + esc(l.name || '') + '</div>' +
+    '<div style="color:#6e520f;margin-bottom:6px">' + esc(l.exchange || l.sector || l.industry || l.status || '') + '</div>' +
+    wcgLine('PRICE', q.price !== undefined && q.price !== null ? wcgNum(q.price, {currency:true}) : '--') +
+    wcgLine('DAY CHANGE', q.change_percent !== undefined ? wcgPct(q.change_percent) : (q.changePercent !== undefined ? wcgPct(q.changePercent) : '--')) +
+    wcgLine('MARKET CAP', q.market_cap !== undefined ? wcgNum(q.market_cap, {currency:true}) : (l.market_cap !== undefined ? wcgNum(l.market_cap, {currency:true}) : '--')) +
+    wcgLine('VOLUME', q.volume !== undefined ? wcgNum(q.volume) : '--') +
     '</div>';
   html += '<div>' +
-    wcgSmallLine('GLOBAL REACH', wcgScore(scores.global_reach ?? scores.globalReach)) +
-    wcgSmallLine('MOVER SCORE', wcgScore(scores.global_reach_mover_score ?? scores.mover)) +
-    wcgSmallLine('INFRA CONTROL', wcgScore(scores.infrastructure_control)) +
-    wcgSmallLine('REGIONAL DOMINANCE', wcgScore(scores.regional_dominance)) +
-    wcgSmallLine('SACRED OVERLAP', wcgScore(scores.sacred_overlap)) +
-    '</div>';
-  html += '</div>';
-  html += '<div style="color:#aa7a18;margin-top:10px">' + esc(l.description || l.wcg_reading || '') + '</div>';
+    wcgLine('WCG BUSINESS SCORE', wcgScore(scores.wcg_business_score ?? scores.business_score ?? scores.global_reach)) +
+    wcgLine('GLOBAL REACH', wcgScore(scores.global_reach ?? scores.globalReach)) +
+    wcgLine('MOVER SCORE', wcgScore(scores.global_reach_mover_score ?? scores.mover)) +
+    wcgLine('INFRA CONTROL', wcgScore(scores.infrastructure_control)) +
+    wcgLine('REGIONAL DOMINANCE', wcgScore(scores.regional_dominance)) +
+    wcgLine('SACRED OVERLAP', wcgScore(scores.sacred_overlap)) +
+    '</div></div>';
+  if (tags.length) html += '<div style="margin:8px 0">' + tags.map(t => wcgTag(t, '#aa7a18')).join('') + '</div>';
+  html += '<div style="color:#aa7a18;margin-top:8px">' + esc(l.description || '') + '</div>';
+  html += '<div style="color:#c7d8ff;margin-top:6px">WCG READING: ' + esc(l.wcg_reading || l.reading || '') + '</div>';
+  if (Array.isArray(l.watch_fields) && l.watch_fields.length) html += '<div style="color:#554400;margin-top:6px">WATCH: ' + esc(l.watch_fields.join(' / ')) + '</div>';
   if (Array.isArray(l.news) && l.news.length) {
-    html += '<div style="margin-top:8px;color:#554400;border-bottom:1px solid #332200">NEWS</div>';
+    html += '<div style="margin-top:8px;color:#554400;border-bottom:1px solid #332200">NEWS / WIRE</div>';
     l.news.slice(0, 5).forEach(n => { html += '<div style="color:#886600">' + esc(n.title || n.headline || '') + '</div>'; });
   }
   return wcgPanel('LOOKUP // ' + (l.symbol || deskFocus || ''), html);
 }
 function renderWCGSources() {
-  const sources = ((deskData || {}).sources || []).slice(0, 20);
+  const sources = (wcgData().sources || []).slice(0, 30);
   let html = '<table style="width:100%;border-collapse:collapse;font-size:10px"><tr style="color:#554400;border-bottom:1px solid #332200"><td>SOURCE</td><td>TYPE</td><td>STATUS</td></tr>';
   if (!sources.length) html += '<tr><td colspan="3" style="color:#665522">No source registry loaded.</td></tr>';
   sources.forEach(s => {
@@ -5432,39 +5495,61 @@ function renderWCGSources() {
   html += '</table>';
   return wcgPanel('SOURCE REGISTRY', html);
 }
+function renderWCGFormula() {
+  const sm = wcgData().score_model || wcgData().scoring || {};
+  let html = '<div style="color:#aa7a18;margin-bottom:6px">The Desk separates raw public data from WCG-derived scoring. The score is a terminal reading, not an official market rating.</div>';
+  const formulas = sm.formulas || sm.indices || [];
+  if (Array.isArray(formulas) && formulas.length) {
+    formulas.forEach(f => {
+      html += '<div style="border-bottom:1px dotted #332200;padding:4px 0"><span style="color:#ffcc44">' + esc(f.name || f.id || '') + '</span><br>' +
+        '<span style="color:#6e520f">' + esc(f.description || f.formula || '') + '</span></div>';
+    });
+  } else {
+    html += wcgLine('GLOBAL REACH INDEX', 'market scale + infrastructure control + network reach + sector weight');
+    html += wcgLine('GLOBAL REACH MOVER SCORE', 'price movement + wire velocity + prediction heat + WCG structural score');
+    html += wcgLine('WABASH COMBINE INDEX', 'local economy + industrial density + ledger load + valley path relevance');
+  }
+  return wcgPanel('WCG SCORE MODEL', html);
+}
 function renderWCGHelp() {
-  return wcgPanel('DESK COMMANDS',
-    '<div style="color:#aa7a18;columns:2;line-height:1.7">' +
-    'home<br>refresh<br>lookup AAPL<br>ticker HNWL<br>movers<br>wire<br>predictions<br>sectors<br>sacred<br>sources<br>api https://your-worker.workers.dev<br>api clear<br>quit' +
+  return wcgPanel('DESK COMMANDS', '<div style="color:#aa7a18;columns:2;line-height:1.8">' +
+    'home<br>refresh<br>lookup AAPL<br>lookup HNWL<br>ticker LMT<br>sector defense<br>movers<br>wire<br>predictions<br>sectors<br>sacred<br>christendom<br>abrahamic<br>metrics<br>formula<br>sources<br>api clear<br>quit' +
     '</div>');
+}
+function renderWCGQuickPanel() {
+  const lks = wcgData().lookups || {};
+  const keys = Array.isArray(lks) ? lks.map(x => x.symbol).filter(Boolean) : Object.keys(lks);
+  let html = '<div style="color:#aa7a18">Indexed lookups: ' + esc(keys.slice(0, 18).join(' / ')) + '</div>';
+  html += '<div style="color:#554400;margin-top:6px">Try: lookup HNWL, lookup AAPL, lookup LMT, sector wire, sacred, predictions, metrics.</div>';
+  return wcgPanel('LOOKUP / COMMAND RAIL', html);
 }
 
 function buildDeskHTML() {
-  const data = deskData || WCG_FALLBACK_DASHBOARD;
   let html = '<div style="font-family:Consolas,Monaco,monospace;line-height:1.45;color:#ffcc44;">';
   html += renderWCGHeader();
   html += renderWCGError();
-
   if (deskView === 'lookup') html += renderWCGLookup();
-  else if (deskView === 'wire') html += renderWCGWire(24);
-  else if (deskView === 'predictions') html += renderWCGPredictions();
+  else if (deskView === 'wire') html += renderWCGWire(28);
+  else if (deskView === 'predictions') html += renderWCGPredictions(18);
   else if (deskView === 'sectors') html += renderWCGSectors();
+  else if (deskView === 'sector') html += renderWCGSectorDetail();
   else if (deskView === 'sacred') html += renderWCGSacred();
   else if (deskView === 'sources') html += renderWCGSources();
+  else if (deskView === 'metrics') html += renderWCGRealMetrics(30);
+  else if (deskView === 'formula' || deskView === 'score') html += renderWCGFormula();
   else if (deskView === 'help') html += renderWCGHelp();
   else {
     html += renderWCGIndices();
-    html += '<div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);gap:12px">' +
-      '<div>' + renderWCGMovers() + renderWCGWire(7) + '</div>' +
-      '<div>' + renderWCGPredictions() + renderWCGSacred() + '</div>' +
+    html += '<div style="display:grid;grid-template-columns:minmax(310px,1.05fr) minmax(310px,1fr) minmax(280px,.9fr);gap:12px">' +
+      '<div>' + renderWCGMovers(9) + renderWCGRealMetrics(6) + '</div>' +
+      '<div>' + renderWCGQuickPanel() + renderWCGSectors() + '</div>' +
+      '<div>' + renderWCGWire(8) + renderWCGPredictions(7) + renderWCGSacred() + '</div>' +
       '</div>';
   }
-
   html += wcgSourceStamp();
   html += '<div style="color:#332200;font-size:10px;margin-top:8px;border-top:1px solid #221100;padding-top:4px">' +
-    'lookup [symbol] | movers | wire | predictions | sectors | sacred | sources | refresh | api [url] | quit' +
-    '</div>';
-  html += '</div>';
+    'lookup [symbol] | sector [name] | movers | wire | predictions | sectors | sacred | metrics | formula | sources | refresh | quit' +
+    '</div></div>';
   return html;
 }
 
@@ -5482,15 +5567,12 @@ function enterDeskMode() {
   deskContainer.innerHTML = buildDeskHTML();
   loadWCGDesk(true);
   showPrompt('[desk] >');
-
   deskIv = setInterval(() => {
     if (!deskMode) { clearInterval(deskIv); return; }
-    // Refresh display clock every few seconds; reload feed about once a minute.
     if (Date.now() - deskLastUpdated > 60000) loadWCGDesk(true);
     else if (deskContainer) deskContainer.innerHTML = buildDeskHTML();
   }, 5000);
 }
-
 function exitDeskMode() {
   deskMode = false;
   doDeskCollapse(() => {
@@ -5508,53 +5590,54 @@ function exitDeskMode() {
     returnToBBS();
   });
 }
-
+function setDeskView(view, focus) {
+  deskView = view;
+  deskFocus = focus || '';
+  if (deskContainer) deskContainer.innerHTML = buildDeskHTML();
+  showPrompt('[desk] >');
+}
 function handleDeskCommand(cmd) {
   const raw = cmd.trim();
   const lower = raw.toLowerCase();
   printLine(esc('> ' + cmd), '', true);
-
   if (['quit','exit','exit desk'].includes(lower)) { exitDeskMode(); return; }
-  if (['help','?','commands'].includes(lower)) { deskView = 'help'; if (deskContainer) deskContainer.innerHTML = buildDeskHTML(); showPrompt('[desk] >'); return; }
-  if (['home','wcg','desk','reach'].includes(lower)) { deskView = 'home'; if (deskContainer) deskContainer.innerHTML = buildDeskHTML(); showPrompt('[desk] >'); return; }
+  if (['help','?','commands'].includes(lower)) { setDeskView('help'); return; }
+  if (['home','wcg','desk','reach','global','combine'].includes(lower)) { setDeskView('home'); return; }
   if (['refresh','reload','live'].includes(lower)) { loadWCGDesk(true).then(() => showPrompt('[desk] >')); return; }
-  if (lower === 'movers') { deskView = 'home'; if (deskContainer) deskContainer.innerHTML = buildDeskHTML(); showPrompt('[desk] >'); return; }
-  if (lower === 'wire') { deskView = 'wire'; if (deskContainer) deskContainer.innerHTML = buildDeskHTML(); showPrompt('[desk] >'); return; }
-  if (lower === 'predictions' || lower === 'predict' || lower === 'bets') { deskView = 'predictions'; if (deskContainer) deskContainer.innerHTML = buildDeskHTML(); showPrompt('[desk] >'); return; }
-  if (lower === 'sectors') { deskView = 'sectors'; if (deskContainer) deskContainer.innerHTML = buildDeskHTML(); showPrompt('[desk] >'); return; }
-  if (lower === 'sacred' || lower === 'religion' || lower === 'christendom' || lower === 'abrahamic') { deskView = 'sacred'; if (deskContainer) deskContainer.innerHTML = buildDeskHTML(); showPrompt('[desk] >'); return; }
-  if (lower === 'sources') { deskView = 'sources'; if (deskContainer) deskContainer.innerHTML = buildDeskHTML(); showPrompt('[desk] >'); return; }
-
+  if (['movers','market'].includes(lower)) { setDeskView('home'); return; }
+  if (lower === 'wire' || lower === 'rss' || lower === 'feed') { setDeskView('wire'); return; }
+  if (lower === 'predictions' || lower === 'predict' || lower === 'bets') { setDeskView('predictions'); return; }
+  if (lower === 'sectors') { setDeskView('sectors'); return; }
+  if (lower.startsWith('sector ')) { setDeskView('sector', raw.slice(raw.indexOf(' ') + 1).trim()); return; }
+  if (['sacred','religion','christendom','abrahamic','rome','byzantium','mecca','jerusalem','register'].includes(lower)) { setDeskView('sacred', lower); return; }
+  if (['sources','source'].includes(lower)) { setDeskView('sources'); return; }
+  if (['metrics','real','data'].includes(lower)) { setDeskView('metrics'); return; }
+  if (['formula','score','scores','model'].includes(lower)) { setDeskView('formula'); return; }
   if (lower.startsWith('api ')) {
     const url = raw.slice(4).trim();
     if (url.toLowerCase() === 'clear') {
-      localStorage.removeItem('WCG_API_BASE');
-      WCG_API_BASE = '';
-      printLine('WCG API cleared. using static /data/live fallback.', '', true);
+      localStorage.removeItem('WCG_API_BASE'); WCG_API_BASE = '';
+      printLine('WCG API cleared. using GitHub static feed.', '', true);
     } else {
-      WCG_API_BASE = url.replace(/\/$/, '');
-      localStorage.setItem('WCG_API_BASE', WCG_API_BASE);
+      WCG_API_BASE = url.replace(/\/$/, ''); localStorage.setItem('WCG_API_BASE', WCG_API_BASE);
       printLine('WCG API set: ' + WCG_API_BASE, '', true);
     }
     loadWCGDesk(true).then(() => showPrompt('[desk] >'));
     return;
   }
-
-  if (lower.startsWith('lookup ') || lower.startsWith('ticker ') || lower.startsWith('business ') || lower.startsWith('entity ')) {
+  if (lower.startsWith('lookup ') || lower.startsWith('ticker ') || lower.startsWith('business ') || lower.startsWith('entity ') || lower.startsWith('search ')) {
     const sym = raw.replace(/^\S+\s+/, '').trim();
     loadWCGLookup(sym).then(() => showPrompt('[desk] >'));
     return;
   }
-
-  // Bare uppercase-ish symbol lookup: AAPL, HNWL, LMT, XOM, etc.
-  if (/^[a-zA-Z.\-]{1,8}$/.test(raw) && !['quit','exit','wire','home','help'].includes(lower)) {
+  if (/^[a-zA-Z.\-]{1,14}$/.test(raw) && !['quit','exit','wire','home','help'].includes(lower)) {
     loadWCGLookup(raw).then(() => showPrompt('[desk] >'));
     return;
   }
-
-  printLine('unknown desk command. try: lookup AAPL | wire | predictions | sacred | api [url] | quit', '', true);
+  printLine('unknown desk command. try: lookup HNWL | sector defense | metrics | wire | predictions | sacred | quit', '', true);
   showPrompt('[desk] >');
 }
+
 
 // ═══════════════════════════════════════════════════════════════
 //  WIRE SERVICE
