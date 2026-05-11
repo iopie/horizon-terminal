@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-05-10T00:00:00Z",
+  "mode": "static-cache-example",
+  "identity": {
+    "system": "WCG",
+    "title": "Wabash Combine Global",
+    "screen": "Global Reach Desk",
+    "subtitle": "static fallback until Worker API is configured"
+  },
+  "indices": {
+    "wabash_combine_index": { "label": "WABASH COMBINE INDEX", "value": 80.5, "change": 0.8 },
+    "global_reach_index": { "label": "GLOBAL REACH INDEX", "value": 91.2, "change": 1.4 },
+    "global_reach_movers": { "label": "GLOBAL REACH MOVERS", "value": 87.7, "change": 0.9 },
+    "sacred_register_score": { "label": "SACRED REGISTER", "value": 86.0, "change": 0.5 },
+    "christendom_field": { "label": "CHRISTENDOM FIELD", "value": 90.1, "change": 0.4 },
+    "abrahamic_field": { "label": "ABRAHAMIC FIELD", "value": 94.4, "change": 0.6 }
+  },
+  "movers": [
+    { "symbol": "HNWL", "name": "Honeywell", "price": null, "change_percent": null, "global_reach_mover_score": 91.4, "wcg_reading": "sensor / control / aerospace" },
+    { "symbol": "LMT", "name": "Lockheed Martin", "price": null, "change_percent": null, "global_reach_mover_score": 90.8, "wcg_reading": "defense / aerospace / range" },
+    { "symbol": "AAPL", "name": "Apple", "price": null, "change_percent": null, "global_reach_mover_score": 88.6, "wcg_reading": "personal terminal / black mirror" }
+  ],
+  "wire": [
+    { "type": "SYSTEM", "headline": "Static fallback feed loaded. Configure WCG_API_BASE for live Worker data.", "source": "local JSON" }
+  ],
+  "predictions": [
+    { "source": "static", "title": "Prediction feed waiting for Worker API.", "probability": null, "volume": null }
+  ],
+  "sectors": [
+    { "id": "wire", "name": "WIRE / SENSOR / CONTROL", "score": 94, "notes": "Honeywell, Rockwell, telemetry, controls" },
+    { "id": "defense", "name": "DEFENSE / AEROSPACE", "score": 96, "notes": "Hughes, Lockheed, ranges, black projects" },
+    { "id": "sacred", "name": "SACRED REGISTER", "score": 86, "notes": "Christendom, Abrahamic field, holy-city axes" }
+  ],
+  "sacred": {
+    "summary": "Parallel sacred ledger: Christendom, Abrahamic field, Roman Register, Byzantine table, Mecca vector, Jerusalem axis.",
+    "metrics": [
+      { "label": "SACRED REGISTER", "value": 86 },
+      { "label": "CHRISTENDOM FIELD", "value": 90 },
+      { "label": "ABRAHAMIC FIELD", "value": 94 }
+    ],
+    "traditions": [
+      { "name": "Catholic Church", "estimate": "~1.3B–1.4B" },
+      { "name": "Eastern Orthodox", "estimate": "~200M–260M" },
+      { "name": "Islamic Ummah", "estimate": "~2B+" }
+    ]
+  },
+  "sources": [
+    { "id": "static", "name": "Static fallback JSON", "type": "local cache", "status": "loaded" }
+  ]
+}
