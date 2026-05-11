@@ -1,50 +1,879 @@
 {
-  "timestamp": "2026-05-10T00:00:00Z",
-  "mode": "static-cache-example",
+  "timestamp": "2026-05-11T01:00:41Z",
+  "mode": "github-static-live-feed-v2",
   "identity": {
     "system": "WCG",
     "title": "Wabash Combine Global",
     "screen": "Global Reach Desk",
-    "subtitle": "static fallback until Worker API is configured"
+    "subtitle": "Wabash-coded market / wire / sacred-register console"
   },
   "indices": {
-    "wabash_combine_index": { "label": "WABASH COMBINE INDEX", "value": 80.5, "change": 0.8 },
-    "global_reach_index": { "label": "GLOBAL REACH INDEX", "value": 91.2, "change": 1.4 },
-    "global_reach_movers": { "label": "GLOBAL REACH MOVERS", "value": 87.7, "change": 0.9 },
-    "sacred_register_score": { "label": "SACRED REGISTER", "value": 86.0, "change": 0.5 },
-    "christendom_field": { "label": "CHRISTENDOM FIELD", "value": 90.1, "change": 0.4 },
-    "abrahamic_field": { "label": "ABRAHAMIC FIELD", "value": 94.4, "change": 0.6 }
+    "wabash_combine_index": {
+      "label": "WABASH COMBINE INDEX",
+      "value": 80.5,
+      "change": 0.8,
+      "method": "local economy + ledger load + industrial density"
+    },
+    "global_reach_index": {
+      "label": "GLOBAL REACH INDEX",
+      "value": 91.2,
+      "change": 1.4,
+      "method": "scale + infrastructure control + network reach"
+    },
+    "global_reach_movers": {
+      "label": "GLOBAL REACH MOVERS",
+      "value": 87.7,
+      "change": 0.9,
+      "method": "market motion + wire velocity + WCG score"
+    },
+    "prediction_pressure": {
+      "label": "PREDICTION PRESSURE",
+      "value": 63.4,
+      "change": -0.2,
+      "method": "watched markets / probability heat"
+    },
+    "sacred_register_score": {
+      "label": "SACRED REGISTER",
+      "value": 86.0,
+      "change": 0.5,
+      "method": "institutional religion + axis-city weight"
+    },
+    "christendom_field": {
+      "label": "CHRISTENDOM FIELD",
+      "value": 90.1,
+      "change": 0.4,
+      "method": "Rome + Byzantium + Protestant dispersion"
+    },
+    "abrahamic_field": {
+      "label": "ABRAHAMIC FIELD",
+      "value": 94.4,
+      "change": 0.6,
+      "method": "Jerusalem / Mecca / Rome / Constantinople axis"
+    }
   },
+  "real_metrics": [
+    {
+      "id": "county_population_2025",
+      "label": "Wabash County Population",
+      "value": 30713,
+      "display": "30,713",
+      "year": 2025,
+      "source": "STATS Indiana",
+      "unit": "count"
+    },
+    {
+      "id": "wabash_city_population_2024",
+      "label": "Wabash City Population",
+      "value": 10275,
+      "display": "10,275",
+      "year": 2024,
+      "source": "STATS Indiana",
+      "unit": "count"
+    },
+    {
+      "id": "county_gdp_2024",
+      "label": "County GDP",
+      "value": 1714709000,
+      "year": 2024,
+      "source": "BEA via FRED",
+      "unit": "USD"
+    },
+    {
+      "id": "county_cnav_2025",
+      "label": "Certified Net Assessed Value",
+      "value": 1872307728,
+      "year": 2025,
+      "source": "Indiana Gateway",
+      "unit": "USD"
+    },
+    {
+      "id": "property_tax_rate_2025",
+      "label": "Property Tax Rate",
+      "value": 0.2769,
+      "display": "0.2769",
+      "year": 2025,
+      "source": "Indiana Gateway",
+      "unit": "rate"
+    },
+    {
+      "id": "employer_establishments_2023",
+      "label": "Employer Establishments",
+      "value": 747,
+      "year": 2023,
+      "source": "U.S. Census QuickFacts",
+      "unit": "count"
+    },
+    {
+      "id": "total_employment_2023",
+      "label": "Total Employment",
+      "value": 10893,
+      "year": 2023,
+      "source": "U.S. Census QuickFacts",
+      "unit": "count"
+    },
+    {
+      "id": "annual_payroll_2023",
+      "label": "Annual Payroll",
+      "value": 536379000,
+      "year": 2023,
+      "source": "U.S. Census QuickFacts",
+      "unit": "USD"
+    },
+    {
+      "id": "religious_adherents_2020",
+      "label": "Religious Adherents",
+      "value": 10944,
+      "display": "10,944",
+      "year": 2020,
+      "source": "ARDA / U.S. Religion Census",
+      "unit": "count"
+    },
+    {
+      "id": "religious_adherence_rate_2020",
+      "label": "Religious Adherence Rate",
+      "value": 35.3,
+      "display": "35.3%",
+      "year": 2020,
+      "source": "ARDA / U.S. Religion Census",
+      "unit": "percent"
+    }
+  ],
   "movers": [
-    { "symbol": "HNWL", "name": "Honeywell", "price": null, "change_percent": null, "global_reach_mover_score": 91.4, "wcg_reading": "sensor / control / aerospace" },
-    { "symbol": "LMT", "name": "Lockheed Martin", "price": null, "change_percent": null, "global_reach_mover_score": 90.8, "wcg_reading": "defense / aerospace / range" },
-    { "symbol": "AAPL", "name": "Apple", "price": null, "change_percent": null, "global_reach_mover_score": 88.6, "wcg_reading": "personal terminal / black mirror" }
+    {
+      "symbol": "HNWL",
+      "name": "Honeywell",
+      "price": null,
+      "change_percent": null,
+      "global_reach_mover_score": 91.4,
+      "wcg_reading": "sensor / control / aerospace / thermostat logic"
+    },
+    {
+      "symbol": "LMT",
+      "name": "Lockheed Martin",
+      "price": null,
+      "change_percent": null,
+      "global_reach_mover_score": 90.8,
+      "wcg_reading": "defense / aerospace / range / black project architecture"
+    },
+    {
+      "symbol": "AAPL",
+      "name": "Apple",
+      "price": null,
+      "change_percent": null,
+      "global_reach_mover_score": 88.6,
+      "wcg_reading": "personal terminal / black mirror / identity device"
+    },
+    {
+      "symbol": "XOM",
+      "name": "Exxon Mobil",
+      "price": null,
+      "change_percent": null,
+      "global_reach_mover_score": 86.9,
+      "wcg_reading": "energy / chemical / fuel corridor"
+    },
+    {
+      "symbol": "F",
+      "name": "Ford Motor",
+      "price": null,
+      "change_percent": null,
+      "global_reach_mover_score": 83.7,
+      "wcg_reading": "mobility / mass production / road standardization"
+    },
+    {
+      "symbol": "GM",
+      "name": "General Motors",
+      "price": null,
+      "change_percent": null,
+      "global_reach_mover_score": 82.4,
+      "wcg_reading": "platform manufacturing / logistics / industrial scale"
+    },
+    {
+      "symbol": "WBNT",
+      "name": "Wabash National",
+      "price": null,
+      "change_percent": null,
+      "global_reach_mover_score": 77.6,
+      "wcg_reading": "trailer logistics / One Wabash echo / freight shell"
+    },
+    {
+      "symbol": "FMBX",
+      "name": "Ford Meter Box",
+      "price": null,
+      "change_percent": null,
+      "global_reach_mover_score": 75.2,
+      "wcg_reading": "municipal water hardware / meter logic / Wabash anchor"
+    }
   ],
   "wire": [
-    { "type": "SYSTEM", "headline": "Static fallback feed loaded. Configure WCG_API_BASE for live Worker data.", "source": "local JSON" }
+    {
+      "type": "SYSTEM",
+      "headline": "WCG v2 GitHub feed loaded. Desk is now reading data/live/wcg_desk_latest.json.",
+      "source": "local feed"
+    },
+    {
+      "type": "MARKET",
+      "headline": "Global Reach Movers board initialized in static-cache mode; live API can be attached later.",
+      "source": "WCG"
+    },
+    {
+      "type": "LOCAL",
+      "headline": "Wabash Combine Index tied to real-data layer: GDP, CNAV, payroll, establishments, religious adherence.",
+      "source": "WCG metrics"
+    },
+    {
+      "type": "PREDICT",
+      "headline": "Prediction Engine panel reserved for Kalshi / Polymarket / future event feeds.",
+      "source": "prediction rail"
+    },
+    {
+      "type": "SACRED",
+      "headline": "Sacred Register tracks Christendom, Abrahamic field, Roman Register, Byzantine table, Mecca vector.",
+      "source": "WCG register"
+    },
+    {
+      "type": "BLEED",
+      "headline": "EMPIRE IS A PUBLIC WORD. THE COMBINE USES REACH.",
+      "source": "WDLS"
+    },
+    {
+      "type": "ARCHIVE",
+      "headline": "1870 index damage and 1882 municipal circuit remain active Wabash memory fields.",
+      "source": "archive layer"
+    },
+    {
+      "type": "WIRE",
+      "headline": "Next build target: automated JSON updater for market/news/prediction feeds.",
+      "source": "build plan"
+    }
   ],
   "predictions": [
-    { "source": "static", "title": "Prediction feed waiting for Worker API.", "probability": null, "volume": null }
+    {
+      "source": "Kalshi slot",
+      "title": "Federal rate / inflation / election-market channel placeholder",
+      "probability": 0.52,
+      "heat": 62
+    },
+    {
+      "source": "Polymarket slot",
+      "title": "Geopolitical event probability channel placeholder",
+      "probability": 0.41,
+      "heat": 68
+    },
+    {
+      "source": "WCG synthetic",
+      "title": "Defense / aerospace policy heat",
+      "probability": 0.64,
+      "heat": 73
+    },
+    {
+      "source": "WCG synthetic",
+      "title": "Energy / shipping disruption pressure",
+      "probability": 0.38,
+      "heat": 59
+    },
+    {
+      "source": "WCG synthetic",
+      "title": "Sacred-geography volatility watch",
+      "probability": 0.27,
+      "heat": 44
+    }
   ],
   "sectors": [
-    { "id": "wire", "name": "WIRE / SENSOR / CONTROL", "score": 94, "notes": "Honeywell, Rockwell, telemetry, controls" },
-    { "id": "defense", "name": "DEFENSE / AEROSPACE", "score": 96, "notes": "Hughes, Lockheed, ranges, black projects" },
-    { "id": "sacred", "name": "SACRED REGISTER", "score": 86, "notes": "Christendom, Abrahamic field, holy-city axes" }
+    {
+      "id": "land",
+      "name": "LAND / PAPER / RECORDS",
+      "score": 89,
+      "notes": "deeds, tax rolls, title firms, courthouse memory, legal paper",
+      "entities": [
+        "County records",
+        "banks",
+        "title firms",
+        "surveyors"
+      ],
+      "watch_fields": [
+        "parcel transfers",
+        "tax bills",
+        "court records",
+        "LLC changes"
+      ]
+    },
+    {
+      "id": "water",
+      "name": "WATER / UTILITY HARDWARE",
+      "score": 86,
+      "notes": "Ford Meter Box, water departments, dams, drainage, river systems",
+      "entities": [
+        "FMBX",
+        "municipal water",
+        "river/dam nodes"
+      ],
+      "watch_fields": [
+        "utility contracts",
+        "meter deployments",
+        "water infrastructure"
+      ]
+    },
+    {
+      "id": "road",
+      "name": "ROAD / STONE / SURFACE",
+      "score": 82,
+      "notes": "Brooks logic, paving, bridges, stone, highway contracts",
+      "entities": [
+        "Brooks Construction",
+        "Bedford stone layer",
+        "county highway"
+      ],
+      "watch_fields": [
+        "road bids",
+        "bridge projects",
+        "aggregate supply"
+      ]
+    },
+    {
+      "id": "freight",
+      "name": "RAIL / TRUCK / FREIGHT",
+      "score": 84,
+      "notes": "canal memory, rail routes, trucks, trailers, logistics shells",
+      "entities": [
+        "WBNT",
+        "Service Motor Truck",
+        "Wabash rail memory"
+      ],
+      "watch_fields": [
+        "freight routes",
+        "rail spurs",
+        "truck contracts"
+      ]
+    },
+    {
+      "id": "wire",
+      "name": "WIRE / SENSOR / CONTROL",
+      "score": 94,
+      "notes": "Honeywell, telemetry, ADT/Bell residue, industrial control",
+      "entities": [
+        "HNWL",
+        "ROCK",
+        "Wabash Magnetics",
+        "radio"
+      ],
+      "watch_fields": [
+        "sensors",
+        "controls",
+        "telemetry",
+        "automation"
+      ]
+    },
+    {
+      "id": "energy",
+      "name": "ENERGY / CHEMICAL",
+      "score": 88,
+      "notes": "Standard Oil, Exxon, petrochemical field, fuel logistics",
+      "entities": [
+        "XOM",
+        "STDO",
+        "pipeline/fuel corridors"
+      ],
+      "watch_fields": [
+        "oil prices",
+        "fuel logistics",
+        "refinery pressure"
+      ]
+    },
+    {
+      "id": "mobility",
+      "name": "MOBILITY / MASS PRODUCTION",
+      "score": 87,
+      "notes": "Ford, GM, road systems, factory discipline, vehicle platforms",
+      "entities": [
+        "F",
+        "GM",
+        "FORD",
+        "Pullman"
+      ],
+      "watch_fields": [
+        "vehicle platforms",
+        "labor",
+        "supply chains"
+      ]
+    },
+    {
+      "id": "defense",
+      "name": "DEFENSE / AEROSPACE",
+      "score": 96,
+      "notes": "Hughes, Lockheed, Skunk Works, Rockwell, DynCorp, ranges",
+      "entities": [
+        "LMT",
+        "HUGH",
+        "ROCK",
+        "DYNC",
+        "VAND",
+        "HUNT-A"
+      ],
+      "watch_fields": [
+        "defense contracts",
+        "launch ranges",
+        "black budget signals"
+      ]
+    },
+    {
+      "id": "materials",
+      "name": "MATERIAL BASE / COPPER",
+      "score": 85,
+      "notes": "copper, aluminum, rare materials, recovery, casting",
+      "entities": [
+        "MTLX",
+        "REAL",
+        "WBCA",
+        "copper mines"
+      ],
+      "watch_fields": [
+        "metal prices",
+        "recycling",
+        "mine supply"
+      ]
+    },
+    {
+      "id": "media",
+      "name": "MEDIA / CONSUMER ELECTRONICS",
+      "score": 89,
+      "notes": "Apple, Sony, screens, cameras, recording systems, personal terminal layer",
+      "entities": [
+        "AAPL",
+        "SONY",
+        "radio",
+        "black mirror devices"
+      ],
+      "watch_fields": [
+        "devices",
+        "content rails",
+        "camera/sensor stack"
+      ]
+    },
+    {
+      "id": "sacred",
+      "name": "SACRED REGISTER",
+      "score": 86,
+      "notes": "Christendom, Abrahamic field, holy cities, denominational mass",
+      "entities": [
+        "ROME",
+        "BYZ",
+        "MECCA",
+        "JERU",
+        "BALT"
+      ],
+      "watch_fields": [
+        "denominations",
+        "dioceses",
+        "holy cities",
+        "ritual calendars"
+      ]
+    }
   ],
   "sacred": {
-    "summary": "Parallel sacred ledger: Christendom, Abrahamic field, Roman Register, Byzantine table, Mecca vector, Jerusalem axis.",
+    "summary": "Parallel institutional ledger measuring church, state, sacred geography, denomination scale, and old-world command forms beside the industrial Combine.",
     "metrics": [
-      { "label": "SACRED REGISTER", "value": 86 },
-      { "label": "CHRISTENDOM FIELD", "value": 90 },
-      { "label": "ABRAHAMIC FIELD", "value": 94 }
+      {
+        "label": "SACRED REGISTER",
+        "value": 86
+      },
+      {
+        "label": "CHRISTENDOM FIELD",
+        "value": 90.1
+      },
+      {
+        "label": "ABRAHAMIC FIELD",
+        "value": 94.4
+      },
+      {
+        "label": "ROMAN REGISTER",
+        "value": 91
+      },
+      {
+        "label": "BYZANTINE / ORTHODOX TABLE",
+        "value": 78
+      },
+      {
+        "label": "MECCA VECTOR",
+        "value": 96
+      },
+      {
+        "label": "JERUSALEM AXIS",
+        "value": 99
+      }
     ],
     "traditions": [
-      { "name": "Catholic Church", "estimate": "~1.3B–1.4B" },
-      { "name": "Eastern Orthodox", "estimate": "~200M–260M" },
-      { "name": "Islamic Ummah", "estimate": "~2B+" }
+      {
+        "name": "Catholic Church",
+        "estimate": "~1.3B\u20131.4B"
+      },
+      {
+        "name": "Islamic Ummah",
+        "estimate": "~2B+"
+      },
+      {
+        "name": "Protestant / Evangelical / Independent fields",
+        "estimate": "hundreds of millions; multiple registers"
+      },
+      {
+        "name": "Eastern Orthodox",
+        "estimate": "~200M\u2013260M"
+      },
+      {
+        "name": "Oriental Orthodox",
+        "estimate": "~60M+"
+      },
+      {
+        "name": "Anglican Communion",
+        "estimate": "~80M+"
+      },
+      {
+        "name": "Jewish global population",
+        "estimate": "~15M"
+      }
+    ],
+    "axis_cities": [
+      {
+        "name": "Wabash",
+        "function": "synthetic terminal core / river-valley ledger point"
+      },
+      {
+        "name": "Rome",
+        "function": "Latin Catholic register / Vatican command layer"
+      },
+      {
+        "name": "Constantinople / Istanbul",
+        "function": "Byzantine imperial church memory / Ottoman archive"
+      },
+      {
+        "name": "Jerusalem",
+        "function": "covenant / temple / cross / qibla memory"
+      },
+      {
+        "name": "Mecca",
+        "function": "qibla and pilgrimage vector"
+      },
+      {
+        "name": "Medina",
+        "function": "prophetic-state memory"
+      },
+      {
+        "name": "Alexandria",
+        "function": "Coptic / Greek / theological archive"
+      },
+      {
+        "name": "Moscow",
+        "function": "Third Rome claim / Orthodox mass"
+      },
+      {
+        "name": "Baltimore",
+        "function": "American Catholic hierarchy / port-register layer"
+      }
+    ]
+  },
+  "lookups": {
+    "HNWL": {
+      "symbol": "HNWL",
+      "name": "Honeywell International Inc.",
+      "sector": "Industrials / Aerospace / Controls",
+      "description": "Industrial controls, aerospace systems, sensors, automation, and building-control infrastructure.",
+      "wcg_reading": "Thermostat logic scaled into sensor, automation, aviation, and building-control systems.",
+      "scores": {
+        "wcg_business_score": 91.4,
+        "global_reach": 96,
+        "global_reach_mover_score": 91.4,
+        "infrastructure_control": 94,
+        "regional_dominance": 68,
+        "sacred_overlap": 22
+      },
+      "tags": [
+        "wire",
+        "sensor",
+        "control",
+        "aerospace",
+        "Wabash origin signal"
+      ],
+      "watch_fields": [
+        "sensors",
+        "aerospace contracts",
+        "building automation",
+        "defense exposure"
+      ]
+    },
+    "AAPL": {
+      "symbol": "AAPL",
+      "name": "Apple Inc.",
+      "sector": "Consumer Electronics / Software / Media Interface",
+      "description": "Consumer computing and mobile-device platform operating across hardware, software, payments, identity, media, cameras, and personal data surfaces.",
+      "wcg_reading": "The personal terminal layer: phone as camera, wallet, archive, map, sensor, and black mirror.",
+      "scores": {
+        "wcg_business_score": 93.0,
+        "global_reach": 98,
+        "global_reach_mover_score": 88.6,
+        "infrastructure_control": 82,
+        "regional_dominance": 91,
+        "sacred_overlap": 18
+      },
+      "tags": [
+        "media",
+        "black mirror",
+        "identity device",
+        "consumer electronics"
+      ],
+      "watch_fields": [
+        "device cycle",
+        "services revenue",
+        "chip supply",
+        "regulatory pressure"
+      ]
+    },
+    "LMT": {
+      "symbol": "LMT",
+      "name": "Lockheed Martin Corporation",
+      "sector": "Defense / Aerospace",
+      "description": "Major defense and aerospace contractor operating through aircraft, missiles, fire control, rotary systems, space systems, and classified-program adjacency.",
+      "wcg_reading": "Classified engineering cell scaled into aircraft, missiles, satellites, ranges, and security-state hardware.",
+      "scores": {
+        "wcg_business_score": 94.0,
+        "global_reach": 97,
+        "global_reach_mover_score": 90.8,
+        "infrastructure_control": 95,
+        "regional_dominance": 88,
+        "sacred_overlap": 10
+      },
+      "tags": [
+        "defense",
+        "aerospace",
+        "Skunk Works",
+        "range systems"
+      ],
+      "watch_fields": [
+        "defense budget",
+        "missile contracts",
+        "space systems",
+        "range activity"
+      ]
+    },
+    "XOM": {
+      "symbol": "XOM",
+      "name": "Exxon Mobil Corporation",
+      "sector": "Energy / Chemical",
+      "description": "Integrated oil and gas major with upstream, downstream, chemical, refining, fuel, and global logistics exposure.",
+      "wcg_reading": "Fuel and petrochemical field: the energy layer behind roads, fleets, militaries, plastics, and industrial transport.",
+      "scores": {
+        "wcg_business_score": 92.0,
+        "global_reach": 96,
+        "global_reach_mover_score": 86.9,
+        "infrastructure_control": 93,
+        "regional_dominance": 90,
+        "sacred_overlap": 8
+      },
+      "tags": [
+        "energy",
+        "oil",
+        "chemical",
+        "logistics"
+      ],
+      "watch_fields": [
+        "oil prices",
+        "refining margins",
+        "shipping lanes",
+        "regulation"
+      ]
+    },
+    "F": {
+      "symbol": "F",
+      "name": "Ford Motor Company",
+      "sector": "Mobility / Mass Production",
+      "description": "Automotive manufacturer tied to mass production, mobility standardization, labor systems, road infrastructure, and wartime production memory.",
+      "wcg_reading": "Mobility standardization and factory discipline: road-scale industry turned into public myth and production doctrine.",
+      "scores": {
+        "wcg_business_score": 84.5,
+        "global_reach": 88,
+        "global_reach_mover_score": 83.7,
+        "infrastructure_control": 79,
+        "regional_dominance": 76,
+        "sacred_overlap": 12
+      },
+      "aliases": [
+        "FORD"
+      ],
+      "tags": [
+        "mobility",
+        "mass production",
+        "road"
+      ],
+      "watch_fields": [
+        "EV transition",
+        "labor",
+        "supply chains",
+        "fleet systems"
+      ]
+    },
+    "GM": {
+      "symbol": "GM",
+      "name": "General Motors Company",
+      "sector": "Mobility / Mass Production",
+      "description": "Large vehicle-platform manufacturer across mass mobility, fleet, parts, labor, finance, and manufacturing networks.",
+      "wcg_reading": "Industrial scale through vehicle platforms, parts webs, credit systems, and supply-chain governance.",
+      "scores": {
+        "wcg_business_score": 83.8,
+        "global_reach": 87,
+        "global_reach_mover_score": 82.4,
+        "infrastructure_control": 80,
+        "regional_dominance": 75,
+        "sacred_overlap": 10
+      },
+      "tags": [
+        "mobility",
+        "manufacturing",
+        "fleet"
+      ],
+      "watch_fields": [
+        "EV transition",
+        "platform launches",
+        "labor",
+        "credit/fleet"
+      ]
+    },
+    "WBNT": {
+      "symbol": "WBNT",
+      "name": "Wabash National",
+      "sector": "Freight / Trailer Logistics",
+      "description": "Trailer and transportation-equipment manufacturer connected to the modern logistics vocabulary of the Wabash name.",
+      "wcg_reading": "The old route becomes the trailer shell: river, canal, rail, road, truck, trailer.",
+      "scores": {
+        "wcg_business_score": 77.6,
+        "global_reach": 72,
+        "global_reach_mover_score": 77.6,
+        "infrastructure_control": 74,
+        "regional_dominance": 61,
+        "sacred_overlap": 5
+      },
+      "tags": [
+        "freight",
+        "trailer",
+        "One Wabash"
+      ],
+      "watch_fields": [
+        "freight cycles",
+        "fleet demand",
+        "manufacturing capacity"
+      ]
+    },
+    "FMBX": {
+      "symbol": "FMBX",
+      "name": "Ford Meter Box",
+      "sector": "Water / Utility Hardware",
+      "description": "Wabash industrial anchor associated with municipal water hardware and metering infrastructure.",
+      "wcg_reading": "Municipal water hardware: a local utility interface where the meter becomes a civic control instrument.",
+      "scores": {
+        "wcg_business_score": 75.2,
+        "global_reach": 63,
+        "global_reach_mover_score": 75.2,
+        "infrastructure_control": 86,
+        "regional_dominance": 72,
+        "sacred_overlap": 4
+      },
+      "tags": [
+        "Wabash",
+        "water",
+        "meter",
+        "utility"
+      ],
+      "watch_fields": [
+        "municipal contracts",
+        "assessed value",
+        "utility infrastructure"
+      ]
+    },
+    "SONY": {
+      "symbol": "SONY",
+      "name": "Sony Group Corporation",
+      "sector": "Media / Consumer Electronics",
+      "description": "Global electronics, gaming, media, imaging, music, film, and sensor company.",
+      "wcg_reading": "Entertainment hardware and image-sensor layer: screen, camera, console, playback, culture distribution.",
+      "scores": {
+        "wcg_business_score": 86.8,
+        "global_reach": 91,
+        "global_reach_mover_score": 82.5,
+        "infrastructure_control": 77,
+        "regional_dominance": 82,
+        "sacred_overlap": 13
+      },
+      "tags": [
+        "media",
+        "camera",
+        "gaming",
+        "sensors"
+      ],
+      "watch_fields": [
+        "gaming",
+        "image sensors",
+        "film/music catalog",
+        "device cycles"
+      ]
+    }
+  },
+  "score_model": {
+    "formulas": [
+      {
+        "id": "global_reach_index",
+        "name": "Global Reach Index",
+        "description": "market scale + infrastructure control + network reach + strategic sector value + institutional depth + WCG path relevance"
+      },
+      {
+        "id": "global_reach_mover_score",
+        "name": "Global Reach Mover Score",
+        "description": "market motion + wire velocity + prediction-market heat + filing/news activity + WCG structural score"
+      },
+      {
+        "id": "wabash_combine_index",
+        "name": "Wabash Combine Index",
+        "description": "county economy + assessed-value base + payroll/employment + ledger load + Wabash River Valley path relevance"
+      },
+      {
+        "id": "sacred_register_score",
+        "name": "Sacred Register Score",
+        "description": "denominational scale + institutional density + sacred-city axis weight + school/hospital/charity network"
+      }
     ]
   },
   "sources": [
-    { "id": "static", "name": "Static fallback JSON", "type": "local cache", "status": "loaded" }
+    {
+      "id": "github_feed",
+      "name": "data/live/wcg_desk_latest.json",
+      "type": "local GitHub feed",
+      "status": "loaded"
+    },
+    {
+      "id": "stats_indiana",
+      "name": "STATS Indiana",
+      "type": "public demographic source",
+      "status": "seeded metric source"
+    },
+    {
+      "id": "fred_bea",
+      "name": "FRED / BEA county GDP",
+      "type": "economic data",
+      "status": "seeded metric source"
+    },
+    {
+      "id": "gateway",
+      "name": "Indiana Gateway",
+      "type": "local finance / assessed value",
+      "status": "seeded metric source"
+    },
+    {
+      "id": "census",
+      "name": "U.S. Census QuickFacts / CBP",
+      "type": "business and employment data",
+      "status": "seeded metric source"
+    },
+    {
+      "id": "arda",
+      "name": "ARDA / U.S. Religion Census",
+      "type": "religious adherence data",
+      "status": "seeded sacred-register source"
+    }
   ]
 }
